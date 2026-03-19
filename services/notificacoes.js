@@ -3,13 +3,25 @@ export function mostrarNotificacao(containerNotificacoes, mensagem, tipo = 'info
         return;
     }
 
-    const elementoNotificacao = document.createElement('div');
-    elementoNotificacao.className = `notificacao notificacao-${tipo}`;
-    elementoNotificacao.textContent = mensagem;
+    const notificacao = document.createElement('div');
+    notificacao.className = 'notificacao';
 
-    containerNotificacoes.appendChild(elementoNotificacao);
+    if (tipo === 'sucesso') {
+        notificacao.classList.add('notificacao-sucesso');
+    } else if (tipo === 'erro') {
+        notificacao.classList.add('notificacao-erro');
+    } else {
+        notificacao.classList.add('notificacao-info');
+    }
 
-    setTimeout(() => {
-        elementoNotificacao.remove();
-    }, 3500);
+    notificacao.textContent = mensagem;
+    containerNotificacoes.appendChild(notificacao);
+
+    const removerNotificacao = () => {
+        if (notificacao.parentNode) {
+            notificacao.parentNode.removeChild(notificacao);
+        }
+    };
+
+    setTimeout(removerNotificacao, 3500);
 }
