@@ -1,11 +1,14 @@
-import { formatarMoeda } from '../services/formatadores.js';
+import { formatarMoeda, formatarPercentual } from '../services/formatadores.js';
 
-function gerarLinhaSeparadora() {
-    return '============================================================';
+function adicionarLinha(listaLinhas, texto = '') {
+    listaLinhas.push(texto);
 }
 
-function gerarSecaoTitulo(titulo) {
-    return `\n${gerarLinhaSeparadora()}\n${titulo}\n${gerarLinhaSeparadora()}\n`;
+function adicionarTituloSecao(listaLinhas, titulo) {
+    adicionarLinha(listaLinhas, '');
+    adicionarLinha(listaLinhas, '============================================================');
+    adicionarLinha(listaLinhas, titulo.toUpperCase());
+    adicionarLinha(listaLinhas, '============================================================');
 }
 
 export function gerarConteudoRelatorioCarteira({
@@ -20,97 +23,93 @@ export function gerarConteudoRelatorioCarteira({
     listaEventosCalendario,
     listaAtivos
 }) {
-    const linhasRelatorio = [];
+    const listaLinhas = [];
 
-    linhasRelatorio.push('FII Insight - Relatório da Carteira');
-    linhasRelatorio.push(`Gerado em: ${new Date().toLocaleString('pt-BR')}`);
+    adicionarLinha(listaLinhas, 'RELATÓRIO DA CARTEIRA - FII INSIGHT');
+    adicionarLinha(listaLinhas, `Gerado em: ${new Date().toLocaleString('pt-BR')}`);
 
-    linhasRelatorio.push(gerarSecaoTitulo('Resumo Geral'));
-    linhasRelatorio.push(`Patrimônio total: R$ ${formatarMoeda(patrimonioTotal)}`);
-    linhasRelatorio.push(`Renda mensal estimada: R$ ${formatarMoeda(rendaMensal)}`);
-    linhasRelatorio.push(`Yield on Cost médio: ${yieldOnCost.toFixed(2)}%`);
-    linhasRelatorio.push(`Risco em estresse (5%): - R$ ${formatarMoeda(quedaEstimada)}`);
-    linhasRelatorio.push(`Quantidade de ativos: ${listaAtivos.length}`);
+    adicionarTituloSecao(listaLinhas, 'Resumo Geral');
+    adicionarLinha(listaLinhas, `Patrimônio total: R$ ${formatarMoeda(patrimonioTotal)}`);
+    adicionarLinha(listaLinhas, `Renda mensal estimada: R$ ${formatarMoeda(rendaMensal)}`);
+    adicionarLinha(listaLinhas, `Yield on Cost: ${formatarPercentual(yieldOnCost)}`);
+    adicionarLinha(listaLinhas, `Risco em estresse (5%): - R$ ${formatarMoeda(quedaEstimada)}`);
 
-    linhasRelatorio.push(gerarSecaoTitulo('Favoritos'));
-    if (listaFavoritos.length) {
+    adicionarTituloSecao(listaLinhas, 'Ativos');
+    if ((listaAtivos || []).length === 0) {
+        adicionarLinha(listaLinhas, 'Nenhum ativo cadastrado.');
+    } else {
+        (listaAtivos || []).forEach((ativo) => {
+            adicionarLinha(
+                listaLinhas,
+                `${ativo.ticker} | Segmento: ${ativo.segmento} | Quantidade: ${ativo.quantidade} | Preço médio: R$ ${formatarMoeda(ativo.precoMedio)} | Preço atual: R$ ${formatarMoeda(ativo.precoAtual)} | Patrimônio: R$ ${formatarMoeda(ativo.valorTotalAtual)}`
+            );
+        });
+    }
+
+    adicionarTituloSecao(listaLinhas, 'Favoritos');
+    if ((listaFavoritos || []).length === 0) {
+        adicionarLinha(listaLinhas, 'Nenhum ativo favorito.');
+    } else {
         listaFavoritos.forEach((ativo) => {
-            linhasRelatorio.push(
-                `${ativo.ticker} | Segmento: ${ativo.segmento} | Preço atual: R$ ${formatarMoeda(ativo.precoAtual)} | Renda mensal: R$ ${formatarMoeda(ativo.rendaMensalEstimada)}`
-            );
+            adicionarLinha(listaLinhas, `${ativo.ticker} | Nota: ${ativo.nota} | Segmento: ${ativo.segmento}`);
         });
-    } else {
-        linhasRelatorio.push('Nenhum ativo favorito.');
     }
 
-    linhasRelatorio.push(gerarSecaoTitulo('Watchlist'));
-    if (listaWatchlist.length) {
+    adicionarTituloSecao(listaLinhas, 'Watchlist');
+    if ((listaWatchlist || []).length === 0) {
+        adicionarLinha(listaLinhas, 'Nenhum ativo em watchlist.');
+    } else {
         listaWatchlist.forEach((ativo) => {
-            linhasRelatorio.push(
-                `${ativo.ticker} | Segmento: ${ativo.segmento} | Preço atual: R$ ${formatarMoeda(ativo.precoAtual)} | Preço teto: R$ ${formatarMoeda(ativo.precoTeto)}`
-            );
+            adicionarLinha(listaLinhas, `${ativo.ticker} | Nota: ${ativo.nota} | Segmento: ${ativo.segmento}`);
         });
-    } else {
-        linhasRelatorio.push('Nenhum ativo em watchlist.');
     }
 
-    linhasRelatorio.push(gerarSecaoTitulo('Alertas'));
-    if (listaAlertas.length) {
+    adicionarTituloSecao(listaLinhas, 'Alertas');
+    if ((listaAlertas || []).length === 0) {
+        adicionarLinha(listaLinhas, 'Nenhum alerta no momento.');
+    } else {
         listaAlertas.forEach((alerta) => {
-            linhasRelatorio.push(
-                `${alerta.ticker} | ${alerta.tipo} | ${alerta.mensagem}`
-            );
+            adicionarLinha(listaLinhas, `${alerta.titulo} - ${alerta.descricao}`);
         });
-    } else {
-        linhasRelatorio.push('Nenhum alerta no momento.');
     }
 
-    linhasRelatorio.push(gerarSecaoTitulo('Ranking de Oportunidades'));
-    if (listaRanking.length) {
-        listaRanking.slice(0, 10).forEach((ativo, indice) => {
-            linhasRelatorio.push(
-                `${indice + 1}. ${ativo.ticker} | Score: ${ativo.score.toFixed(1)} | Segmento: ${ativo.segmento} | Renda mensal: R$ ${formatarMoeda(ativo.rendaMensalEstimada)}`
+    adicionarTituloSecao(listaLinhas, 'Ranking de Oportunidades');
+    if ((listaRanking || []).length === 0) {
+        adicionarLinha(listaLinhas, 'Sem ativos para ranquear.');
+    } else {
+        listaRanking.slice(0, 10).forEach((itemRanking) => {
+            adicionarLinha(
+                listaLinhas,
+                `#${itemRanking.posicaoRanking} ${itemRanking.ticker} | Score: ${formatarMoeda(itemRanking.score)} | Preço atual: R$ ${formatarMoeda(itemRanking.precoAtual)} | Preço teto: R$ ${formatarMoeda(itemRanking.precoTeto)}`
             );
         });
-    } else {
-        linhasRelatorio.push('Sem ativos ranqueados.');
     }
 
-    linhasRelatorio.push(gerarSecaoTitulo('Calendário da Carteira'));
-    if (listaEventosCalendario.length) {
-        listaEventosCalendario.forEach((eventoCalendario) => {
-            linhasRelatorio.push(
-                `${eventoCalendario.ticker} | ${eventoCalendario.tipo} | Dia ${eventoCalendario.dia} | Em ${eventoCalendario.distanciaDias} dia(s)`
+    adicionarTituloSecao(listaLinhas, 'Calendário');
+    if ((listaEventosCalendario || []).length === 0) {
+        adicionarLinha(listaLinhas, 'Nenhum evento de calendário disponível.');
+    } else {
+        listaEventosCalendario.slice(0, 15).forEach((evento) => {
+            adicionarLinha(
+                listaLinhas,
+                `${evento.ticker} | ${evento.tipo} | Dia ${evento.dia} | Em ${evento.distanciaDias} dia(s)`
             );
         });
-    } else {
-        linhasRelatorio.push('Nenhum evento disponível.');
     }
 
-    linhasRelatorio.push(gerarSecaoTitulo('Ativos da Carteira'));
-    if (listaAtivos.length) {
-        listaAtivos.forEach((ativo) => {
-            linhasRelatorio.push(
-                `${ativo.ticker} | Segmento: ${ativo.segmento} | Quantidade: ${ativo.quantidade} | Preço atual: R$ ${formatarMoeda(ativo.precoAtual)} | Valor atual: R$ ${formatarMoeda(ativo.valorTotalAtual)}`
-            );
-        });
-    } else {
-        linhasRelatorio.push('Nenhum ativo cadastrado.');
-    }
-
-    return linhasRelatorio.join('\n');
+    adicionarLinha(listaLinhas, '');
+    return listaLinhas.join('\n');
 }
 
 export function exportarRelatorioCarteiraComoTxt(nomeArquivo, conteudoRelatorio) {
-    const blobArquivo = new Blob([conteudoRelatorio], { type: 'text/plain;charset=utf-8' });
-    const urlArquivo = URL.createObjectURL(blobArquivo);
-
+    const blob = new Blob([conteudoRelatorio], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const elementoLink = document.createElement('a');
-    elementoLink.href = urlArquivo;
+
+    elementoLink.href = url;
     elementoLink.download = nomeArquivo;
     document.body.appendChild(elementoLink);
     elementoLink.click();
     document.body.removeChild(elementoLink);
-
-    URL.revokeObjectURL(urlArquivo);
+    URL.revokeObjectURL(url);
 }
