@@ -1,96 +1,123 @@
-import {
-    collection,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    doc,
-    serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { escaparHtml, formatarMoeda } from '../services/formatadores.js';
 
-import { converterParaNumeroSeguro } from '../services/calculos-carteira.js';
-import { normalizarTicker } from '../services/formatadores.js';
+function agruparAportesPorTicker(listaAportes) {
+    const mapaAportes = {};
 
-export function validarDadosAporte(dadosAporte) {
-    if (!dadosAporte.ticker) {
-        throw new Error('Informe o ticker do aporte.');
-    }
+    listaAportes.forEach((aporte) => {
+        if (!mapaAportes[aporte.ticker]) {
+            mapaAportes[aporte.ticker] = [];
+        }
 
-    if (!Number.isFinite(dadosAporte.quantidadeComprada) || dadosAporte.quantidadeComprada <= 0) {
-        throw new Error('Informe uma quantidade válida para o aporte.');
-    }
-
-    if (!Number.isFinite(dadosAporte.precoPorCota) || dadosAporte.precoPorCota <= 0) {
-        throw new Error('Informe um preço por cota válido.');
-    }
-
-    if (!dadosAporte.dataAporte) {
-        throw new Error('Informe a data do aporte.');
-    }
-}
-
-export function montarDadosAporte({ usuarioAtual, ticker, quantidadeComprada, precoPorCota, dataAporte, observacao }) {
-    const quantidadeConvertida = parseInt(quantidadeComprada, 10);
-    const precoConvertido = converterParaNumeroSeguro(precoPorCota, NaN);
-
-    const dadosAporte = {
-        uid: usuarioAtual.uid,
-        ticker: normalizarTicker(ticker),
-        quantidadeComprada: quantidadeConvertida,
-        precoPorCota: precoConvertido,
-        valorTotalAporte: quantidadeConvertida * precoConvertido,
-        dataAporte,
-        observacao: observacao || '',
-        timestamp: serverTimestamp()
-    };
-
-    validarDadosAporte(dadosAporte);
-    return dadosAporte;
-}
-
-export async function salvarAporteNoFirestore({ db, identificadorAporteEmEdicao, dadosAporte }) {
-    if (identificadorAporteEmEdicao) {
-        await updateDoc(doc(db, 'aportes', identificadorAporteEmEdicao), dadosAporte);
-        return 'Aporte atualizado com sucesso.';
-    }
-
-    await addDoc(collection(db, 'aportes'), dadosAporte);
-    return 'Aporte registrado com sucesso.';
-}
-
-export async function excluirAporteNoFirestore({ db, identificadorAporte }) {
-    await deleteDoc(doc(db, 'aportes', identificadorAporte));
-}
-
-export function recalcularResumoDoAtivoComAportes(ativoBase, listaAportesDoTicker) {
-    if (!ativoBase) {
-        return null;
-    }
-
-    if (!listaAportesDoTicker.length) {
-        return {
-            ...ativoBase,
-            quantidadeCalculadaPorAportes: ativoBase.quantidade,
-            precoMedioCalculadoPorAportes: ativoBase.precoMedio,
-            valorInvestidoCalculadoPorAportes: ativoBase.quantidade * ativoBase.precoMedio
-        };
-    }
-
-    let quantidadeCalculada = 0;
-    let valorInvestidoCalculado = 0;
-
-    listaAportesDoTicker.forEach((aporte) => {
-        quantidadeCalculada += Number(aporte.quantidadeComprada || 0);
-        valorInvestidoCalculado += Number(aporte.valorTotalAporte || 0);
+        mapaAportes[aporte.ticker].push(aporte);
     });
 
-    const precoMedioCalculadoPorAportes = quantidadeCalculada > 0
-        ? valorInvestidoCalculado / quantidadeCalculada
+    Object.keys(mapaAportes).forEach((ticker) => {
+        mapaAportes[ticker].sort((aporteA, aporteB) => {
+            const dataA = aporteA.dataAporte || '';
+            const dataB = aporteB.dataAporte || '';
+            return dataB.localeCompare(dataA);
+        });
+    });
+
+    return mapaAportes;
+}
+
+function calcularResumoDoHistorico(listaAportesTicker) {
+    let quantidadeTotalComprada = 0;
+    let valorTotalInvestido = 0;
+
+    listaAportesTicker.forEach((aporte) => {
+        quantidadeTotalComprada += Number(aporte.quantidadeComprada || 0);
+        valorTotalInvestido += Number(aporte.valorTotalAporte || 0);
+    });
+
+    const precoMedioCalculado = quantidadeTotalComprada > 0
+        ? valorTotalInvestido / quantidadeTotalComprada
         : 0;
 
     return {
-        ...ativoBase,
-        quantidadeCalculadaPorAportes: quantidadeCalculada,
-        precoMedioCalculadoPorAportes,
-        valorInvestidoCalculadoPorAportes: valorInvestidoCalculado
+        quantidadeTotalComprada,
+        valorTotalInvestido,
+        precoMedioCalculado,
+        quantidadeDeAportes: listaAportesTicker.length
     };
+}
+
+export function renderizarPainelHistoricoAportes(painelHistoricoAportes, listaAportes) {
+    if (!listaAportes.length) {
+        painelHistoricoAportes.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>';
+        return;
+    }
+
+    const mapaAportesPorTicker = agruparAportesPorTicker(listaAportes);
+    const listaTickers = Object.keys(mapaAportesPorTicker).sort((tickerA, tickerB) => tickerA.localeCompare(tickerB));
+
+    painelHistoricoAportes.innerHTML = listaTickers.map((ticker) => {
+        const listaAportesTicker = mapaAportesPorTicker[ticker];
+        const resumo = calcularResumoDoHistorico(listaAportesTicker);
+
+        return `
+            <div class="cartao-aporte">
+                <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-black text-amber-300 text-sm">${escaparHtml(ticker)}</span>
+                        <span class="selo-status aporte">Aportes</span>
+                    </div>
+
+                    <div class="text-[10px] uppercase font-black text-slate-500">
+                        ${resumo.quantidadeDeAportes} registro(s)
+                    </div>
+                </div>
+
+                <div class="grade-resumo-aporte">
+                    <div class="bloco-resumo-aporte">
+                        <div class="rotulo-resumo-aporte">Quantidade comprada</div>
+                        <div class="valor-resumo-aporte">${resumo.quantidadeTotalComprada}</div>
+                    </div>
+                    <div class="bloco-resumo-aporte">
+                        <div class="rotulo-resumo-aporte">Valor investido</div>
+                        <div class="valor-resumo-aporte valor-sensivel">R$ ${formatarMoeda(resumo.valorTotalInvestido)}</div>
+                    </div>
+                    <div class="bloco-resumo-aporte">
+                        <div class="rotulo-resumo-aporte">Preço médio calculado</div>
+                        <div class="valor-resumo-aporte valor-sensivel">R$ ${formatarMoeda(resumo.precoMedioCalculado)}</div>
+                    </div>
+                    <div class="bloco-resumo-aporte">
+                        <div class="rotulo-resumo-aporte">Último aporte</div>
+                        <div class="valor-resumo-aporte">${escaparHtml(listaAportesTicker[0]?.dataAporte || '--')}</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    ${listaAportesTicker.map((aporte) => {
+                        return `
+                            <div class="bg-slate-950/50 rounded-xl border border-white/5 p-3">
+                                <div class="flex items-center justify-between gap-3 flex-wrap">
+                                    <div class="text-[11px] text-slate-300">
+                                        <span class="font-black">${aporte.quantidadeComprada}</span> cota(s) a
+                                        <span class="font-black valor-sensivel">R$ ${formatarMoeda(aporte.precoPorCota)}</span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <button data-id="${escaparHtml(aporte.id)}" type="button" class="botao-acao-tabela botao-editar-aporte">📝</button>
+                                        <button data-id="${escaparHtml(aporte.id)}" type="button" class="botao-acao-tabela botao-excluir-aporte">✕</button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2 text-[11px] text-slate-400">
+                                    Data: <span class="text-slate-200">${escaparHtml(aporte.dataAporte || '--')}</span>
+                                </div>
+
+                                <div class="mt-1 text-[11px] text-slate-400">
+                                    Valor total: <span class="text-white font-black valor-sensivel">R$ ${formatarMoeda(aporte.valorTotalAporte)}</span>
+                                </div>
+
+                                <div class="mt-2 area-observacao-aporte">${escaparHtml(aporte.observacao || 'Sem observação registrada.')}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
