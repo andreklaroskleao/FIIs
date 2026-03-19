@@ -48,12 +48,16 @@ import {
 } from './features/metas-carteira.js';
 import {
     exportarCarteiraParaJson,
-    importarCarteiraDeArquivo
+    importarCarteiraDeArquivo,
+    restaurarBackupNoFirestore
 } from './features/exportacao-importacao.js';
 import {
     renderizarCardMetaPatrimonio,
     renderizarCardMetaRenda
 } from './ui/renderizacao-metas.js';
+
+const CHAVE_LOCAL_STORAGE_META_PATRIMONIO = 'fii_insight_meta_patrimonio';
+const CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL = 'fii_insight_meta_renda_mensal';
 
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
@@ -102,6 +106,31 @@ const camposFormularioProvento = {
     valor: document.getElementById('campo-valor-provento'),
     mes: document.getElementById('campo-mes-provento')
 };
+
+function carregarMetasDoLocalStorage() {
+    const metaPatrimonioSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_META_PATRIMONIO);
+    const metaRendaMensalSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL);
+
+    if (metaPatrimonioSalva !== null) {
+        elementosInterface.campoMetaPatrimonio.value = metaPatrimonioSalva;
+    }
+
+    if (metaRendaMensalSalva !== null) {
+        elementosInterface.campoMetaRendaMensal.value = metaRendaMensalSalva;
+    }
+}
+
+function salvarMetasNoLocalStorage() {
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_META_PATRIMONIO,
+        String(elementosInterface.campoMetaPatrimonio.value || '')
+    );
+
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL,
+        String(elementosInterface.campoMetaRendaMensal.value || '')
+    );
+}
 
 function atualizarBlocoUsuario(estaLogado) {
     if (estaLogado) {
@@ -489,6 +518,8 @@ function abrirFormularioProventoComTickerPreenchido(ticker) {
 }
 
 function inicializarEventosDaInterface() {
+    carregarMetasDoLocalStorage();
+
     document.getElementById('botao-modo-privacidade').addEventListener('click', () => {
         estadoAplicacao.modoPrivacidadeAtivo = !estadoAplicacao.modoPrivacidadeAtivo;
         document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
@@ -549,10 +580,12 @@ function inicializarEventosDaInterface() {
     elementosInterface.botaoCancelarEdicaoProvento.addEventListener('click', cancelarEdicaoProvento);
 
     elementosInterface.campoMetaPatrimonio.addEventListener('input', () => {
+        salvarMetasNoLocalStorage();
         renderizarTudo();
     });
 
     elementosInterface.campoMetaRendaMensal.addEventListener('input', () => {
+        salvarMetasNoLocalStorage();
         renderizarTudo();
     });
 
@@ -578,13 +611,31 @@ function inicializarEventosDaInterface() {
         try {
             const dadosImportados = await importarCarteiraDeArquivo(arquivo);
 
-            mostrarNotificacao(
-                elementosInterface.containerNotificacoes,
-                `Backup lido com sucesso. Ativos: ${dadosImportados.ativos.length}, Proventos: ${dadosImportados.proventos.length}.`,
-                'sucesso'
+            if (!estadoAplicacao.usuarioAtual) {
+                throw new Error('Faça login antes de restaurar um backup.');
+            }
+
+            const confirmouRestauracao = confirm(
+                `Deseja restaurar este backup no Firestore?\n\nAtivos: ${dadosImportados.ativos.length}\nProventos: ${dadosImportados.proventos.length}\n\nIsso adicionará novos registros à sua conta.`
             );
 
-            console.log('Dados importados:', dadosImportados);
+            if (!confirmouRestauracao) {
+                evento.target.value = '';
+                return;
+            }
+
+            const resultadoRestauracao = await restaurarBackupNoFirestore({
+                db,
+                usuarioAtual: estadoAplicacao.usuarioAtual,
+                ativos: dadosImportados.ativos,
+                proventos: dadosImportados.proventos
+            });
+
+            mostrarNotificacao(
+                elementosInterface.containerNotificacoes,
+                `Backup restaurado com sucesso. Ativos: ${resultadoRestauracao.quantidadeAtivos}, Proventos: ${resultadoRestauracao.quantidadeProventos}.`,
+                'sucesso'
+            );
         } catch (erro) {
             mostrarNotificacao(
                 elementosInterface.containerNotificacoes,
