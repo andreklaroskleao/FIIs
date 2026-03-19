@@ -10,6 +10,33 @@ function renderizarBlocoCampo(rotulo, valor, classesAdicionais = '') {
     `;
 }
 
+function gerarBotaoAcaoMobile({
+    classeBotao,
+    identificador,
+    ticker,
+    titulo,
+    icone,
+    texto,
+    classeCor = ''
+}) {
+    const atributoIdentificador = identificador ? `data-id="${escaparHtml(identificador)}"` : '';
+    const atributoTicker = ticker ? `data-ticker="${escaparHtml(ticker)}"` : '';
+
+    return `
+        <button
+            ${atributoIdentificador}
+            ${atributoTicker}
+            type="button"
+            class="botao-acao-tabela botao-acao-com-texto botao-acao-mobile ${classeBotao} ${classeCor}"
+            title="${escaparHtml(titulo)}"
+            aria-label="${escaparHtml(titulo)}"
+        >
+            <span class="botao-acao-icone">${icone}</span>
+            <span class="botao-acao-texto">${escaparHtml(texto)}</span>
+        </button>
+    `;
+}
+
 export function renderizarCardsMobileAtivos({
     listaCardsMobileAtivos,
     listaAtivos,
@@ -79,13 +106,68 @@ export function renderizarCardsMobileAtivos({
                 </div>
 
                 <div class="cartao-ativo-mobile-acoes">
-                    <button data-id="${escaparHtml(ativo.id)}" type="button" class="botao-acao-tabela botao-editar-ativo">📝</button>
-                    <button data-id="${escaparHtml(ativo.id)}" type="button" class="botao-acao-tabela botao-excluir-ativo">✕</button>
-                    <button data-ticker="${escaparHtml(ativo.ticker)}" type="button" class="botao-acao-tabela botao-registrar-provento">💸</button>
-                    <button data-id="${escaparHtml(ativo.id)}" type="button" class="botao-acao-tabela botao-alternar-favorito">${ativo.favorito ? '★' : '☆'}</button>
-                    <button data-id="${escaparHtml(ativo.id)}" type="button" class="botao-acao-tabela botao-alternar-watchlist">${ativo.emWatchlist ? '👁️' : '➕'}</button>
-                    <button data-id="${escaparHtml(ativo.id)}" type="button" class="botao-acao-tabela botao-alternar-comparador">${estaNoComparador ? '⇄' : '⊕'}</button>
-                    <button data-id="${escaparHtml(ativo.id)}" type="button" class="botao-acao-tabela botao-detalhes-ativo">${mapaLinhasExpandidas[ativo.id] ? '▴' : '▾'}</button>
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-editar-ativo',
+                        identificador: ativo.id,
+                        titulo: 'Editar ativo',
+                        icone: '📝',
+                        texto: 'Editar',
+                        classeCor: 'botao-acao-neutro'
+                    })}
+
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-excluir-ativo',
+                        identificador: ativo.id,
+                        titulo: 'Excluir ativo',
+                        icone: '🗑️',
+                        texto: 'Excluir',
+                        classeCor: 'botao-acao-perigo'
+                    })}
+
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-registrar-provento',
+                        ticker: ativo.ticker,
+                        titulo: 'Lançar provento',
+                        icone: '💸',
+                        texto: 'Provento',
+                        classeCor: 'botao-acao-sucesso'
+                    })}
+
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-alternar-favorito',
+                        identificador: ativo.id,
+                        titulo: ativo.favorito ? 'Remover dos favoritos' : 'Marcar como favorito',
+                        icone: ativo.favorito ? '★' : '☆',
+                        texto: 'Favorito',
+                        classeCor: 'botao-acao-favorito'
+                    })}
+
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-alternar-comparador',
+                        identificador: ativo.id,
+                        titulo: estaNoComparador ? 'Remover do comparador' : 'Adicionar ao comparador',
+                        icone: '⇄',
+                        texto: 'Comparar',
+                        classeCor: 'botao-acao-informacao'
+                    })}
+
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-alternar-watchlist',
+                        identificador: ativo.id,
+                        titulo: ativo.emWatchlist ? 'Remover da watchlist' : 'Adicionar à watchlist',
+                        icone: '🔖',
+                        texto: 'Watchlist',
+                        classeCor: 'botao-acao-watchlist'
+                    })}
+
+                    ${gerarBotaoAcaoMobile({
+                        classeBotao: 'botao-detalhes-ativo',
+                        identificador: ativo.id,
+                        titulo: mapaLinhasExpandidas[ativo.id] ? 'Ocultar detalhes' : 'Expandir detalhes',
+                        icone: mapaLinhasExpandidas[ativo.id] ? '▴' : '▾',
+                        texto: 'Detalhes',
+                        classeCor: 'botao-acao-neutro'
+                    })}
                 </div>
 
                 ${
