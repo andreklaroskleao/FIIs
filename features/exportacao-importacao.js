@@ -4,20 +4,35 @@ import {
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-export function exportarCarteiraParaJson(listaAtivos, listaProventos, nomeArquivo = 'backup-carteira.json') {
-    const conteudo = {
-        versao: 1,
+function baixarArquivo(nomeArquivo, conteudo, tipoMime) {
+    const blob = new Blob([conteudo], { type: tipoMime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = nomeArquivo;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+}
+
+export function exportarCarteiraParaJson(listaAtivos, listaProventos) {
+    const dados = {
         exportadoEm: new Date().toISOString(),
         ativos: listaAtivos.map((ativo) => ({
             ticker: ativo.ticker,
-            quantidade: ativo.quantidade,
-            precoMedio: ativo.precoMedio,
+            quantidade: ativo.quantidadeCadastro ?? ativo.quantidade,
+            precoMedio: ativo.precoMedioCadastro ?? ativo.precoMedio,
             nota: ativo.nota,
             precoTeto: ativo.precoTeto,
             diaDataCom: ativo.diaDataCom,
             diaPagamento: ativo.diaPagamento,
             segmento: ativo.segmento,
-            observacao: ativo.observacao || ''
+            observacao: ativo.observacao,
+            favorito: Boolean(ativo.favorito),
+            emWatchlist: Boolean(ativo.emWatchlist)
         })),
         proventos: listaProventos.map((provento) => ({
             ticker: provento.ticker,
@@ -26,20 +41,16 @@ export function exportarCarteiraParaJson(listaAtivos, listaProventos, nomeArquiv
         }))
     };
 
-    const blob = new Blob([JSON.stringify(conteudo, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = nomeArquivo;
-    link.click();
-
-    URL.revokeObjectURL(url);
+    baixarArquivo(
+        `backup-fii-insight-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify(dados, null, 2),
+        'application/json;charset=utf-8'
+    );
 }
 
 export async function importarCarteiraDeArquivo(arquivo) {
-    const texto = await arquivo.text();
-    const dados = JSON.parse(texto);
+    const textoArquivo = await arquivo.text();
+    const dados = JSON.parse(textoArquivo);
 
     return {
         ativos: Array.isArray(dados.ativos) ? dados.ativos : [],
@@ -47,46 +58,30 @@ export async function importarCarteiraDeArquivo(arquivo) {
     };
 }
 
-export async function restaurarBackupNoFirestore({
-    db,
-    usuarioAtual,
-    ativos,
-    proventos
-}) {
-    if (!usuarioAtual) {
-        throw new Error('Usuário não autenticado.');
+export async function restaurarBackupNoFirestore({ db, usuarioAtual, ativos, proventos }) {
+    let quantidadeAtivos = 0;
+    let quantidadeProventos = 0;
+
+    for (const ativo of ativos) {
+        await addDoc(collection(db, 'ativos'), {
+            uid: usuarioAtual.uid,
+            ...ativo,
+            timestamp: serverTimestamp()
+        });
+        quantidadeAtivos += 1;
     }
 
-    const promessasAtivos = ativos.map((ativo) => {
-        return addDoc(collection(db, 'ativos'), {
+    for (const provento of proventos) {
+        await addDoc(collection(db, 'proventos'), {
             uid: usuarioAtual.uid,
-            ticker: ativo.ticker || '',
-            quantidade: Number(ativo.quantidade || 0),
-            precoMedio: Number(ativo.precoMedio || 0),
-            nota: Number(ativo.nota || 0),
-            precoTeto: Number(ativo.precoTeto || 0),
-            diaDataCom: ativo.diaDataCom ?? null,
-            diaPagamento: ativo.diaPagamento ?? null,
-            segmento: ativo.segmento || 'Outros',
-            observacao: ativo.observacao || '',
+            ...provento,
             timestamp: serverTimestamp()
         });
-    });
-
-    const promessasProventos = proventos.map((provento) => {
-        return addDoc(collection(db, 'proventos'), {
-            uid: usuarioAtual.uid,
-            ticker: provento.ticker || '',
-            valor: Number(provento.valor || 0),
-            mesAno: provento.mesAno || '',
-            timestamp: serverTimestamp()
-        });
-    });
-
-    await Promise.all([...promessasAtivos, ...promessasProventos]);
+        quantidadeProventos += 1;
+    }
 
     return {
-        quantidadeAtivos: ativos.length,
-        quantidadeProventos: proventos.length
+        quantidadeAtivos,
+        quantidadeProventos
     };
 }
