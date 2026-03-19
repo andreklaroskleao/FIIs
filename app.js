@@ -55,6 +55,7 @@ import {
     renderizarCardMetaPatrimonio,
     renderizarCardMetaRenda
 } from './ui/renderizacao-metas.js';
+import { renderizarPainelWatchlist } from './ui/renderizacao-watchlist.js';
 
 const CHAVE_LOCAL_STORAGE_META_PATRIMONIO = 'fii_insight_meta_patrimonio';
 const CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL = 'fii_insight_meta_renda_mensal';
@@ -70,6 +71,7 @@ const elementosInterface = {
     textoYieldOnCostMedio: document.getElementById('texto-yield-on-cost-medio'),
     textoQuedaEstimada: document.getElementById('texto-queda-estimada'),
     painelRebalanceamento: document.getElementById('painel-rebalanceamento'),
+    painelWatchlist: document.getElementById('painel-watchlist'),
     campoCaixaDisponivel: document.getElementById('campo-caixa-disponivel'),
     secaoPainel: document.getElementById('secao-painel'),
     secaoProventos: document.getElementById('secao-proventos'),
@@ -191,6 +193,7 @@ function resetarPainel() {
     elementosInterface.textoYieldOnCostMedio.textContent = '0.00%';
     elementosInterface.textoQuedaEstimada.textContent = '- R$ 0,00';
     elementosInterface.painelRebalanceamento.innerHTML = '<p class="text-[10px] italic p-4 text-slate-600">Sem dados para rebalanceamento.</p>';
+    elementosInterface.painelWatchlist.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>';
     elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td></tr>';
     elementosInterface.corpoTabelaProventos.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td></tr>';
 
@@ -270,6 +273,11 @@ function renderizarTudo() {
     estadoAplicacao.instanciaGraficoSegmentos = renderizarGraficoSegmentos(
         elementosInterface.graficoAlocacaoSegmentos,
         estadoAplicacao.instanciaGraficoSegmentos,
+        estadoAplicacao.listaAtivosEmMemoria
+    );
+
+    renderizarPainelWatchlist(
+        elementosInterface.painelWatchlist,
         estadoAplicacao.listaAtivosEmMemoria
     );
 }
@@ -442,6 +450,8 @@ async function salvarAtivo() {
         diaPagamento: validarDiaDoMes(camposFormularioAtivo.diaPagamento.value),
         segmento: camposFormularioAtivo.segmento.value || 'Outros',
         observacao: camposFormularioAtivo.observacao.value || '',
+        favorito: false,
+        emWatchlist: false,
         timestamp: serverTimestamp()
     };
 
@@ -463,7 +473,12 @@ async function salvarAtivo() {
         }
 
         if (estadoAplicacao.identificadorAtivoEmEdicao) {
-            await updateDoc(doc(db, 'ativos', estadoAplicacao.identificadorAtivoEmEdicao), dadosAtivo);
+            const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao);
+            await updateDoc(doc(db, 'ativos', estadoAplicacao.identificadorAtivoEmEdicao), {
+                ...dadosAtivo,
+                favorito: Boolean(ativoAtual?.favorito),
+                emWatchlist: Boolean(ativoAtual?.emWatchlist)
+            });
             mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo atualizado com sucesso.', 'sucesso');
         } else {
             await addDoc(collection(db, 'ativos'), dadosAtivo);
@@ -515,6 +530,28 @@ function abrirFormularioProventoComTickerPreenchido(ticker) {
     camposFormularioProvento.ticker.value = ticker;
     camposFormularioProvento.valor.focus();
     mostrarNotificacao(elementosInterface.containerNotificacoes, `Ticker ${ticker} enviado para o formulário de proventos.`, 'info');
+}
+
+async function alternarFavorito(identificadorAtivo) {
+    const ativo = estadoAplicacao.listaAtivosEmMemoria.find((item) => item.id === identificadorAtivo);
+    if (!ativo) {
+        return;
+    }
+
+    await updateDoc(doc(db, 'ativos', identificadorAtivo), {
+        favorito: !ativo.favorito
+    });
+}
+
+async function alternarWatchlist(identificadorAtivo) {
+    const ativo = estadoAplicacao.listaAtivosEmMemoria.find((item) => item.id === identificadorAtivo);
+    if (!ativo) {
+        return;
+    }
+
+    await updateDoc(doc(db, 'ativos', identificadorAtivo), {
+        emWatchlist: !ativo.emWatchlist
+    });
 }
 
 function inicializarEventosDaInterface() {
@@ -652,6 +689,8 @@ function inicializarEventosDaInterface() {
         const botaoExcluirAtivo = evento.target.closest('.botao-excluir-ativo');
         const botaoDetalhesAtivo = evento.target.closest('.botao-detalhes-ativo');
         const botaoRegistrarProvento = evento.target.closest('.botao-registrar-provento');
+        const botaoAlternarFavorito = evento.target.closest('.botao-alternar-favorito');
+        const botaoAlternarWatchlist = evento.target.closest('.botao-alternar-watchlist');
 
         if (botaoEditarAtivo) {
             await prepararEdicaoAtivo(botaoEditarAtivo.dataset.id);
@@ -684,6 +723,22 @@ function inicializarEventosDaInterface() {
 
         if (botaoRegistrarProvento) {
             abrirFormularioProventoComTickerPreenchido(botaoRegistrarProvento.dataset.ticker);
+        }
+
+        if (botaoAlternarFavorito) {
+            try {
+                await alternarFavorito(botaoAlternarFavorito.dataset.id);
+            } catch (erro) {
+                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao alterar favorito: ${erro.message}`, 'erro');
+            }
+        }
+
+        if (botaoAlternarWatchlist) {
+            try {
+                await alternarWatchlist(botaoAlternarWatchlist.dataset.id);
+            } catch (erro) {
+                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao alterar watchlist: ${erro.message}`, 'erro');
+            }
         }
     });
 
