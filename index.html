@@ -14,8 +14,8 @@
     <div id="container-notificacoes" class="container-notificacoes"></div>
 
     <nav class="border-b border-slate-800 p-4 glass sticky top-0 z-50 flex flex-col gap-4">
-        <div class="flex justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
+        <div class="flex justify-between items-center gap-4 flex-wrap">
+            <div class="flex items-center gap-4 flex-wrap">
                 <h1 class="text-lg font-black text-emerald-500 italic tracking-tighter uppercase">FII Insight</h1>
                 <span class="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-black">Painel de Fundos Imobiliários</span>
             </div>
@@ -29,19 +29,61 @@
             </div>
         </div>
 
-        <div id="navegacao-abas-principais" class="flex flex-wrap gap-2 overflow-x-auto pb-1 esconder-barra-rolagem">
-            <button data-aba-principal="visao-geral" class="botao-aba-principal ativa" type="button">Visão Geral</button>
-            <button data-aba-principal="carteira" class="botao-aba-principal" type="button">Carteira</button>
-            <button data-aba-principal="aportes" class="botao-aba-principal" type="button">Aportes</button>
-            <button data-aba-principal="proventos" class="botao-aba-principal" type="button">Proventos</button>
-            <button data-aba-principal="analises" class="botao-aba-principal" type="button">Análises</button>
-            <button data-aba-principal="listas" class="botao-aba-principal" type="button">Listas</button>
-            <button data-aba-principal="configuracoes" class="botao-aba-principal" type="button">Configurações</button>
+        <div class="barra-acoes-rapidas">
+            <button id="botao-acao-rapida-novo-ativo" type="button" class="botao-acao-rapida">Novo ativo</button>
+            <button id="botao-acao-rapida-novo-aporte" type="button" class="botao-acao-rapida">Novo aporte</button>
+            <button id="botao-acao-rapida-novo-provento" type="button" class="botao-acao-rapida">Novo provento</button>
+            <button id="botao-acao-rapida-comparador" type="button" class="botao-acao-rapida">Comparador</button>
+            <button id="botao-acao-rapida-backup" type="button" class="botao-acao-rapida">Backup</button>
+        </div>
+
+        <div id="navegacao-abas-principais" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+            <button data-aba-principal="visao-geral" class="botao-aba-principal ativa" type="button">
+                <span>Visão Geral</span>
+                <span id="contador-aba-visao-geral" class="contador-aba">0</span>
+            </button>
+
+            <button data-aba-principal="carteira" class="botao-aba-principal" type="button">
+                <span>Carteira</span>
+                <span id="contador-aba-carteira" class="contador-aba">0</span>
+            </button>
+
+            <button data-aba-principal="aportes" class="botao-aba-principal" type="button">
+                <span>Aportes</span>
+                <span id="contador-aba-aportes" class="contador-aba">0</span>
+            </button>
+
+            <button data-aba-principal="proventos" class="botao-aba-principal" type="button">
+                <span>Proventos</span>
+                <span id="contador-aba-proventos" class="contador-aba">0</span>
+            </button>
+
+            <button data-aba-principal="analises" class="botao-aba-principal" type="button">
+                <span>Análises</span>
+                <span id="contador-aba-analises" class="contador-aba">0</span>
+            </button>
+
+            <button data-aba-principal="listas" class="botao-aba-principal" type="button">
+                <span>Listas</span>
+                <span id="contador-aba-listas" class="contador-aba">0</span>
+            </button>
+
+            <button data-aba-principal="configuracoes" class="botao-aba-principal" type="button">
+                <span>Configurações</span>
+                <span id="contador-aba-configuracoes" class="contador-aba">0</span>
+            </button>
         </div>
     </nav>
 
     <main class="p-6 container mx-auto space-y-8">
         <section id="secao-visao-geral" class="secao-aba-principal">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Visão Geral</h2>
+                    <p class="descricao-secao-principal">Resumo executivo da carteira, metas, alertas e calendário.</p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 <div class="glass p-6 rounded-3xl border-b-4 border-emerald-500">
                     <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Patrimônio</p>
@@ -93,24 +135,14 @@
                         <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
                             Meta de patrimônio
                         </label>
-                        <input
-                            type="number"
-                            id="campo-meta-patrimonio"
-                            placeholder="Ex: 100000"
-                            class="campo-formulario"
-                        >
+                        <input type="number" id="campo-meta-patrimonio" placeholder="Ex: 100000" class="campo-formulario">
                     </div>
 
                     <div>
                         <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
                             Meta de renda mensal
                         </label>
-                        <input
-                            type="number"
-                            id="campo-meta-renda-mensal"
-                            placeholder="Ex: 1000"
-                            class="campo-formulario"
-                        >
+                        <input type="number" id="campo-meta-renda-mensal" placeholder="Ex: 1000" class="campo-formulario">
                     </div>
                 </div>
 
@@ -148,6 +180,13 @@
         </section>
 
         <section id="secao-carteira" class="secao-aba-principal hidden">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Carteira</h2>
+                    <p class="descricao-secao-principal">Cadastro, edição, rebalanceamento e lista completa de ativos.</p>
+                </div>
+            </div>
+
             <div id="navegacao-subabas-carteira" class="flex flex-wrap gap-2 mb-6">
                 <button data-subaba-grupo="carteira" data-subaba="gestao" class="botao-subaba ativa" type="button">Gestão</button>
                 <button data-subaba-grupo="carteira" data-subaba="lista" class="botao-subaba" type="button">Lista de Ativos</button>
@@ -161,12 +200,7 @@
 
                             <div class="flex items-center gap-2">
                                 <span class="text-[9px] text-slate-500 font-black uppercase">Caixa:</span>
-                                <input
-                                    type="number"
-                                    id="campo-caixa-disponivel"
-                                    placeholder="R$ 0,00"
-                                    class="bg-slate-900 border border-blue-900/30 rounded-lg p-2 text-[10px] text-blue-400 w-28 font-black"
-                                >
+                                <input type="number" id="campo-caixa-disponivel" placeholder="R$ 0,00" class="bg-slate-900 border border-blue-900/30 rounded-lg p-2 text-[10px] text-blue-400 w-28 font-black">
                             </div>
                         </div>
 
@@ -305,6 +339,13 @@
         </section>
 
         <section id="secao-aportes" class="secao-aba-principal hidden">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Aportes</h2>
+                    <p class="descricao-secao-principal">Registro das compras e histórico consolidado de entradas.</p>
+                </div>
+            </div>
+
             <div id="navegacao-subabas-aportes" class="flex flex-wrap gap-2 mb-6">
                 <button data-subaba-grupo="aportes" data-subaba="registrar" class="botao-subaba ativa" type="button">Registrar</button>
                 <button data-subaba-grupo="aportes" data-subaba="historico" class="botao-subaba" type="button">Histórico</button>
@@ -321,55 +362,37 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div>
-                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
-                                Ticker
-                            </label>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Ticker</label>
                             <input type="text" id="campo-ticker-aporte" placeholder="Ex: HGLG11" class="campo-formulario uppercase font-black">
                         </div>
 
                         <div>
-                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
-                                Quantidade comprada
-                            </label>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Quantidade comprada</label>
                             <input type="number" id="campo-quantidade-aporte" placeholder="Ex: 10" class="campo-formulario">
                         </div>
 
                         <div>
-                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
-                                Preço por cota
-                            </label>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Preço por cota</label>
                             <input type="number" id="campo-preco-aporte" placeholder="Ex: 96.45" class="campo-formulario">
                         </div>
 
                         <div>
-                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
-                                Data do aporte
-                            </label>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Data do aporte</label>
                             <input type="date" id="campo-data-aporte" class="campo-formulario">
                         </div>
                     </div>
 
                     <div class="mt-3">
-                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
-                            Observação do aporte
-                        </label>
+                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Observação do aporte</label>
                         <textarea id="campo-observacao-aporte" rows="3" placeholder="Observações sobre a compra" class="campo-formulario resize-none"></textarea>
                     </div>
 
                     <div class="mt-4 flex flex-wrap gap-3">
-                        <button
-                            id="botao-salvar-aporte"
-                            type="button"
-                            class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-5 rounded-2xl uppercase text-[11px] shadow-lg transition-all"
-                        >
+                        <button id="botao-salvar-aporte" type="button" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-5 rounded-2xl uppercase text-[11px] shadow-lg transition-all">
                             Registrar aporte
                         </button>
 
-                        <button
-                            id="botao-cancelar-edicao-aporte"
-                            type="button"
-                            class="hidden text-slate-400 hover:text-white font-black py-3 px-4 rounded-2xl uppercase text-[11px] border border-slate-700"
-                        >
+                        <button id="botao-cancelar-edicao-aporte" type="button" class="hidden text-slate-400 hover:text-white font-black py-3 px-4 rounded-2xl uppercase text-[11px] border border-slate-700">
                             Cancelar edição
                         </button>
                     </div>
@@ -393,12 +416,17 @@
         </section>
 
         <section id="secao-proventos" class="secao-aba-principal hidden">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Proventos</h2>
+                    <p class="descricao-secao-principal">Lançamentos, fluxo mensal e histórico completo de recebimentos.</p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="glass p-8 rounded-[2.5rem] h-fit border-t-4 border-blue-500">
                     <div class="flex items-center justify-between gap-3 mb-6">
-                        <h3 id="titulo-formulario-provento" class="text-xs font-black uppercase text-blue-400">
-                            Lançar Provento
-                        </h3>
+                        <h3 id="titulo-formulario-provento" class="text-xs font-black uppercase text-blue-400">Lançar Provento</h3>
 
                         <button id="botao-cancelar-edicao-provento" type="button" class="hidden text-[10px] font-black uppercase text-slate-400 hover:text-white transition">
                             Cancelar
@@ -468,6 +496,13 @@
         </section>
 
         <section id="secao-analises" class="secao-aba-principal hidden">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Análises</h2>
+                    <p class="descricao-secao-principal">Simulações, comparação entre ativos e ranking de oportunidades.</p>
+                </div>
+            </div>
+
             <div id="navegacao-subabas-analises" class="flex flex-wrap gap-2 mb-6">
                 <button data-subaba-grupo="analises" data-subaba="simulador" class="botao-subaba ativa" type="button">Simulador</button>
                 <button data-subaba-grupo="analises" data-subaba="comparador" class="botao-subaba" type="button">Comparador</button>
@@ -483,12 +518,7 @@
                         </div>
 
                         <div class="w-full max-w-xs">
-                            <input
-                                type="number"
-                                id="campo-valor-aporte-global"
-                                placeholder="Valor total do aporte"
-                                class="campo-formulario"
-                            >
+                            <input type="number" id="campo-valor-aporte-global" placeholder="Valor total do aporte" class="campo-formulario">
                         </div>
                     </div>
 
@@ -506,11 +536,7 @@
                             <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Compare até 2 ativos lado a lado</p>
                         </div>
 
-                        <button
-                            id="botao-limpar-comparador"
-                            type="button"
-                            class="botao-acao-tabela text-[10px] uppercase"
-                        >
+                        <button id="botao-limpar-comparador" type="button" class="botao-acao-tabela text-[10px] uppercase">
                             Limpar comparador
                         </button>
                     </div>
@@ -538,6 +564,13 @@
         </section>
 
         <section id="secao-listas" class="secao-aba-principal hidden">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Listas</h2>
+                    <p class="descricao-secao-principal">Favoritos e watchlist para acompanhamento rápido.</p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
                     <div class="flex items-center justify-between mb-5">
@@ -568,6 +601,13 @@
         </section>
 
         <section id="secao-configuracoes" class="secao-aba-principal hidden">
+            <div class="cabecalho-secao">
+                <div>
+                    <h2 class="titulo-secao-principal">Configurações</h2>
+                    <p class="descricao-secao-principal">Exportações, backup e ações de manutenção do sistema.</p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
                     <div class="flex items-center justify-between mb-5 gap-4">
@@ -576,11 +616,7 @@
                             <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Resumo exportável em texto</p>
                         </div>
 
-                        <button
-                            id="botao-exportar-relatorio"
-                            type="button"
-                            class="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 font-black py-3 px-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all"
-                        >
+                        <button id="botao-exportar-relatorio" type="button" class="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 font-black py-3 px-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all">
                             Exportar relatório TXT
                         </button>
                     </div>
@@ -599,11 +635,7 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button
-                            id="botao-exportar-backup"
-                            type="button"
-                            class="w-full bg-cyan-600 hover:bg-cyan-500 font-black py-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all"
-                        >
+                        <button id="botao-exportar-backup" type="button" class="w-full bg-cyan-600 hover:bg-cyan-500 font-black py-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all">
                             Exportar JSON
                         </button>
 
