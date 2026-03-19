@@ -1,98 +1,134 @@
-export const LISTA_SEGMENTOS_VALIDOS = [
-    'Papel',
-    'Tijolo',
-    'Agro',
-    'Fundo de Fundo',
-    'Outros'
-];
-
-export function validarDiaDoMes(valor) {
-    if (valor === null || valor === undefined || valor === '') {
-        return null;
+function definirErroNoCampo(campo, elementoMensagem, mensagem) {
+    if (campo) {
+        campo.classList.add('campo-com-erro');
     }
 
-    const numero = Number(valor);
-
-    if (!Number.isInteger(numero) || numero < 1 || numero > 31) {
-        return null;
-    }
-
-    return numero;
-}
-
-function mostrarErroCampo(campo, mensagem) {
-    if (!campo) {
-        return;
-    }
-
-    campo.classList.add('campo-com-erro');
-
-    const elementoErro = document.getElementById(`erro-${campo.id}`);
-    if (elementoErro) {
-        elementoErro.textContent = mensagem;
-        elementoErro.classList.remove('hidden');
+    if (elementoMensagem) {
+        elementoMensagem.textContent = mensagem;
+        elementoMensagem.classList.remove('hidden');
     }
 }
 
-function limparErroCampo(campo) {
-    if (!campo) {
-        return;
+function limparErroNoCampo(campo, elementoMensagem) {
+    if (campo) {
+        campo.classList.remove('campo-com-erro');
     }
 
-    campo.classList.remove('campo-com-erro');
-
-    const elementoErro = document.getElementById(`erro-${campo.id}`);
-    if (elementoErro) {
-        elementoErro.textContent = '';
-        elementoErro.classList.add('hidden');
+    if (elementoMensagem) {
+        elementoMensagem.textContent = '';
+        elementoMensagem.classList.add('hidden');
     }
+}
+
+function obterElementoErroPeloCampo(campo) {
+    if (!campo || !campo.id) {
+        return null;
+    }
+
+    return document.getElementById(`erro-${campo.id}`);
 }
 
 export function limparErrosDosCampos(listaCampos) {
-    listaCampos.forEach((campo) => limparErroCampo(campo));
+    listaCampos.forEach((campo) => {
+        const elementoMensagem = obterElementoErroPeloCampo(campo);
+        limparErroNoCampo(campo, elementoMensagem);
+    });
+}
+
+export function validarDiaDoMes(valor) {
+    if (valor === '' || valor === null || valor === undefined) {
+        return null;
+    }
+
+    const numeroConvertido = Number(valor);
+
+    if (!Number.isInteger(numeroConvertido)) {
+        return null;
+    }
+
+    if (numeroConvertido < 1 || numeroConvertido > 31) {
+        return null;
+    }
+
+    return numeroConvertido;
 }
 
 export function validarDadosAtivo(dadosAtivo, camposFormularioAtivo) {
     let formularioValido = true;
-    limparErrosDosCampos(Object.values(camposFormularioAtivo));
 
-    if (!dadosAtivo.ticker) {
-        mostrarErroCampo(camposFormularioAtivo.ticker, 'Informe o ticker.');
+    limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
+
+    if (!dadosAtivo.ticker || dadosAtivo.ticker.length < 4) {
+        definirErroNoCampo(
+            camposFormularioAtivo.ticker,
+            obterElementoErroPeloCampo(camposFormularioAtivo.ticker),
+            'Informe um ticker válido.'
+        );
         formularioValido = false;
     }
 
     if (!Number.isInteger(dadosAtivo.quantidade) || dadosAtivo.quantidade <= 0) {
-        mostrarErroCampo(camposFormularioAtivo.quantidade, 'Informe uma quantidade válida.');
+        definirErroNoCampo(
+            camposFormularioAtivo.quantidade,
+            obterElementoErroPeloCampo(camposFormularioAtivo.quantidade),
+            'A quantidade deve ser maior que zero.'
+        );
         formularioValido = false;
     }
 
-    if (!Number.isFinite(dadosAtivo.precoMedio) || dadosAtivo.precoMedio <= 0) {
-        mostrarErroCampo(camposFormularioAtivo.precoMedio, 'Informe um preço médio válido.');
+    if (!Number.isFinite(Number(dadosAtivo.precoMedio)) || Number(dadosAtivo.precoMedio) <= 0) {
+        definirErroNoCampo(
+            camposFormularioAtivo.precoMedio,
+            obterElementoErroPeloCampo(camposFormularioAtivo.precoMedio),
+            'Informe um preço médio válido.'
+        );
         formularioValido = false;
     }
 
     if (!Number.isInteger(dadosAtivo.nota) || dadosAtivo.nota < 1 || dadosAtivo.nota > 10) {
-        mostrarErroCampo(camposFormularioAtivo.nota, 'Informe uma nota entre 1 e 10.');
+        definirErroNoCampo(
+            camposFormularioAtivo.nota,
+            obterElementoErroPeloCampo(camposFormularioAtivo.nota),
+            'A nota deve ficar entre 1 e 10.'
+        );
         formularioValido = false;
     }
 
-    if (!Number.isFinite(dadosAtivo.precoTeto) || dadosAtivo.precoTeto < 0) {
-        mostrarErroCampo(camposFormularioAtivo.precoTeto, 'Informe um preço teto válido.');
+    if (!Number.isFinite(Number(dadosAtivo.precoTeto)) || Number(dadosAtivo.precoTeto) <= 0) {
+        definirErroNoCampo(
+            camposFormularioAtivo.precoTeto,
+            obterElementoErroPeloCampo(camposFormularioAtivo.precoTeto),
+            'Informe um preço teto válido.'
+        );
         formularioValido = false;
     }
 
-    if (!LISTA_SEGMENTOS_VALIDOS.includes(dadosAtivo.segmento)) {
-        mostrarErroCampo(camposFormularioAtivo.segmento, 'Selecione um segmento válido.');
+    if (!dadosAtivo.segmento || String(dadosAtivo.segmento).trim() === '') {
+        definirErroNoCampo(
+            camposFormularioAtivo.segmento,
+            obterElementoErroPeloCampo(camposFormularioAtivo.segmento),
+            'Selecione um segmento.'
+        );
         formularioValido = false;
     }
 
-    if (camposFormularioAtivo.diaDataCom.value && dadosAtivo.diaDataCom === null) {
-        mostrarErroCampo(camposFormularioAtivo.diaDataCom, 'Informe um dia entre 1 e 31.');
+    const valorDigitadoDiaDataCom = camposFormularioAtivo.diaDataCom?.value;
+    if (valorDigitadoDiaDataCom !== '' && dadosAtivo.diaDataCom === null) {
+        definirErroNoCampo(
+            camposFormularioAtivo.diaDataCom,
+            obterElementoErroPeloCampo(camposFormularioAtivo.diaDataCom),
+            'O dia da data com deve ficar entre 1 e 31.'
+        );
         formularioValido = false;
     }
 
-    if (camposFormularioAtivo.diaPagamento.value && dadosAtivo.diaPagamento === null) {
-        mostrarErroCampo(camposFormularioAtivo.diaPagamento, 'Informe um dia entre 1 e 31.');
+    const valorDigitadoDiaPagamento = camposFormularioAtivo.diaPagamento?.value;
+    if (valorDigitadoDiaPagamento !== '' && dadosAtivo.diaPagamento === null) {
+        definirErroNoCampo(
+            camposFormularioAtivo.diaPagamento,
+            obterElementoErroPeloCampo(camposFormularioAtivo.diaPagamento),
+            'O dia do pagamento deve ficar entre 1 e 31.'
+        );
         formularioValido = false;
     }
 
@@ -101,20 +137,33 @@ export function validarDadosAtivo(dadosAtivo, camposFormularioAtivo) {
 
 export function validarDadosProvento(dadosProvento, camposFormularioProvento) {
     let formularioValido = true;
-    limparErrosDosCampos(Object.values(camposFormularioProvento));
 
-    if (!dadosProvento.ticker) {
-        mostrarErroCampo(camposFormularioProvento.ticker, 'Informe o ticker.');
+    limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
+
+    if (!dadosProvento.ticker || dadosProvento.ticker.length < 4) {
+        definirErroNoCampo(
+            camposFormularioProvento.ticker,
+            obterElementoErroPeloCampo(camposFormularioProvento.ticker),
+            'Informe um ticker válido.'
+        );
         formularioValido = false;
     }
 
-    if (!Number.isFinite(dadosProvento.valor) || dadosProvento.valor <= 0) {
-        mostrarErroCampo(camposFormularioProvento.valor, 'Informe um valor válido.');
+    if (!Number.isFinite(Number(dadosProvento.valor)) || Number(dadosProvento.valor) <= 0) {
+        definirErroNoCampo(
+            camposFormularioProvento.valor,
+            obterElementoErroPeloCampo(camposFormularioProvento.valor),
+            'Informe um valor válido maior que zero.'
+        );
         formularioValido = false;
     }
 
-    if (!dadosProvento.mesAno) {
-        mostrarErroCampo(camposFormularioProvento.mes, 'Informe o mês do provento.');
+    if (!dadosProvento.mesAno || !/^\d{4}-\d{2}$/.test(dadosProvento.mesAno)) {
+        definirErroNoCampo(
+            camposFormularioProvento.mes,
+            obterElementoErroPeloCampo(camposFormularioProvento.mes),
+            'Selecione um mês válido.'
+        );
         formularioValido = false;
     }
 
