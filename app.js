@@ -89,6 +89,9 @@ const CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE = 'fii_insight_modo_privacidade';
 const CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST = 'fii_insight_observacoes_watchlist';
 const CHAVE_LOCAL_STORAGE_APORTE_GLOBAL = 'fii_insight_aporte_global';
 const CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL = 'fii_insight_aba_principal';
+const CHAVE_LOCAL_STORAGE_SUBABA_CARTEIRA = 'fii_insight_subaba_carteira';
+const CHAVE_LOCAL_STORAGE_SUBABA_APORTES = 'fii_insight_subaba_aportes';
+const CHAVE_LOCAL_STORAGE_SUBABA_ANALISES = 'fii_insight_subaba_analises';
 
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
@@ -141,13 +144,23 @@ const elementosInterface = {
     containerFiltrosInteligentes: document.getElementById('container-filtros-inteligentes'),
     containerOrdenacaoCarteira: document.getElementById('container-ordenacao-carteira'),
     navegacaoAbasPrincipais: document.getElementById('navegacao-abas-principais'),
+    navegacaoSubabasCarteira: document.getElementById('navegacao-subabas-carteira'),
+    navegacaoSubabasAportes: document.getElementById('navegacao-subabas-aportes'),
+    navegacaoSubabasAnalises: document.getElementById('navegacao-subabas-analises'),
     secaoVisaoGeral: document.getElementById('secao-visao-geral'),
     secaoCarteira: document.getElementById('secao-carteira'),
     secaoAportes: document.getElementById('secao-aportes'),
     secaoProventos: document.getElementById('secao-proventos'),
     secaoAnalises: document.getElementById('secao-analises'),
     secaoListas: document.getElementById('secao-listas'),
-    secaoConfiguracoes: document.getElementById('secao-configuracoes')
+    secaoConfiguracoes: document.getElementById('secao-configuracoes'),
+    subabaCarteiraGestao: document.getElementById('subaba-carteira-gestao'),
+    subabaCarteiraLista: document.getElementById('subaba-carteira-lista'),
+    subabaAportesRegistrar: document.getElementById('subaba-aportes-registrar'),
+    subabaAportesHistorico: document.getElementById('subaba-aportes-historico'),
+    subabaAnalisesSimulador: document.getElementById('subaba-analises-simulador'),
+    subabaAnalisesComparador: document.getElementById('subaba-analises-comparador'),
+    subabaAnalisesRanking: document.getElementById('subaba-analises-ranking')
 };
 
 const camposFormularioAtivo = {
@@ -318,8 +331,37 @@ function salvarAbaPrincipalNoLocalStorage(abaSelecionada) {
 }
 
 function carregarAbaPrincipalDoLocalStorage() {
-    const abaSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL);
-    return abaSalva || 'visao-geral';
+    return localStorage.getItem(CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL) || 'visao-geral';
+}
+
+function salvarSubabaNoLocalStorage(grupo, subabaSelecionada) {
+    if (grupo === 'carteira') {
+        localStorage.setItem(CHAVE_LOCAL_STORAGE_SUBABA_CARTEIRA, subabaSelecionada);
+    }
+
+    if (grupo === 'aportes') {
+        localStorage.setItem(CHAVE_LOCAL_STORAGE_SUBABA_APORTES, subabaSelecionada);
+    }
+
+    if (grupo === 'analises') {
+        localStorage.setItem(CHAVE_LOCAL_STORAGE_SUBABA_ANALISES, subabaSelecionada);
+    }
+}
+
+function carregarSubabaDoLocalStorage(grupo) {
+    if (grupo === 'carteira') {
+        return localStorage.getItem(CHAVE_LOCAL_STORAGE_SUBABA_CARTEIRA) || 'gestao';
+    }
+
+    if (grupo === 'aportes') {
+        return localStorage.getItem(CHAVE_LOCAL_STORAGE_SUBABA_APORTES) || 'registrar';
+    }
+
+    if (grupo === 'analises') {
+        return localStorage.getItem(CHAVE_LOCAL_STORAGE_SUBABA_ANALISES) || 'simulador';
+    }
+
+    return '';
 }
 
 function alternarAbaPrincipal(abaSelecionada) {
@@ -346,6 +388,53 @@ function alternarAbaPrincipal(abaSelecionada) {
     });
 
     salvarAbaPrincipalNoLocalStorage(abaSelecionada);
+}
+
+function alternarSubaba(grupo, subabaSelecionada) {
+    const mapaSubabas = {
+        'carteira': {
+            secoes: {
+                'gestao': elementosInterface.subabaCarteiraGestao,
+                'lista': elementosInterface.subabaCarteiraLista
+            },
+            seletorBotoes: '[data-subaba-grupo="carteira"]'
+        },
+        'aportes': {
+            secoes: {
+                'registrar': elementosInterface.subabaAportesRegistrar,
+                'historico': elementosInterface.subabaAportesHistorico
+            },
+            seletorBotoes: '[data-subaba-grupo="aportes"]'
+        },
+        'analises': {
+            secoes: {
+                'simulador': elementosInterface.subabaAnalisesSimulador,
+                'comparador': elementosInterface.subabaAnalisesComparador,
+                'ranking': elementosInterface.subabaAnalisesRanking
+            },
+            seletorBotoes: '[data-subaba-grupo="analises"]'
+        }
+    };
+
+    const configuracaoGrupo = mapaSubabas[grupo];
+
+    if (!configuracaoGrupo) {
+        return;
+    }
+
+    Object.entries(configuracaoGrupo.secoes).forEach(([nomeSubaba, secao]) => {
+        if (!secao) {
+            return;
+        }
+
+        secao.classList.toggle('hidden', nomeSubaba !== subabaSelecionada);
+    });
+
+    document.querySelectorAll(configuracaoGrupo.seletorBotoes).forEach((botao) => {
+        botao.classList.toggle('ativa', botao.dataset.subaba === subabaSelecionada);
+    });
+
+    salvarSubabaNoLocalStorage(grupo, subabaSelecionada);
 }
 
 function atualizarBlocoUsuario(estaLogado) {
@@ -723,6 +812,7 @@ function prepararEdicaoAporte(identificadorAporte) {
     }
 
     alternarAbaPrincipal('aportes');
+    alternarSubaba('aportes', 'registrar');
 }
 
 async function salvarAporte() {
@@ -1203,6 +1293,7 @@ async function prepararEdicaoAtivo(identificadorAtivo) {
 
         limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
         alternarAbaPrincipal('carteira');
+        alternarSubaba('carteira', 'gestao');
     } catch (erro) {
         mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao carregar ativo para edição: ${erro.message}`, 'erro');
     }
@@ -1426,7 +1517,11 @@ function inicializarEventosDaInterface() {
     carregarModoPrivacidadeDoLocalStorage();
     carregarObservacoesWatchlistDoLocalStorage();
     carregarAporteGlobalNoLocalStorage();
+
     alternarAbaPrincipal(carregarAbaPrincipalDoLocalStorage());
+    alternarSubaba('carteira', carregarSubabaDoLocalStorage('carteira'));
+    alternarSubaba('aportes', carregarSubabaDoLocalStorage('aportes'));
+    alternarSubaba('analises', carregarSubabaDoLocalStorage('analises'));
 
     if (elementosInterface.navegacaoAbasPrincipais) {
         elementosInterface.navegacaoAbasPrincipais.addEventListener('click', (evento) => {
@@ -1437,6 +1532,42 @@ function inicializarEventosDaInterface() {
             }
 
             alternarAbaPrincipal(botaoAbaPrincipal.dataset.abaPrincipal);
+        });
+    }
+
+    if (elementosInterface.navegacaoSubabasCarteira) {
+        elementosInterface.navegacaoSubabasCarteira.addEventListener('click', (evento) => {
+            const botaoSubaba = evento.target.closest('[data-subaba-grupo="carteira"]');
+
+            if (!botaoSubaba) {
+                return;
+            }
+
+            alternarSubaba('carteira', botaoSubaba.dataset.subaba);
+        });
+    }
+
+    if (elementosInterface.navegacaoSubabasAportes) {
+        elementosInterface.navegacaoSubabasAportes.addEventListener('click', (evento) => {
+            const botaoSubaba = evento.target.closest('[data-subaba-grupo="aportes"]');
+
+            if (!botaoSubaba) {
+                return;
+            }
+
+            alternarSubaba('aportes', botaoSubaba.dataset.subaba);
+        });
+    }
+
+    if (elementosInterface.navegacaoSubabasAnalises) {
+        elementosInterface.navegacaoSubabasAnalises.addEventListener('click', (evento) => {
+            const botaoSubaba = evento.target.closest('[data-subaba-grupo="analises"]');
+
+            if (!botaoSubaba) {
+                return;
+            }
+
+            alternarSubaba('analises', botaoSubaba.dataset.subaba);
         });
     }
 
@@ -1701,6 +1832,7 @@ function inicializarEventosDaInterface() {
         if (botaoAlternarComparador) {
             alternarAtivoNoComparador(botaoAlternarComparador.dataset.id);
             alternarAbaPrincipal('analises');
+            alternarSubaba('analises', 'comparador');
             renderizarTudo();
         }
     };
