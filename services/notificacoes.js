@@ -1,11 +1,15 @@
 export function mostrarNotificacao(containerNotificacoes, mensagem, tipo = 'info') {
-    const notificacao = document.createElement('div');
-    notificacao.className = `notificacao notificacao-${tipo}`;
-    notificacao.textContent = mensagem;
+    if (!containerNotificacoes) {
+        return;
+    }
 
-    containerNotificacoes.appendChild(notificacao);
+    const elementoNotificacao = document.createElement('div');
+    elementoNotificacao.className = `notificacao notificacao-${tipo}`;
+    elementoNotificacao.textContent = mensagem;
+
+    containerNotificacoes.appendChild(elementoNotificacao);
 
     setTimeout(() => {
-        notificacao.remove();
-    }, 3200);
+        elementoNotificacao.remove();
+    }, 3500);
 }
