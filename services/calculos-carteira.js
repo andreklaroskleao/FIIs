@@ -111,17 +111,10 @@ export function enriquecerListaAtivos(listaAtivosOriginal, mapaCotacoes, listaAp
         const precoMedioCadastro = converterParaNumeroSeguro(ativoOriginal.precoMedio, 0);
 
         const resumoAportes = calcularResumoAportesDoTicker(listaAportesDoTicker);
-
         const usarResumoAportes = resumoAportes.quantidadeCalculada > 0;
 
-        const quantidade = usarResumoAportes
-            ? resumoAportes.quantidadeCalculada
-            : quantidadeCadastro;
-
-        const precoMedio = usarResumoAportes
-            ? resumoAportes.precoMedioCalculado
-            : precoMedioCadastro;
-
+        const quantidade = usarResumoAportes ? resumoAportes.quantidadeCalculada : quantidadeCadastro;
+        const precoMedio = usarResumoAportes ? resumoAportes.precoMedioCalculado : precoMedioCadastro;
         const valorTotalInvestido = usarResumoAportes
             ? resumoAportes.valorInvestidoCalculado
             : precoMedioCadastro * quantidadeCadastro;
@@ -241,7 +234,7 @@ export function gerarListaAlertas(listaAtivos) {
                 tipo: 'Preço médio real',
                 classeSelo: 'favorito',
                 classeCartao: 'alerta-azul',
-                mensagem: `Este ativo está usando o histórico de aportes como base principal do preço médio e da quantidade.`,
+                mensagem: 'Este ativo está usando o histórico de aportes como base principal do preço médio e da quantidade.',
                 precoAtual: ativo.precoAtual
             });
         }
