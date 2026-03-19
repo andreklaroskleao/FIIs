@@ -136,7 +136,12 @@ const elementosInterface = {
     campoDataAporte: document.getElementById('campo-data-aporte'),
     campoObservacaoAporte: document.getElementById('campo-observacao-aporte'),
     botaoSalvarAporte: document.getElementById('botao-salvar-aporte'),
-    botaoCancelarEdicaoAporte: document.getElementById('botao-cancelar-edicao-aporte')
+    botaoCancelarEdicaoAporte: document.getElementById('botao-cancelar-edicao-aporte'),
+    botaoModoPrivacidade: document.getElementById('botao-modo-privacidade'),
+    containerFiltrosSegmento: document.getElementById('container-filtros-segmento'),
+    containerFiltrosInteligentes: document.getElementById('container-filtros-inteligentes'),
+    containerOrdenacaoCarteira: document.getElementById('container-ordenacao-carteira'),
+    navegacaoAbas: document.getElementById('navegacao-abas')
 };
 
 const camposFormularioAtivo = {
@@ -168,23 +173,33 @@ function carregarModoPrivacidadeDoLocalStorage() {
     const valorSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE);
     estadoAplicacao.modoPrivacidadeAtivo = valorSalvo === '1';
     document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
-    elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
+
+    if (elementosInterface.iconeModoPrivacidade) {
+        elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
+    }
 }
 
 function salvarMetasNoLocalStorage() {
-    localStorage.setItem(CHAVE_LOCAL_STORAGE_META_PATRIMONIO, String(elementosInterface.campoMetaPatrimonio.value || ''));
-    localStorage.setItem(CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL, String(elementosInterface.campoMetaRendaMensal.value || ''));
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_META_PATRIMONIO,
+        String(elementosInterface.campoMetaPatrimonio?.value || '')
+    );
+
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL,
+        String(elementosInterface.campoMetaRendaMensal?.value || '')
+    );
 }
 
 function carregarMetasDoLocalStorage() {
     const metaPatrimonioSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_META_PATRIMONIO);
     const metaRendaMensalSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL);
 
-    if (metaPatrimonioSalva !== null) {
+    if (metaPatrimonioSalva !== null && elementosInterface.campoMetaPatrimonio) {
         elementosInterface.campoMetaPatrimonio.value = metaPatrimonioSalva;
     }
 
-    if (metaRendaMensalSalva !== null) {
+    if (metaRendaMensalSalva !== null && elementosInterface.campoMetaRendaMensal) {
         elementosInterface.campoMetaRendaMensal.value = metaRendaMensalSalva;
     }
 }
@@ -280,18 +295,23 @@ function carregarObservacoesWatchlistDoLocalStorage() {
 function salvarAporteGlobalNoLocalStorage() {
     localStorage.setItem(
         CHAVE_LOCAL_STORAGE_APORTE_GLOBAL,
-        String(elementosInterface.campoValorAporteGlobal.value || '')
+        String(elementosInterface.campoValorAporteGlobal?.value || '')
     );
 }
 
 function carregarAporteGlobalNoLocalStorage() {
     const valorSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_APORTE_GLOBAL);
-    if (valorSalvo !== null) {
+
+    if (valorSalvo !== null && elementosInterface.campoValorAporteGlobal) {
         elementosInterface.campoValorAporteGlobal.value = valorSalvo;
     }
 }
 
 function atualizarBlocoUsuario(estaLogado) {
+    if (!elementosInterface.informacoesUsuario) {
+        return;
+    }
+
     if (estaLogado) {
         elementosInterface.informacoesUsuario.innerHTML = `
             <button id="botao-logout" type="button" class="text-[10px] font-black text-red-500 uppercase px-4 py-2 border border-red-500/20 rounded-xl hover:bg-red-500/10 transition">
@@ -299,14 +319,18 @@ function atualizarBlocoUsuario(estaLogado) {
             </button>
         `;
 
-        document.getElementById('botao-logout').addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                mostrarNotificacao(elementosInterface.containerNotificacoes, 'Sessão encerrada com sucesso.', 'info');
-            } catch (erro) {
-                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao sair: ${erro.message}`, 'erro');
-            }
-        });
+        const botaoLogout = document.getElementById('botao-logout');
+
+        if (botaoLogout) {
+            botaoLogout.addEventListener('click', async () => {
+                try {
+                    await signOut(auth);
+                    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Sessão encerrada com sucesso.', 'info');
+                } catch (erro) {
+                    mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao sair: ${erro.message}`, 'erro');
+                }
+            });
+        }
 
         return;
     }
@@ -317,14 +341,18 @@ function atualizarBlocoUsuario(estaLogado) {
         </button>
     `;
 
-    document.getElementById('botao-login').addEventListener('click', async () => {
-        try {
-            await setPersistence(auth, browserLocalPersistence);
-            await signInWithPopup(auth, provider);
-        } catch (erro) {
-            mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro no login: ${erro.message}`, 'erro');
-        }
-    });
+    const botaoLogin = document.getElementById('botao-login');
+
+    if (botaoLogin) {
+        botaoLogin.addEventListener('click', async () => {
+            try {
+                await setPersistence(auth, browserLocalPersistence);
+                await signInWithPopup(auth, provider);
+            } catch (erro) {
+                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro no login: ${erro.message}`, 'erro');
+            }
+        });
+    }
 }
 
 function cancelarInscricoesAtivas() {
@@ -387,13 +415,34 @@ function gerarEventosCalendarioCarteira(listaAtivos) {
 
 function limparFormularioAporte() {
     estadoAplicacao.identificadorAporteEmEdicao = null;
-    elementosInterface.campoTickerAporte.value = '';
-    elementosInterface.campoQuantidadeAporte.value = '';
-    elementosInterface.campoPrecoAporte.value = '';
-    elementosInterface.campoDataAporte.value = '';
-    elementosInterface.campoObservacaoAporte.value = '';
-    elementosInterface.botaoSalvarAporte.textContent = 'Registrar aporte';
-    elementosInterface.botaoCancelarEdicaoAporte.classList.add('hidden');
+
+    if (elementosInterface.campoTickerAporte) {
+        elementosInterface.campoTickerAporte.value = '';
+    }
+
+    if (elementosInterface.campoQuantidadeAporte) {
+        elementosInterface.campoQuantidadeAporte.value = '';
+    }
+
+    if (elementosInterface.campoPrecoAporte) {
+        elementosInterface.campoPrecoAporte.value = '';
+    }
+
+    if (elementosInterface.campoDataAporte) {
+        elementosInterface.campoDataAporte.value = '';
+    }
+
+    if (elementosInterface.campoObservacaoAporte) {
+        elementosInterface.campoObservacaoAporte.value = '';
+    }
+
+    if (elementosInterface.botaoSalvarAporte) {
+        elementosInterface.botaoSalvarAporte.textContent = 'Registrar aporte';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoAporte) {
+        elementosInterface.botaoCancelarEdicaoAporte.classList.add('hidden');
+    }
 }
 
 function resetarPainel() {
@@ -402,23 +451,73 @@ function resetarPainel() {
     estadoAplicacao.listaAportesEmMemoria = [];
     estadoAplicacao.mapaLinhasExpandidas = {};
 
-    elementosInterface.textoPatrimonioTotal.textContent = 'R$ 0,00';
-    elementosInterface.textoRendaMensal.textContent = 'R$ 0,00';
-    elementosInterface.textoRendaPorHora.textContent = 'R$ 0,00 / hora';
-    elementosInterface.textoYieldOnCostMedio.textContent = '0.00%';
-    elementosInterface.textoQuedaEstimada.textContent = '- R$ 0,00';
-    elementosInterface.painelRebalanceamento.innerHTML = '<p class="text-[10px] italic p-4 text-slate-600">Sem dados para rebalanceamento.</p>';
-    elementosInterface.painelWatchlist.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>';
-    elementosInterface.painelFavoritos.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo favorito.</div>';
-    elementosInterface.painelRankingOportunidades.innerHTML = '<div class="text-[11px] text-slate-500 italic">Sem ativos para ranquear.</div>';
-    elementosInterface.painelAlertas.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum alerta no momento.</div>';
-    elementosInterface.painelComparador.innerHTML = '<div class="text-[11px] text-slate-500 italic">Selecione até 2 ativos na tabela para comparar.</div>';
-    elementosInterface.painelSimuladorGlobal.innerHTML = '<div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>';
-    elementosInterface.painelCalendarioCarteira.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum evento disponível.</div>';
-    elementosInterface.painelHistoricoAportes.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>';
-    elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td></tr>';
-    elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">Faça login para carregar seus ativos.</div>';
-    elementosInterface.corpoTabelaProventos.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td></tr>';
+    if (elementosInterface.textoPatrimonioTotal) {
+        elementosInterface.textoPatrimonioTotal.textContent = 'R$ 0,00';
+    }
+
+    if (elementosInterface.textoRendaMensal) {
+        elementosInterface.textoRendaMensal.textContent = 'R$ 0,00';
+    }
+
+    if (elementosInterface.textoRendaPorHora) {
+        elementosInterface.textoRendaPorHora.textContent = 'R$ 0,00 / hora';
+    }
+
+    if (elementosInterface.textoYieldOnCostMedio) {
+        elementosInterface.textoYieldOnCostMedio.textContent = '0.00%';
+    }
+
+    if (elementosInterface.textoQuedaEstimada) {
+        elementosInterface.textoQuedaEstimada.textContent = '- R$ 0,00';
+    }
+
+    if (elementosInterface.painelRebalanceamento) {
+        elementosInterface.painelRebalanceamento.innerHTML = '<p class="text-[10px] italic p-4 text-slate-600">Sem dados para rebalanceamento.</p>';
+    }
+
+    if (elementosInterface.painelWatchlist) {
+        elementosInterface.painelWatchlist.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>';
+    }
+
+    if (elementosInterface.painelFavoritos) {
+        elementosInterface.painelFavoritos.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo favorito.</div>';
+    }
+
+    if (elementosInterface.painelRankingOportunidades) {
+        elementosInterface.painelRankingOportunidades.innerHTML = '<div class="text-[11px] text-slate-500 italic">Sem ativos para ranquear.</div>';
+    }
+
+    if (elementosInterface.painelAlertas) {
+        elementosInterface.painelAlertas.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum alerta no momento.</div>';
+    }
+
+    if (elementosInterface.painelComparador) {
+        elementosInterface.painelComparador.innerHTML = '<div class="text-[11px] text-slate-500 italic">Selecione até 2 ativos na tabela para comparar.</div>';
+    }
+
+    if (elementosInterface.painelSimuladorGlobal) {
+        elementosInterface.painelSimuladorGlobal.innerHTML = '<div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>';
+    }
+
+    if (elementosInterface.painelCalendarioCarteira) {
+        elementosInterface.painelCalendarioCarteira.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum evento disponível.</div>';
+    }
+
+    if (elementosInterface.painelHistoricoAportes) {
+        elementosInterface.painelHistoricoAportes.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>';
+    }
+
+    if (elementosInterface.corpoTabelaAtivos) {
+        elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td></tr>';
+    }
+
+    if (elementosInterface.listaCardsMobileAtivos) {
+        elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">Faça login para carregar seus ativos.</div>';
+    }
+
+    if (elementosInterface.corpoTabelaProventos) {
+        elementosInterface.corpoTabelaProventos.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td></tr>';
+    }
 
     if (estadoAplicacao.instanciaGraficoProventos) {
         estadoAplicacao.instanciaGraficoProventos.destroy();
@@ -435,36 +534,65 @@ function resetarPainel() {
 }
 
 function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
-    const metaPatrimonio = converterParaNumeroSeguro(elementosInterface.campoMetaPatrimonio.value, 0);
-    const metaRendaMensal = converterParaNumeroSeguro(elementosInterface.campoMetaRendaMensal.value, 0);
+    const metaPatrimonio = converterParaNumeroSeguro(elementosInterface.campoMetaPatrimonio?.value, 0);
+    const metaRendaMensal = converterParaNumeroSeguro(elementosInterface.campoMetaRendaMensal?.value, 0);
 
     const progressoMetaPatrimonio = calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio);
     const progressoMetaRenda = calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal);
 
-    renderizarCardMetaPatrimonio(elementosInterface.cardMetaPatrimonio, progressoMetaPatrimonio, patrimonioAtual);
-    renderizarCardMetaRenda(elementosInterface.cardMetaRenda, progressoMetaRenda, rendaMensalAtual);
+    if (elementosInterface.cardMetaPatrimonio) {
+        renderizarCardMetaPatrimonio(
+            elementosInterface.cardMetaPatrimonio,
+            progressoMetaPatrimonio,
+            patrimonioAtual
+        );
+    }
+
+    if (elementosInterface.cardMetaRenda) {
+        renderizarCardMetaRenda(
+            elementosInterface.cardMetaRenda,
+            progressoMetaRenda,
+            rendaMensalAtual
+        );
+    }
 }
 
 function atualizarResumoPainel(resultadoRenderizacao) {
-    elementosInterface.textoPatrimonioTotal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal)}`;
-    elementosInterface.textoRendaMensal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal)}`;
-    elementosInterface.textoRendaPorHora.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal / 720, 4)} / hora`;
-    elementosInterface.textoYieldOnCostMedio.textContent = resultadoRenderizacao.valorTotalInvestidoCarteira > 0
-        ? `${((resultadoRenderizacao.projecaoMensalTotal * 12 / resultadoRenderizacao.valorTotalInvestidoCarteira) * 100).toFixed(2)}%`
-        : '0.00%';
-    elementosInterface.textoQuedaEstimada.textContent = `- R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal * 0.05)} (Stress 5%)`;
+    if (elementosInterface.textoPatrimonioTotal) {
+        elementosInterface.textoPatrimonioTotal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal)}`;
+    }
 
-    elementosInterface.painelRebalanceamento.innerHTML = resultadoRenderizacao.listaSugestoesRebalanceamento
-        .sort((sugestaoA, sugestaoB) => sugestaoB.nota - sugestaoA.nota)
-        .slice(0, 2)
-        .map((sugestao) => {
-            return `
-                <div class="bg-slate-900/60 p-4 rounded-2xl border border-blue-900/30">
-                    <div class="text-[8px] text-blue-400 font-black mb-1 uppercase tracking-widest">Rebalancear</div>
-                    <div class="text-lg font-black text-white">${escaparHtml(sugestao.ticker)} <span class="text-emerald-500">+${sugestao.quantidadeSugerida} un.</span></div>
-                </div>
-            `;
-        }).join('') || '<p class="text-[10px] italic p-4 text-slate-600">Alocação equilibrada.</p>';
+    if (elementosInterface.textoRendaMensal) {
+        elementosInterface.textoRendaMensal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal)}`;
+    }
+
+    if (elementosInterface.textoRendaPorHora) {
+        elementosInterface.textoRendaPorHora.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal / 720, 4)} / hora`;
+    }
+
+    if (elementosInterface.textoYieldOnCostMedio) {
+        elementosInterface.textoYieldOnCostMedio.textContent = resultadoRenderizacao.valorTotalInvestidoCarteira > 0
+            ? `${((resultadoRenderizacao.projecaoMensalTotal * 12 / resultadoRenderizacao.valorTotalInvestidoCarteira) * 100).toFixed(2)}%`
+            : '0.00%';
+    }
+
+    if (elementosInterface.textoQuedaEstimada) {
+        elementosInterface.textoQuedaEstimada.textContent = `- R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal * 0.05)} (Stress 5%)`;
+    }
+
+    if (elementosInterface.painelRebalanceamento) {
+        elementosInterface.painelRebalanceamento.innerHTML = resultadoRenderizacao.listaSugestoesRebalanceamento
+            .sort((sugestaoA, sugestaoB) => sugestaoB.nota - sugestaoA.nota)
+            .slice(0, 2)
+            .map((sugestao) => {
+                return `
+                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-blue-900/30">
+                        <div class="text-[8px] text-blue-400 font-black mb-1 uppercase tracking-widest">Rebalancear</div>
+                        <div class="text-lg font-black text-white">${escaparHtml(sugestao.ticker)} <span class="text-emerald-500">+${sugestao.quantidadeSugerida} un.</span></div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-[10px] italic p-4 text-slate-600">Alocação equilibrada.</p>';
+    }
 
     renderizarMetas(resultadoRenderizacao.patrimonioTotal, resultadoRenderizacao.projecaoMensalTotal);
 }
@@ -524,13 +652,34 @@ function prepararEdicaoAporte(identificadorAporte) {
     }
 
     estadoAplicacao.identificadorAporteEmEdicao = identificadorAporte;
-    elementosInterface.campoTickerAporte.value = aporte.ticker || '';
-    elementosInterface.campoQuantidadeAporte.value = aporte.quantidadeComprada || '';
-    elementosInterface.campoPrecoAporte.value = aporte.precoPorCota || '';
-    elementosInterface.campoDataAporte.value = aporte.dataAporte || '';
-    elementosInterface.campoObservacaoAporte.value = aporte.observacao || '';
-    elementosInterface.botaoSalvarAporte.textContent = 'Atualizar aporte';
-    elementosInterface.botaoCancelarEdicaoAporte.classList.remove('hidden');
+
+    if (elementosInterface.campoTickerAporte) {
+        elementosInterface.campoTickerAporte.value = aporte.ticker || '';
+    }
+
+    if (elementosInterface.campoQuantidadeAporte) {
+        elementosInterface.campoQuantidadeAporte.value = aporte.quantidadeComprada || '';
+    }
+
+    if (elementosInterface.campoPrecoAporte) {
+        elementosInterface.campoPrecoAporte.value = aporte.precoPorCota || '';
+    }
+
+    if (elementosInterface.campoDataAporte) {
+        elementosInterface.campoDataAporte.value = aporte.dataAporte || '';
+    }
+
+    if (elementosInterface.campoObservacaoAporte) {
+        elementosInterface.campoObservacaoAporte.value = aporte.observacao || '';
+    }
+
+    if (elementosInterface.botaoSalvarAporte) {
+        elementosInterface.botaoSalvarAporte.textContent = 'Atualizar aporte';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoAporte) {
+        elementosInterface.botaoCancelarEdicaoAporte.classList.remove('hidden');
+    }
 }
 
 async function salvarAporte() {
@@ -542,11 +691,11 @@ async function salvarAporte() {
     try {
         const dadosAporte = montarDadosAporte({
             usuarioAtual: estadoAplicacao.usuarioAtual,
-            ticker: elementosInterface.campoTickerAporte.value,
-            quantidadeComprada: elementosInterface.campoQuantidadeAporte.value,
-            precoPorCota: elementosInterface.campoPrecoAporte.value,
-            dataAporte: elementosInterface.campoDataAporte.value,
-            observacao: elementosInterface.campoObservacaoAporte.value
+            ticker: elementosInterface.campoTickerAporte?.value,
+            quantidadeComprada: elementosInterface.campoQuantidadeAporte?.value,
+            precoPorCota: elementosInterface.campoPrecoAporte?.value,
+            dataAporte: elementosInterface.campoDataAporte?.value,
+            observacao: elementosInterface.campoObservacaoAporte?.value
         });
 
         const mensagemSucesso = await salvarAporteNoFirestore({
@@ -578,48 +727,63 @@ function renderizarTudo() {
 
     const listaAtivosFiltradaInteligente = filtrarListaAtivosPorFiltroInteligente(estadoAplicacao.listaAtivosEmMemoria);
 
+    if (!elementosInterface.corpoTabelaAtivos) {
+        return;
+    }
+
     const resultadoRenderizacao = renderizarTabelaAtivos({
         corpoTabelaAtivos: elementosInterface.corpoTabelaAtivos,
         listaAtivos: listaAtivosFiltradaInteligente,
         filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
         ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
-        caixaDisponivel: converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel.value, 0),
+        caixaDisponivel: converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel?.value, 0),
         mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
         listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
         obterListaAtivosFiltradaEOrdenada,
         obterStatusAtivo
     });
 
-    renderizarCardsMobileAtivos({
-        listaCardsMobileAtivos: elementosInterface.listaCardsMobileAtivos,
-        listaAtivos: listaAtivosFiltradaInteligente,
-        filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
-        ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
-        mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
-        listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
-        obterListaAtivosFiltradaEOrdenada,
-        obterStatusAtivo
-    });
+    if (elementosInterface.listaCardsMobileAtivos) {
+        renderizarCardsMobileAtivos({
+            listaCardsMobileAtivos: elementosInterface.listaCardsMobileAtivos,
+            listaAtivos: listaAtivosFiltradaInteligente,
+            filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
+            ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
+            mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
+            listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
+            obterListaAtivosFiltradaEOrdenada,
+            obterStatusAtivo
+        });
+    }
 
     atualizarResumoPainel(resultadoRenderizacao);
 
-    estadoAplicacao.instanciaGraficoSegmentos = renderizarGraficoSegmentos(
-        elementosInterface.graficoAlocacaoSegmentos,
-        estadoAplicacao.instanciaGraficoSegmentos,
-        estadoAplicacao.listaAtivosEmMemoria
-    );
+    if (elementosInterface.graficoAlocacaoSegmentos) {
+        estadoAplicacao.instanciaGraficoSegmentos = renderizarGraficoSegmentos(
+            elementosInterface.graficoAlocacaoSegmentos,
+            estadoAplicacao.instanciaGraficoSegmentos,
+            estadoAplicacao.listaAtivosEmMemoria
+        );
+    }
 
-    renderizarPainelWatchlist(
-        elementosInterface.painelWatchlist,
-        estadoAplicacao.listaAtivosEmMemoria,
-        estadoAplicacao.mapaObservacoesWatchlist
-    );
+    if (elementosInterface.painelWatchlist) {
+        renderizarPainelWatchlist(
+            elementosInterface.painelWatchlist,
+            estadoAplicacao.listaAtivosEmMemoria,
+            estadoAplicacao.mapaObservacoesWatchlist
+        );
+    }
 
-    renderizarPainelFavoritos(elementosInterface.painelFavoritos, estadoAplicacao.listaAtivosEmMemoria);
+    if (elementosInterface.painelFavoritos) {
+        renderizarPainelFavoritos(
+            elementosInterface.painelFavoritos,
+            estadoAplicacao.listaAtivosEmMemoria
+        );
+    }
 
     const patrimonioTotal = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.valorTotalAtual, 0);
     const somaDasNotas = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.nota, 0);
-    const caixaDisponivel = converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel.value, 0);
+    const caixaDisponivel = converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel?.value, 0);
 
     const listaRanking = gerarRankingDeOportunidades(
         estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => !ativo.emWatchlist),
@@ -628,30 +792,68 @@ function renderizarTudo() {
         caixaDisponivel
     );
 
-    renderizarPainelRankingOportunidades(elementosInterface.painelRankingOportunidades, listaRanking);
+    if (elementosInterface.painelRankingOportunidades) {
+        renderizarPainelRankingOportunidades(
+            elementosInterface.painelRankingOportunidades,
+            listaRanking
+        );
+    }
 
     const listaAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria);
-    renderizarPainelAlertas(elementosInterface.painelAlertas, listaAlertas);
 
-    renderizarPainelComparador(elementosInterface.painelComparador, obterAtivosSelecionadosParaComparacao());
+    if (elementosInterface.painelAlertas) {
+        renderizarPainelAlertas(
+            elementosInterface.painelAlertas,
+            listaAlertas
+        );
+    }
+
+    if (elementosInterface.painelComparador) {
+        renderizarPainelComparador(
+            elementosInterface.painelComparador,
+            obterAtivosSelecionadosParaComparacao()
+        );
+    }
 
     const resultadoSimulacaoGlobal = gerarSimulacaoGlobalDeAporte(
-        converterParaNumeroSeguro(elementosInterface.campoValorAporteGlobal.value, 0),
+        converterParaNumeroSeguro(elementosInterface.campoValorAporteGlobal?.value, 0),
         listaRanking
     );
 
-    renderizarPainelSimuladorGlobal(elementosInterface.painelSimuladorGlobal, resultadoSimulacaoGlobal);
+    if (elementosInterface.painelSimuladorGlobal) {
+        renderizarPainelSimuladorGlobal(
+            elementosInterface.painelSimuladorGlobal,
+            resultadoSimulacaoGlobal
+        );
+    }
 
     const listaEventosCalendario = gerarEventosCalendarioCarteira(estadoAplicacao.listaAtivosEmMemoria);
-    renderizarPainelCalendarioCarteira(elementosInterface.painelCalendarioCarteira, listaEventosCalendario);
 
-    renderizarPainelHistoricoAportes(elementosInterface.painelHistoricoAportes, estadoAplicacao.listaAportesEmMemoria);
+    if (elementosInterface.painelCalendarioCarteira) {
+        renderizarPainelCalendarioCarteira(
+            elementosInterface.painelCalendarioCarteira,
+            listaEventosCalendario
+        );
+    }
+
+    if (elementosInterface.painelHistoricoAportes) {
+        renderizarPainelHistoricoAportes(
+            elementosInterface.painelHistoricoAportes,
+            estadoAplicacao.listaAportesEmMemoria
+        );
+    }
 }
 
 function renderizarProventos() {
-    renderizarHistoricoProventos(elementosInterface.corpoTabelaProventos, estadoAplicacao.listaProventosEmMemoria);
+    if (elementosInterface.corpoTabelaProventos) {
+        renderizarHistoricoProventos(
+            elementosInterface.corpoTabelaProventos,
+            estadoAplicacao.listaProventosEmMemoria
+        );
+    }
 
     const mapaProventosAgrupadosPorMes = {};
+
     estadoAplicacao.listaProventosEmMemoria.forEach((provento) => {
         mapaProventosAgrupadosPorMes[provento.mesAno] =
             converterParaNumeroSeguro(mapaProventosAgrupadosPorMes[provento.mesAno], 0) + converterParaNumeroSeguro(provento.valor, 0);
@@ -659,12 +861,14 @@ function renderizarProventos() {
 
     const listaMesesOrdenada = Object.keys(mapaProventosAgrupadosPorMes).sort((mesA, mesB) => mesA.localeCompare(mesB));
 
-    estadoAplicacao.instanciaGraficoProventos = renderizarGraficoProventos(
-        elementosInterface.graficoProventos,
-        estadoAplicacao.instanciaGraficoProventos,
-        listaMesesOrdenada.map(formatarMesAno),
-        listaMesesOrdenada.map((mesAno) => mapaProventosAgrupadosPorMes[mesAno])
-    );
+    if (elementosInterface.graficoProventos) {
+        estadoAplicacao.instanciaGraficoProventos = renderizarGraficoProventos(
+            elementosInterface.graficoProventos,
+            estadoAplicacao.instanciaGraficoProventos,
+            listaMesesOrdenada.map(formatarMesAno),
+            listaMesesOrdenada.map((mesAno) => mapaProventosAgrupadosPorMes[mesAno])
+        );
+    }
 }
 
 async function atualizarListaAtivosEnriquecida() {
@@ -719,16 +923,25 @@ function assinarColecaoAtivos() {
         }));
 
         const mapaCotacoes = await buscarCotacoesNaBrapi(listaAtivosBruta.map((ativo) => ativo.ticker));
+
         estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
             listaAtivosBruta,
             mapaCotacoes,
             estadoAplicacao.listaAportesEmMemoria
         );
+
         renderizarTudo();
     }, (erro) => {
         console.error('Erro ao escutar ativos:', erro);
-        elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 italic">Erro ao carregar ativos.</td></tr>';
-        elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-red-500 italic">Erro ao carregar ativos.</div>';
+
+        if (elementosInterface.corpoTabelaAtivos) {
+            elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 italic">Erro ao carregar ativos.</td></tr>';
+        }
+
+        if (elementosInterface.listaCardsMobileAtivos) {
+            elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-red-500 italic">Erro ao carregar ativos.</div>';
+        }
+
         mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os ativos.', 'erro');
     });
 }
@@ -786,47 +999,108 @@ function assinarColecaoAportes() {
 
 function cancelarEdicaoAtivo() {
     estadoAplicacao.identificadorAtivoEmEdicao = null;
-    elementosInterface.botaoSalvarAtivo.textContent = 'Salvar no Portfólio';
-    elementosInterface.botaoCancelarEdicaoAtivo.classList.add('hidden');
-    elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Gerenciar Ativo';
 
-    camposFormularioAtivo.ticker.value = '';
-    camposFormularioAtivo.quantidade.value = '';
-    camposFormularioAtivo.precoMedio.value = '';
-    camposFormularioAtivo.nota.value = '';
-    camposFormularioAtivo.precoTeto.value = '';
-    camposFormularioAtivo.diaDataCom.value = '';
-    camposFormularioAtivo.diaPagamento.value = '';
-    camposFormularioAtivo.segmento.value = 'Papel';
-    camposFormularioAtivo.observacao.value = '';
+    if (elementosInterface.botaoSalvarAtivo) {
+        elementosInterface.botaoSalvarAtivo.textContent = 'Salvar no Portfólio';
+    }
 
-    limparErrosDosCampos(Object.values(camposFormularioAtivo));
+    if (elementosInterface.botaoCancelarEdicaoAtivo) {
+        elementosInterface.botaoCancelarEdicaoAtivo.classList.add('hidden');
+    }
+
+    if (elementosInterface.tituloFormularioAtivo) {
+        elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Gerenciar Ativo';
+    }
+
+    if (camposFormularioAtivo.ticker) {
+        camposFormularioAtivo.ticker.value = '';
+    }
+    if (camposFormularioAtivo.quantidade) {
+        camposFormularioAtivo.quantidade.value = '';
+    }
+    if (camposFormularioAtivo.precoMedio) {
+        camposFormularioAtivo.precoMedio.value = '';
+    }
+    if (camposFormularioAtivo.nota) {
+        camposFormularioAtivo.nota.value = '';
+    }
+    if (camposFormularioAtivo.precoTeto) {
+        camposFormularioAtivo.precoTeto.value = '';
+    }
+    if (camposFormularioAtivo.diaDataCom) {
+        camposFormularioAtivo.diaDataCom.value = '';
+    }
+    if (camposFormularioAtivo.diaPagamento) {
+        camposFormularioAtivo.diaPagamento.value = '';
+    }
+    if (camposFormularioAtivo.segmento) {
+        camposFormularioAtivo.segmento.value = 'Papel';
+    }
+    if (camposFormularioAtivo.observacao) {
+        camposFormularioAtivo.observacao.value = '';
+    }
+
+    limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
 }
 
 function prepararEdicaoProvento(provento) {
     estadoAplicacao.identificadorProventoEmEdicao = provento.id;
-    camposFormularioProvento.ticker.value = provento.ticker;
-    camposFormularioProvento.valor.value = provento.valor;
-    camposFormularioProvento.mes.value = provento.mesAno;
 
-    elementosInterface.tituloFormularioProvento.textContent = 'Editar Provento';
-    elementosInterface.botaoSalvarProvento.textContent = 'Atualizar Provento';
-    elementosInterface.botaoCancelarEdicaoProvento.classList.remove('hidden');
+    if (camposFormularioProvento.ticker) {
+        camposFormularioProvento.ticker.value = provento.ticker;
+    }
 
-    limparErrosDosCampos(Object.values(camposFormularioProvento));
+    if (camposFormularioProvento.valor) {
+        camposFormularioProvento.valor.value = provento.valor;
+    }
+
+    if (camposFormularioProvento.mes) {
+        camposFormularioProvento.mes.value = provento.mesAno;
+    }
+
+    if (elementosInterface.tituloFormularioProvento) {
+        elementosInterface.tituloFormularioProvento.textContent = 'Editar Provento';
+    }
+
+    if (elementosInterface.botaoSalvarProvento) {
+        elementosInterface.botaoSalvarProvento.textContent = 'Atualizar Provento';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoProvento) {
+        elementosInterface.botaoCancelarEdicaoProvento.classList.remove('hidden');
+    }
+
+    limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
 }
 
 function cancelarEdicaoProvento() {
     estadoAplicacao.identificadorProventoEmEdicao = null;
-    camposFormularioProvento.ticker.value = '';
-    camposFormularioProvento.valor.value = '';
-    camposFormularioProvento.mes.value = '';
 
-    elementosInterface.tituloFormularioProvento.textContent = 'Lançar Provento';
-    elementosInterface.botaoSalvarProvento.textContent = 'Registrar Provento';
-    elementosInterface.botaoCancelarEdicaoProvento.classList.add('hidden');
+    if (camposFormularioProvento.ticker) {
+        camposFormularioProvento.ticker.value = '';
+    }
 
-    limparErrosDosCampos(Object.values(camposFormularioProvento));
+    if (camposFormularioProvento.valor) {
+        camposFormularioProvento.valor.value = '';
+    }
+
+    if (camposFormularioProvento.mes) {
+        camposFormularioProvento.mes.value = '';
+    }
+
+    if (elementosInterface.tituloFormularioProvento) {
+        elementosInterface.tituloFormularioProvento.textContent = 'Lançar Provento';
+    }
+
+    if (elementosInterface.botaoSalvarProvento) {
+        elementosInterface.botaoSalvarProvento.textContent = 'Registrar Provento';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoProvento) {
+        elementosInterface.botaoCancelarEdicaoProvento.classList.add('hidden');
+    }
+
+    limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
 }
 
 async function prepararEdicaoAtivo(identificadorAtivo) {
@@ -841,22 +1115,49 @@ async function prepararEdicaoAtivo(identificadorAtivo) {
 
         const dadosAtivo = documento.data();
 
-        camposFormularioAtivo.ticker.value = dadosAtivo.ticker || '';
-        camposFormularioAtivo.quantidade.value = dadosAtivo.quantidade || '';
-        camposFormularioAtivo.precoMedio.value = dadosAtivo.precoMedio || '';
-        camposFormularioAtivo.nota.value = dadosAtivo.nota || '';
-        camposFormularioAtivo.precoTeto.value = dadosAtivo.precoTeto || '';
-        camposFormularioAtivo.diaDataCom.value = dadosAtivo.diaDataCom || '';
-        camposFormularioAtivo.diaPagamento.value = dadosAtivo.diaPagamento || '';
-        camposFormularioAtivo.segmento.value = dadosAtivo.segmento || 'Outros';
-        camposFormularioAtivo.observacao.value = dadosAtivo.observacao || '';
+        if (camposFormularioAtivo.ticker) {
+            camposFormularioAtivo.ticker.value = dadosAtivo.ticker || '';
+        }
+        if (camposFormularioAtivo.quantidade) {
+            camposFormularioAtivo.quantidade.value = dadosAtivo.quantidade || '';
+        }
+        if (camposFormularioAtivo.precoMedio) {
+            camposFormularioAtivo.precoMedio.value = dadosAtivo.precoMedio || '';
+        }
+        if (camposFormularioAtivo.nota) {
+            camposFormularioAtivo.nota.value = dadosAtivo.nota || '';
+        }
+        if (camposFormularioAtivo.precoTeto) {
+            camposFormularioAtivo.precoTeto.value = dadosAtivo.precoTeto || '';
+        }
+        if (camposFormularioAtivo.diaDataCom) {
+            camposFormularioAtivo.diaDataCom.value = dadosAtivo.diaDataCom || '';
+        }
+        if (camposFormularioAtivo.diaPagamento) {
+            camposFormularioAtivo.diaPagamento.value = dadosAtivo.diaPagamento || '';
+        }
+        if (camposFormularioAtivo.segmento) {
+            camposFormularioAtivo.segmento.value = dadosAtivo.segmento || 'Outros';
+        }
+        if (camposFormularioAtivo.observacao) {
+            camposFormularioAtivo.observacao.value = dadosAtivo.observacao || '';
+        }
 
         estadoAplicacao.identificadorAtivoEmEdicao = identificadorAtivo;
-        elementosInterface.botaoSalvarAtivo.textContent = 'Atualizar Ativo';
-        elementosInterface.botaoCancelarEdicaoAtivo.classList.remove('hidden');
-        elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Editando Ativo';
 
-        limparErrosDosCampos(Object.values(camposFormularioAtivo));
+        if (elementosInterface.botaoSalvarAtivo) {
+            elementosInterface.botaoSalvarAtivo.textContent = 'Atualizar Ativo';
+        }
+
+        if (elementosInterface.botaoCancelarEdicaoAtivo) {
+            elementosInterface.botaoCancelarEdicaoAtivo.classList.remove('hidden');
+        }
+
+        if (elementosInterface.tituloFormularioAtivo) {
+            elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Editando Ativo';
+        }
+
+        limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
     } catch (erro) {
         mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao carregar ativo para edição: ${erro.message}`, 'erro');
     }
@@ -870,15 +1171,15 @@ async function salvarAtivo() {
 
     const dadosAtivo = {
         uid: estadoAplicacao.usuarioAtual.uid,
-        ticker: normalizarTicker(camposFormularioAtivo.ticker.value),
-        quantidade: parseInt(camposFormularioAtivo.quantidade.value, 10),
-        precoMedio: converterParaNumeroSeguro(camposFormularioAtivo.precoMedio.value, 0),
-        nota: parseInt(camposFormularioAtivo.nota.value, 10),
-        precoTeto: converterParaNumeroSeguro(camposFormularioAtivo.precoTeto.value, 0),
-        diaDataCom: validarDiaDoMes(camposFormularioAtivo.diaDataCom.value),
-        diaPagamento: validarDiaDoMes(camposFormularioAtivo.diaPagamento.value),
-        segmento: camposFormularioAtivo.segmento.value || 'Outros',
-        observacao: camposFormularioAtivo.observacao.value || '',
+        ticker: normalizarTicker(camposFormularioAtivo.ticker?.value),
+        quantidade: parseInt(camposFormularioAtivo.quantidade?.value, 10),
+        precoMedio: converterParaNumeroSeguro(camposFormularioAtivo.precoMedio?.value, 0),
+        nota: parseInt(camposFormularioAtivo.nota?.value, 10),
+        precoTeto: converterParaNumeroSeguro(camposFormularioAtivo.precoTeto?.value, 0),
+        diaDataCom: validarDiaDoMes(camposFormularioAtivo.diaDataCom?.value),
+        diaPagamento: validarDiaDoMes(camposFormularioAtivo.diaPagamento?.value),
+        segmento: camposFormularioAtivo.segmento?.value || 'Outros',
+        observacao: camposFormularioAtivo.observacao?.value || '',
         favorito: false,
         emWatchlist: false,
         timestamp: serverTimestamp()
@@ -903,11 +1204,13 @@ async function salvarAtivo() {
 
         if (estadoAplicacao.identificadorAtivoEmEdicao) {
             const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao);
+
             await updateDoc(doc(db, 'ativos', estadoAplicacao.identificadorAtivoEmEdicao), {
                 ...dadosAtivo,
                 favorito: Boolean(ativoAtual?.favorito),
                 emWatchlist: Boolean(ativoAtual?.emWatchlist)
             });
+
             mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo atualizado com sucesso.', 'sucesso');
         } else {
             await addDoc(collection(db, 'ativos'), dadosAtivo);
@@ -928,9 +1231,9 @@ async function salvarProvento() {
 
     const dadosProvento = {
         uid: estadoAplicacao.usuarioAtual.uid,
-        ticker: normalizarTicker(camposFormularioProvento.ticker.value),
-        valor: converterParaNumeroSeguro(camposFormularioProvento.valor.value, NaN),
-        mesAno: camposFormularioProvento.mes.value,
+        ticker: normalizarTicker(camposFormularioProvento.ticker?.value),
+        valor: converterParaNumeroSeguro(camposFormularioProvento.valor?.value, NaN),
+        mesAno: camposFormularioProvento.mes?.value,
         timestamp: serverTimestamp()
     };
 
@@ -955,14 +1258,30 @@ async function salvarProvento() {
 }
 
 function abrirFormularioProventoComTickerPreenchido(ticker) {
-    document.querySelector('[data-aba="proventos"]').click();
-    camposFormularioProvento.ticker.value = ticker;
-    camposFormularioProvento.valor.focus();
-    mostrarNotificacao(elementosInterface.containerNotificacoes, `Ticker ${ticker} enviado para o formulário de proventos.`, 'info');
+    const botaoAbaProventos = document.querySelector('[data-aba="proventos"]');
+
+    if (botaoAbaProventos) {
+        botaoAbaProventos.click();
+    }
+
+    if (camposFormularioProvento.ticker) {
+        camposFormularioProvento.ticker.value = ticker;
+    }
+
+    if (camposFormularioProvento.valor) {
+        camposFormularioProvento.valor.focus();
+    }
+
+    mostrarNotificacao(
+        elementosInterface.containerNotificacoes,
+        `Ticker ${ticker} enviado para o formulário de proventos.`,
+        'info'
+    );
 }
 
 async function alternarFavorito(identificadorAtivo) {
     const ativo = estadoAplicacao.listaAtivosEmMemoria.find((item) => item.id === identificadorAtivo);
+
     if (!ativo) {
         return;
     }
@@ -974,6 +1293,7 @@ async function alternarFavorito(identificadorAtivo) {
 
 async function alternarWatchlist(identificadorAtivo) {
     const ativo = estadoAplicacao.listaAtivosEmMemoria.find((item) => item.id === identificadorAtivo);
+
     if (!ativo) {
         return;
     }
@@ -993,7 +1313,11 @@ function alternarAtivoNoComparador(identificadorAtivo) {
     }
 
     if (listaAtual.length >= 2) {
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'O comparador aceita no máximo 2 ativos.', 'info');
+        mostrarNotificacao(
+            elementosInterface.containerNotificacoes,
+            'O comparador aceita no máximo 2 ativos.',
+            'info'
+        );
         return;
     }
 
@@ -1014,17 +1338,19 @@ function exportarRelatorioCarteira() {
     const yieldOnCost = valorTotalInvestido > 0 ? ((rendaMensal * 12 / valorTotalInvestido) * 100) : 0;
     const quedaEstimada = patrimonioTotal * 0.05;
     const somaDasNotas = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.nota, 0);
-    const caixaDisponivel = converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel.value, 0);
+    const caixaDisponivel = converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel?.value, 0);
 
     const listaFavoritos = estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.favorito);
     const listaWatchlist = estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.emWatchlist);
     const listaAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria);
+
     const listaRanking = gerarRankingDeOportunidades(
         estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => !ativo.emWatchlist),
         patrimonioTotal,
         somaDasNotas,
         caixaDisponivel
     );
+
     const listaEventosCalendario = gerarEventosCalendarioCarteira(estadoAplicacao.listaAtivosEmMemoria);
 
     const conteudoRelatorio = gerarConteudoRelatorioCarteira({
@@ -1045,7 +1371,11 @@ function exportarRelatorioCarteira() {
         conteudoRelatorio
     );
 
-    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Relatório exportado com sucesso.', 'sucesso');
+    mostrarNotificacao(
+        elementosInterface.containerNotificacoes,
+        'Relatório exportado com sucesso.',
+        'sucesso'
+    );
 }
 
 function inicializarEventosDaInterface() {
@@ -1056,150 +1386,220 @@ function inicializarEventosDaInterface() {
     carregarObservacoesWatchlistDoLocalStorage();
     carregarAporteGlobalNoLocalStorage();
 
-    document.getElementById('botao-modo-privacidade').addEventListener('click', () => {
-        estadoAplicacao.modoPrivacidadeAtivo = !estadoAplicacao.modoPrivacidadeAtivo;
-        document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
-        elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
-        salvarModoPrivacidadeNoLocalStorage();
-    });
+    if (elementosInterface.botaoModoPrivacidade) {
+        elementosInterface.botaoModoPrivacidade.addEventListener('click', () => {
+            estadoAplicacao.modoPrivacidadeAtivo = !estadoAplicacao.modoPrivacidadeAtivo;
+            document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
 
-    document.getElementById('container-filtros-segmento').addEventListener('click', (evento) => {
-        const botaoFiltro = evento.target.closest('.botao-filtro');
-        if (!botaoFiltro) {
-            return;
-        }
-
-        estadoAplicacao.filtroSegmentoAtual = botaoFiltro.dataset.filtro;
-        salvarFiltroEOrdenacaoNoLocalStorage();
-
-        document.querySelectorAll('.botao-filtro').forEach((botao) => {
-            botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
-        });
-
-        renderizarTudo();
-    });
-
-    document.getElementById('container-filtros-inteligentes').addEventListener('click', (evento) => {
-        const botaoFiltroInteligente = evento.target.closest('.botao-filtro-inteligente');
-        if (!botaoFiltroInteligente) {
-            return;
-        }
-
-        estadoAplicacao.filtroInteligenteAtual = botaoFiltroInteligente.dataset.filtroInteligente;
-        salvarFiltroEOrdenacaoNoLocalStorage();
-
-        document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
-            botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
-        });
-
-        renderizarTudo();
-    });
-
-    document.getElementById('container-ordenacao-carteira').addEventListener('click', (evento) => {
-        const botaoOrdenacao = evento.target.closest('.botao-ordenacao');
-        if (!botaoOrdenacao) {
-            return;
-        }
-
-        estadoAplicacao.ordenacaoCarteiraAtual = botaoOrdenacao.dataset.ordenacao;
-        salvarFiltroEOrdenacaoNoLocalStorage();
-
-        document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
-            botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
-        });
-
-        renderizarTudo();
-    });
-
-    document.getElementById('navegacao-abas').addEventListener('click', (evento) => {
-        const botaoAba = evento.target.closest('button[data-aba]');
-        if (!botaoAba) {
-            return;
-        }
-
-        const abaSelecionada = botaoAba.dataset.aba;
-
-        elementosInterface.secaoPainel.classList.toggle('hidden', abaSelecionada !== 'painel');
-        elementosInterface.secaoProventos.classList.toggle('hidden', abaSelecionada !== 'proventos');
-
-        document.querySelectorAll('#navegacao-abas button').forEach((botao) => {
-            botao.classList.toggle('text-white', botao.dataset.aba === abaSelecionada);
-            botao.classList.toggle('aba-ativa', botao.dataset.aba === abaSelecionada);
-        });
-    });
-
-    elementosInterface.botaoLimparComparador.addEventListener('click', limparComparador);
-    elementosInterface.botaoExportarRelatorio.addEventListener('click', exportarRelatorioCarteira);
-
-    elementosInterface.campoCaixaDisponivel.addEventListener('input', renderizarTudo);
-
-    elementosInterface.campoValorAporteGlobal.addEventListener('input', () => {
-        salvarAporteGlobalNoLocalStorage();
-        renderizarTudo();
-    });
-
-    elementosInterface.botaoSalvarAtivo.addEventListener('click', salvarAtivo);
-    elementosInterface.botaoCancelarEdicaoAtivo.addEventListener('click', cancelarEdicaoAtivo);
-    elementosInterface.botaoSalvarProvento.addEventListener('click', salvarProvento);
-    elementosInterface.botaoCancelarEdicaoProvento.addEventListener('click', cancelarEdicaoProvento);
-    elementosInterface.botaoSalvarAporte.addEventListener('click', salvarAporte);
-    elementosInterface.botaoCancelarEdicaoAporte.addEventListener('click', limparFormularioAporte);
-
-    elementosInterface.campoMetaPatrimonio.addEventListener('input', () => {
-        salvarMetasNoLocalStorage();
-        renderizarTudo();
-    });
-
-    elementosInterface.campoMetaRendaMensal.addEventListener('input', () => {
-        salvarMetasNoLocalStorage();
-        renderizarTudo();
-    });
-
-    elementosInterface.botaoExportarBackup.addEventListener('click', () => {
-        exportarCarteiraParaJson(estadoAplicacao.listaAtivosEmMemoria, estadoAplicacao.listaProventosEmMemoria);
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Backup exportado com sucesso.', 'sucesso');
-    });
-
-    elementosInterface.campoImportarBackup.addEventListener('change', async (evento) => {
-        const arquivo = evento.target.files?.[0];
-        if (!arquivo) {
-            return;
-        }
-
-        try {
-            const dadosImportados = await importarCarteiraDeArquivo(arquivo);
-
-            if (!estadoAplicacao.usuarioAtual) {
-                throw new Error('Faça login antes de restaurar um backup.');
+            if (elementosInterface.iconeModoPrivacidade) {
+                elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
             }
 
-            const confirmouRestauracao = confirm(
-                `Deseja restaurar este backup no Firestore?\n\nAtivos: ${dadosImportados.ativos.length}\nProventos: ${dadosImportados.proventos.length}\n\nIsso adicionará novos registros à sua conta.`
-            );
+            salvarModoPrivacidadeNoLocalStorage();
+        });
+    }
 
-            if (!confirmouRestauracao) {
-                evento.target.value = '';
+    if (elementosInterface.containerFiltrosSegmento) {
+        elementosInterface.containerFiltrosSegmento.addEventListener('click', (evento) => {
+            const botaoFiltro = evento.target.closest('.botao-filtro');
+
+            if (!botaoFiltro) {
                 return;
             }
 
-            const resultadoRestauracao = await restaurarBackupNoFirestore({
-                db,
-                usuarioAtual: estadoAplicacao.usuarioAtual,
-                ativos: dadosImportados.ativos,
-                proventos: dadosImportados.proventos
+            estadoAplicacao.filtroSegmentoAtual = botaoFiltro.dataset.filtro;
+            salvarFiltroEOrdenacaoNoLocalStorage();
+
+            document.querySelectorAll('.botao-filtro').forEach((botao) => {
+                botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
             });
+
+            renderizarTudo();
+        });
+    }
+
+    if (elementosInterface.containerFiltrosInteligentes) {
+        elementosInterface.containerFiltrosInteligentes.addEventListener('click', (evento) => {
+            const botaoFiltroInteligente = evento.target.closest('.botao-filtro-inteligente');
+
+            if (!botaoFiltroInteligente) {
+                return;
+            }
+
+            estadoAplicacao.filtroInteligenteAtual = botaoFiltroInteligente.dataset.filtroInteligente;
+            salvarFiltroEOrdenacaoNoLocalStorage();
+
+            document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
+                botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
+            });
+
+            renderizarTudo();
+        });
+    }
+
+    if (elementosInterface.containerOrdenacaoCarteira) {
+        elementosInterface.containerOrdenacaoCarteira.addEventListener('click', (evento) => {
+            const botaoOrdenacao = evento.target.closest('.botao-ordenacao');
+
+            if (!botaoOrdenacao) {
+                return;
+            }
+
+            estadoAplicacao.ordenacaoCarteiraAtual = botaoOrdenacao.dataset.ordenacao;
+            salvarFiltroEOrdenacaoNoLocalStorage();
+
+            document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
+                botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
+            });
+
+            renderizarTudo();
+        });
+    }
+
+    if (elementosInterface.navegacaoAbas) {
+        elementosInterface.navegacaoAbas.addEventListener('click', (evento) => {
+            const botaoAba = evento.target.closest('button[data-aba]');
+
+            if (!botaoAba) {
+                return;
+            }
+
+            const abaSelecionada = botaoAba.dataset.aba;
+
+            if (elementosInterface.secaoPainel) {
+                elementosInterface.secaoPainel.classList.toggle('hidden', abaSelecionada !== 'painel');
+            }
+
+            if (elementosInterface.secaoProventos) {
+                elementosInterface.secaoProventos.classList.toggle('hidden', abaSelecionada !== 'proventos');
+            }
+
+            document.querySelectorAll('#navegacao-abas button').forEach((botao) => {
+                botao.classList.toggle('text-white', botao.dataset.aba === abaSelecionada);
+                botao.classList.toggle('aba-ativa', botao.dataset.aba === abaSelecionada);
+            });
+        });
+    }
+
+    if (elementosInterface.botaoLimparComparador) {
+        elementosInterface.botaoLimparComparador.addEventListener('click', limparComparador);
+    }
+
+    if (elementosInterface.botaoExportarRelatorio) {
+        elementosInterface.botaoExportarRelatorio.addEventListener('click', exportarRelatorioCarteira);
+    }
+
+    if (elementosInterface.campoCaixaDisponivel) {
+        elementosInterface.campoCaixaDisponivel.addEventListener('input', renderizarTudo);
+    }
+
+    if (elementosInterface.campoValorAporteGlobal) {
+        elementosInterface.campoValorAporteGlobal.addEventListener('input', () => {
+            salvarAporteGlobalNoLocalStorage();
+            renderizarTudo();
+        });
+    }
+
+    if (elementosInterface.botaoSalvarAtivo) {
+        elementosInterface.botaoSalvarAtivo.addEventListener('click', salvarAtivo);
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoAtivo) {
+        elementosInterface.botaoCancelarEdicaoAtivo.addEventListener('click', cancelarEdicaoAtivo);
+    }
+
+    if (elementosInterface.botaoSalvarProvento) {
+        elementosInterface.botaoSalvarProvento.addEventListener('click', salvarProvento);
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoProvento) {
+        elementosInterface.botaoCancelarEdicaoProvento.addEventListener('click', cancelarEdicaoProvento);
+    }
+
+    if (elementosInterface.botaoSalvarAporte) {
+        elementosInterface.botaoSalvarAporte.addEventListener('click', salvarAporte);
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoAporte) {
+        elementosInterface.botaoCancelarEdicaoAporte.addEventListener('click', limparFormularioAporte);
+    }
+
+    if (elementosInterface.campoMetaPatrimonio) {
+        elementosInterface.campoMetaPatrimonio.addEventListener('input', () => {
+            salvarMetasNoLocalStorage();
+            renderizarTudo();
+        });
+    }
+
+    if (elementosInterface.campoMetaRendaMensal) {
+        elementosInterface.campoMetaRendaMensal.addEventListener('input', () => {
+            salvarMetasNoLocalStorage();
+            renderizarTudo();
+        });
+    }
+
+    if (elementosInterface.botaoExportarBackup) {
+        elementosInterface.botaoExportarBackup.addEventListener('click', () => {
+            exportarCarteiraParaJson(
+                estadoAplicacao.listaAtivosEmMemoria,
+                estadoAplicacao.listaProventosEmMemoria
+            );
 
             mostrarNotificacao(
                 elementosInterface.containerNotificacoes,
-                `Backup restaurado com sucesso. Ativos: ${resultadoRestauracao.quantidadeAtivos}, Proventos: ${resultadoRestauracao.quantidadeProventos}.`,
+                'Backup exportado com sucesso.',
                 'sucesso'
             );
-        } catch (erro) {
-            mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao importar backup: ${erro.message}`, 'erro');
-        } finally {
-            evento.target.value = '';
-        }
-    });
+        });
+    }
+
+    if (elementosInterface.campoImportarBackup) {
+        elementosInterface.campoImportarBackup.addEventListener('change', async (evento) => {
+            const arquivo = evento.target.files?.[0];
+
+            if (!arquivo) {
+                return;
+            }
+
+            try {
+                const dadosImportados = await importarCarteiraDeArquivo(arquivo);
+
+                if (!estadoAplicacao.usuarioAtual) {
+                    throw new Error('Faça login antes de restaurar um backup.');
+                }
+
+                const confirmouRestauracao = confirm(
+                    `Deseja restaurar este backup no Firestore?\n\nAtivos: ${dadosImportados.ativos.length}\nProventos: ${dadosImportados.proventos.length}\n\nIsso adicionará novos registros à sua conta.`
+                );
+
+                if (!confirmouRestauracao) {
+                    evento.target.value = '';
+                    return;
+                }
+
+                const resultadoRestauracao = await restaurarBackupNoFirestore({
+                    db,
+                    usuarioAtual: estadoAplicacao.usuarioAtual,
+                    ativos: dadosImportados.ativos,
+                    proventos: dadosImportados.proventos
+                });
+
+                mostrarNotificacao(
+                    elementosInterface.containerNotificacoes,
+                    `Backup restaurado com sucesso. Ativos: ${resultadoRestauracao.quantidadeAtivos}, Proventos: ${resultadoRestauracao.quantidadeProventos}.`,
+                    'sucesso'
+                );
+            } catch (erro) {
+                mostrarNotificacao(
+                    elementosInterface.containerNotificacoes,
+                    `Erro ao importar backup: ${erro.message}`,
+                    'erro'
+                );
+            } finally {
+                evento.target.value = '';
+            }
+        });
+    }
 
     const tratarCliqueAcoesAtivo = async (evento) => {
         const botaoEditarAtivo = evento.target.closest('.botao-editar-ativo');
@@ -1216,6 +1616,7 @@ function inicializarEventosDaInterface() {
 
         if (botaoExcluirAtivo) {
             const confirmouExclusao = confirm('Deseja realmente excluir este ativo?');
+
             if (!confirmouExclusao) {
                 return;
             }
@@ -1233,6 +1634,7 @@ function inicializarEventosDaInterface() {
                 estadoAplicacao.listaAtivosSelecionadosParaComparacao = estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter(
                     (item) => item !== botaoExcluirAtivo.dataset.id
                 );
+
                 salvarComparadorNoLocalStorage();
 
                 mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo excluído com sucesso.', 'sucesso');
@@ -1273,11 +1675,17 @@ function inicializarEventosDaInterface() {
         }
     };
 
-    elementosInterface.corpoTabelaAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
-    elementosInterface.listaCardsMobileAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
+    if (elementosInterface.corpoTabelaAtivos) {
+        elementosInterface.corpoTabelaAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
+    }
+
+    if (elementosInterface.listaCardsMobileAtivos) {
+        elementosInterface.listaCardsMobileAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
+    }
 
     const tratarInputAtivo = (evento) => {
         const campoObservacaoWatchlist = evento.target.closest('.campo-observacao-watchlist');
+
         if (campoObservacaoWatchlist) {
             estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
             salvarObservacoesWatchlistNoLocalStorage();
@@ -1285,77 +1693,91 @@ function inicializarEventosDaInterface() {
         }
     };
 
-    elementosInterface.corpoTabelaAtivos.addEventListener('input', tratarInputAtivo);
-    elementosInterface.listaCardsMobileAtivos.addEventListener('input', tratarInputAtivo);
+    if (elementosInterface.corpoTabelaAtivos) {
+        elementosInterface.corpoTabelaAtivos.addEventListener('input', tratarInputAtivo);
+    }
 
-    elementosInterface.corpoTabelaProventos.addEventListener('click', async (evento) => {
-        const botaoEditarProvento = evento.target.closest('.botao-editar-provento');
-        const botaoExcluirProvento = evento.target.closest('.botao-excluir-provento');
+    if (elementosInterface.listaCardsMobileAtivos) {
+        elementosInterface.listaCardsMobileAtivos.addEventListener('input', tratarInputAtivo);
+    }
 
-        if (botaoEditarProvento) {
-            const proventoSelecionado = estadoAplicacao.listaProventosEmMemoria.find((provento) => provento.id === botaoEditarProvento.dataset.id);
-            if (proventoSelecionado) {
-                prepararEdicaoProvento(proventoSelecionado);
+    if (elementosInterface.corpoTabelaProventos) {
+        elementosInterface.corpoTabelaProventos.addEventListener('click', async (evento) => {
+            const botaoEditarProvento = evento.target.closest('.botao-editar-provento');
+            const botaoExcluirProvento = evento.target.closest('.botao-excluir-provento');
+
+            if (botaoEditarProvento) {
+                const proventoSelecionado = estadoAplicacao.listaProventosEmMemoria.find(
+                    (provento) => provento.id === botaoEditarProvento.dataset.id
+                );
+
+                if (proventoSelecionado) {
+                    prepararEdicaoProvento(proventoSelecionado);
+                }
             }
-        }
 
-        if (botaoExcluirProvento) {
-            const confirmouExclusao = confirm('Deseja realmente excluir este provento?');
-            if (!confirmouExclusao) {
-                return;
-            }
+            if (botaoExcluirProvento) {
+                const confirmouExclusao = confirm('Deseja realmente excluir este provento?');
 
-            try {
-                await deleteDoc(doc(db, 'proventos', botaoExcluirProvento.dataset.id));
-
-                if (estadoAplicacao.identificadorProventoEmEdicao === botaoExcluirProvento.dataset.id) {
-                    cancelarEdicaoProvento();
+                if (!confirmouExclusao) {
+                    return;
                 }
 
-                mostrarNotificacao(elementosInterface.containerNotificacoes, 'Provento excluído com sucesso.', 'sucesso');
-            } catch (erro) {
-                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir provento: ${erro.message}`, 'erro');
+                try {
+                    await deleteDoc(doc(db, 'proventos', botaoExcluirProvento.dataset.id));
+
+                    if (estadoAplicacao.identificadorProventoEmEdicao === botaoExcluirProvento.dataset.id) {
+                        cancelarEdicaoProvento();
+                    }
+
+                    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Provento excluído com sucesso.', 'sucesso');
+                } catch (erro) {
+                    mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir provento: ${erro.message}`, 'erro');
+                }
             }
-        }
-    });
+        });
+    }
 
-    elementosInterface.painelHistoricoAportes.addEventListener('click', async (evento) => {
-        const botaoEditarAporte = evento.target.closest('.botao-editar-aporte');
-        const botaoExcluirAporte = evento.target.closest('.botao-excluir-aporte');
+    if (elementosInterface.painelHistoricoAportes) {
+        elementosInterface.painelHistoricoAportes.addEventListener('click', async (evento) => {
+            const botaoEditarAporte = evento.target.closest('.botao-editar-aporte');
+            const botaoExcluirAporte = evento.target.closest('.botao-excluir-aporte');
 
-        if (botaoEditarAporte) {
-            prepararEdicaoAporte(botaoEditarAporte.dataset.id);
-        }
-
-        if (botaoExcluirAporte) {
-            const confirmouExclusao = confirm('Deseja realmente excluir este aporte?');
-            if (!confirmouExclusao) {
-                return;
+            if (botaoEditarAporte) {
+                prepararEdicaoAporte(botaoEditarAporte.dataset.id);
             }
 
-            try {
-                await excluirAporteNoFirestore({
-                    db,
-                    identificadorAporte: botaoExcluirAporte.dataset.id
-                });
+            if (botaoExcluirAporte) {
+                const confirmouExclusao = confirm('Deseja realmente excluir este aporte?');
 
-                if (estadoAplicacao.identificadorAporteEmEdicao === botaoExcluirAporte.dataset.id) {
-                    limparFormularioAporte();
+                if (!confirmouExclusao) {
+                    return;
                 }
 
-                mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte excluído com sucesso.', 'sucesso');
-            } catch (erro) {
-                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir aporte: ${erro.message}`, 'erro');
+                try {
+                    await excluirAporteNoFirestore({
+                        db,
+                        identificadorAporte: botaoExcluirAporte.dataset.id
+                    });
+
+                    if (estadoAplicacao.identificadorAporteEmEdicao === botaoExcluirAporte.dataset.id) {
+                        limparFormularioAporte();
+                    }
+
+                    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte excluído com sucesso.', 'sucesso');
+                } catch (erro) {
+                    mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir aporte: ${erro.message}`, 'erro');
+                }
             }
-        }
+        });
+    }
+
+    Object.values(camposFormularioAtivo).filter(Boolean).forEach((campo) => {
+        campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean)));
     });
 
-    Object.values(camposFormularioAtivo).forEach((campo) => {
-        campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioAtivo)));
-    });
-
-    Object.values(camposFormularioProvento).forEach((campo) => {
-        campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioProvento)));
+    Object.values(camposFormularioProvento).filter(Boolean).forEach((campo) => {
+        campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean)));
     });
 }
 
