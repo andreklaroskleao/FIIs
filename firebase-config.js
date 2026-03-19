@@ -10,13 +10,14 @@ import {
     browserLocalPersistence
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
-const configuracaoFirebase = {
-    apiKey: 'AIzaSyApVZ6hSdi-HKIjVXsZPHRV6BhmnHvKMKE',
-    authDomain: 'appfiis-a6550.firebaseapp.com',
-    projectId: 'appfiis-a6550',
-    storageBucket: 'appfiis-a6550.firebasestorage.app',
-    messagingSenderId: '28404604247',
-    appId: '1:28404604247:web:bc9c16c771cbbeef8b7212'
+const firebaseConfig = {
+  apiKey: "AIzaSyD4Yq5QBh84yox8-yLS6mxqP3o0vpHQUb4",
+  authDomain: "appfiis-ii.firebaseapp.com",
+  projectId: "appfiis-ii",
+  storageBucket: "appfiis-ii.firebasestorage.app",
+  messagingSenderId: "735639659271",
+  appId: "1:735639659271:web:14174f2a9acb9eefd95ba2",
+  measurementId: "G-DC17FH54CE"
 };
 
 const aplicacaoFirebase = initializeApp(configuracaoFirebase);
