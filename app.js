@@ -88,6 +88,7 @@ const CHAVE_LOCAL_STORAGE_COMPARADOR = 'fii_insight_comparador';
 const CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE = 'fii_insight_modo_privacidade';
 const CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST = 'fii_insight_observacoes_watchlist';
 const CHAVE_LOCAL_STORAGE_APORTE_GLOBAL = 'fii_insight_aporte_global';
+const CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL = 'fii_insight_aba_principal';
 
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
@@ -113,8 +114,6 @@ const elementosInterface = {
     botaoExportarRelatorio: document.getElementById('botao-exportar-relatorio'),
     botaoLimparComparador: document.getElementById('botao-limpar-comparador'),
     campoCaixaDisponivel: document.getElementById('campo-caixa-disponivel'),
-    secaoPainel: document.getElementById('secao-painel'),
-    secaoProventos: document.getElementById('secao-proventos'),
     graficoProventos: document.getElementById('grafico-proventos'),
     graficoAlocacaoSegmentos: document.getElementById('grafico-alocacao-segmentos'),
     tituloFormularioAtivo: document.getElementById('titulo-formulario-ativo'),
@@ -130,6 +129,7 @@ const elementosInterface = {
     botaoExportarBackup: document.getElementById('botao-exportar-backup'),
     campoImportarBackup: document.getElementById('campo-importar-backup'),
     iconeModoPrivacidade: document.getElementById('icone-modo-privacidade'),
+    botaoModoPrivacidade: document.getElementById('botao-modo-privacidade'),
     campoTickerAporte: document.getElementById('campo-ticker-aporte'),
     campoQuantidadeAporte: document.getElementById('campo-quantidade-aporte'),
     campoPrecoAporte: document.getElementById('campo-preco-aporte'),
@@ -137,11 +137,17 @@ const elementosInterface = {
     campoObservacaoAporte: document.getElementById('campo-observacao-aporte'),
     botaoSalvarAporte: document.getElementById('botao-salvar-aporte'),
     botaoCancelarEdicaoAporte: document.getElementById('botao-cancelar-edicao-aporte'),
-    botaoModoPrivacidade: document.getElementById('botao-modo-privacidade'),
     containerFiltrosSegmento: document.getElementById('container-filtros-segmento'),
     containerFiltrosInteligentes: document.getElementById('container-filtros-inteligentes'),
     containerOrdenacaoCarteira: document.getElementById('container-ordenacao-carteira'),
-    navegacaoAbas: document.getElementById('navegacao-abas')
+    navegacaoAbasPrincipais: document.getElementById('navegacao-abas-principais'),
+    secaoVisaoGeral: document.getElementById('secao-visao-geral'),
+    secaoCarteira: document.getElementById('secao-carteira'),
+    secaoAportes: document.getElementById('secao-aportes'),
+    secaoProventos: document.getElementById('secao-proventos'),
+    secaoAnalises: document.getElementById('secao-analises'),
+    secaoListas: document.getElementById('secao-listas'),
+    secaoConfiguracoes: document.getElementById('secao-configuracoes')
 };
 
 const camposFormularioAtivo = {
@@ -305,6 +311,41 @@ function carregarAporteGlobalNoLocalStorage() {
     if (valorSalvo !== null && elementosInterface.campoValorAporteGlobal) {
         elementosInterface.campoValorAporteGlobal.value = valorSalvo;
     }
+}
+
+function salvarAbaPrincipalNoLocalStorage(abaSelecionada) {
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL, abaSelecionada);
+}
+
+function carregarAbaPrincipalDoLocalStorage() {
+    const abaSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL);
+    return abaSalva || 'visao-geral';
+}
+
+function alternarAbaPrincipal(abaSelecionada) {
+    const mapaSecoes = {
+        'visao-geral': elementosInterface.secaoVisaoGeral,
+        'carteira': elementosInterface.secaoCarteira,
+        'aportes': elementosInterface.secaoAportes,
+        'proventos': elementosInterface.secaoProventos,
+        'analises': elementosInterface.secaoAnalises,
+        'listas': elementosInterface.secaoListas,
+        'configuracoes': elementosInterface.secaoConfiguracoes
+    };
+
+    Object.entries(mapaSecoes).forEach(([nomeAba, secao]) => {
+        if (!secao) {
+            return;
+        }
+
+        secao.classList.toggle('hidden', nomeAba !== abaSelecionada);
+    });
+
+    document.querySelectorAll('.botao-aba-principal').forEach((botao) => {
+        botao.classList.toggle('ativa', botao.dataset.abaPrincipal === abaSelecionada);
+    });
+
+    salvarAbaPrincipalNoLocalStorage(abaSelecionada);
 }
 
 function atualizarBlocoUsuario(estaLogado) {
@@ -680,6 +721,8 @@ function prepararEdicaoAporte(identificadorAporte) {
     if (elementosInterface.botaoCancelarEdicaoAporte) {
         elementosInterface.botaoCancelarEdicaoAporte.classList.remove('hidden');
     }
+
+    alternarAbaPrincipal('aportes');
 }
 
 async function salvarAporte() {
@@ -1071,6 +1114,7 @@ function prepararEdicaoProvento(provento) {
     }
 
     limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
+    alternarAbaPrincipal('proventos');
 }
 
 function cancelarEdicaoProvento() {
@@ -1158,6 +1202,7 @@ async function prepararEdicaoAtivo(identificadorAtivo) {
         }
 
         limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
+        alternarAbaPrincipal('carteira');
     } catch (erro) {
         mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao carregar ativo para edição: ${erro.message}`, 'erro');
     }
@@ -1258,11 +1303,7 @@ async function salvarProvento() {
 }
 
 function abrirFormularioProventoComTickerPreenchido(ticker) {
-    const botaoAbaProventos = document.querySelector('[data-aba="proventos"]');
-
-    if (botaoAbaProventos) {
-        botaoAbaProventos.click();
-    }
+    alternarAbaPrincipal('proventos');
 
     if (camposFormularioProvento.ticker) {
         camposFormularioProvento.ticker.value = ticker;
@@ -1385,6 +1426,19 @@ function inicializarEventosDaInterface() {
     carregarModoPrivacidadeDoLocalStorage();
     carregarObservacoesWatchlistDoLocalStorage();
     carregarAporteGlobalNoLocalStorage();
+    alternarAbaPrincipal(carregarAbaPrincipalDoLocalStorage());
+
+    if (elementosInterface.navegacaoAbasPrincipais) {
+        elementosInterface.navegacaoAbasPrincipais.addEventListener('click', (evento) => {
+            const botaoAbaPrincipal = evento.target.closest('[data-aba-principal]');
+
+            if (!botaoAbaPrincipal) {
+                return;
+            }
+
+            alternarAbaPrincipal(botaoAbaPrincipal.dataset.abaPrincipal);
+        });
+    }
 
     if (elementosInterface.botaoModoPrivacidade) {
         elementosInterface.botaoModoPrivacidade.addEventListener('click', () => {
@@ -1453,31 +1507,6 @@ function inicializarEventosDaInterface() {
             });
 
             renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.navegacaoAbas) {
-        elementosInterface.navegacaoAbas.addEventListener('click', (evento) => {
-            const botaoAba = evento.target.closest('button[data-aba]');
-
-            if (!botaoAba) {
-                return;
-            }
-
-            const abaSelecionada = botaoAba.dataset.aba;
-
-            if (elementosInterface.secaoPainel) {
-                elementosInterface.secaoPainel.classList.toggle('hidden', abaSelecionada !== 'painel');
-            }
-
-            if (elementosInterface.secaoProventos) {
-                elementosInterface.secaoProventos.classList.toggle('hidden', abaSelecionada !== 'proventos');
-            }
-
-            document.querySelectorAll('#navegacao-abas button').forEach((botao) => {
-                botao.classList.toggle('text-white', botao.dataset.aba === abaSelecionada);
-                botao.classList.toggle('aba-ativa', botao.dataset.aba === abaSelecionada);
-            });
         });
     }
 
@@ -1671,6 +1700,7 @@ function inicializarEventosDaInterface() {
 
         if (botaoAlternarComparador) {
             alternarAtivoNoComparador(botaoAlternarComparador.dataset.id);
+            alternarAbaPrincipal('analises');
             renderizarTudo();
         }
     };
