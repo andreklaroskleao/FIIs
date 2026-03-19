@@ -1,50 +1,32 @@
-import { LISTA_SEGMENTOS_VALIDOS, validarDiaDoMes } from './validacoes.js';
 import { normalizarTicker } from './formatadores.js';
 
 export function converterParaNumeroSeguro(valor, valorPadrao = 0) {
     const numeroConvertido = Number(valor);
-    return Number.isFinite(numeroConvertido) ? numeroConvertido : valorPadrao;
+
+    if (!Number.isFinite(numeroConvertido)) {
+        return valorPadrao;
+    }
+
+    return numeroConvertido;
 }
 
-export function calcularDistanciaCircularEntreDias(diaA, diaB) {
-    const diferencaAbsoluta = Math.abs(diaA - diaB);
-    return Math.min(diferencaAbsoluta, 31 - diferencaAbsoluta);
+export function calcularDistanciaCircularEntreDias(diaEvento, diaAtual) {
+    const diaEventoConvertido = Number(diaEvento);
+    const diaAtualConvertido = Number(diaAtual);
+
+    if (!Number.isInteger(diaEventoConvertido) || !Number.isInteger(diaAtualConvertido)) {
+        return 999;
+    }
+
+    if (diaEventoConvertido >= diaAtualConvertido) {
+        return diaEventoConvertido - diaAtualConvertido;
+    }
+
+    return (31 - diaAtualConvertido) + diaEventoConvertido;
 }
 
-export function calcularLucroPrejuizo(valorTotalAtual, valorTotalInvestido) {
-    const valor = valorTotalAtual - valorTotalInvestido;
-    const percentual = valorTotalInvestido > 0 ? (valor / valorTotalInvestido) * 100 : 0;
-
-    return { valor, percentual };
-}
-
-export function calcularRendaEstimada(precoAtual, dividendYieldAnual, quantidade) {
-    const dividendoMensalEstimadoPorCota = dividendYieldAnual > 0
-        ? (precoAtual * (dividendYieldAnual / 100)) / 12
-        : precoAtual * 0.008;
-
-    const rendaMensal = quantidade * dividendoMensalEstimadoPorCota;
-    const rendaAnual = rendaMensal * 12;
-
-    return {
-        dividendoMensalEstimadoPorCota,
-        rendaMensal,
-        rendaAnual
-    };
-}
-
-export function calcularDiferencaParaPrecoTeto(precoAtual, precoTeto) {
-    const valor = precoTeto - precoAtual;
-    const percentual = precoAtual > 0 ? ((precoTeto - precoAtual) / precoAtual) * 100 : 0;
-
-    return {
-        valor,
-        percentual
-    };
-}
-
-export function agruparAportesPorTicker(listaAportes) {
-    const mapaAportesPorTicker = {};
+function calcularResumoAportesPorTicker(listaAportes) {
+    const mapaResumo = {};
 
     listaAportes.forEach((aporte) => {
         const tickerNormalizado = normalizarTicker(aporte.ticker);
@@ -53,189 +35,210 @@ export function agruparAportesPorTicker(listaAportes) {
             return;
         }
 
-        if (!mapaAportesPorTicker[tickerNormalizado]) {
-            mapaAportesPorTicker[tickerNormalizado] = [];
+        const quantidadeComprada = converterParaNumeroSeguro(aporte.quantidadeComprada, 0);
+        const precoPorCota = converterParaNumeroSeguro(aporte.precoPorCota, 0);
+        const valorTotalCompra = quantidadeComprada * precoPorCota;
+
+        if (!mapaResumo[tickerNormalizado]) {
+            mapaResumo[tickerNormalizado] = {
+                quantidadeTotal: 0,
+                valorTotalInvestido: 0
+            };
         }
 
-        mapaAportesPorTicker[tickerNormalizado].push({
-            ...aporte,
-            ticker: tickerNormalizado,
-            quantidadeComprada: converterParaNumeroSeguro(aporte.quantidadeComprada, 0),
-            precoPorCota: converterParaNumeroSeguro(aporte.precoPorCota, 0),
-            valorTotalAporte: converterParaNumeroSeguro(aporte.valorTotalAporte, 0),
-            dataAporte: aporte.dataAporte || ''
-        });
+        mapaResumo[tickerNormalizado].quantidadeTotal += quantidadeComprada;
+        mapaResumo[tickerNormalizado].valorTotalInvestido += valorTotalCompra;
     });
 
-    Object.keys(mapaAportesPorTicker).forEach((ticker) => {
-        mapaAportesPorTicker[ticker].sort((aporteA, aporteB) => {
-            const dataA = aporteA.dataAporte || '';
-            const dataB = aporteB.dataAporte || '';
-            return dataA.localeCompare(dataB);
-        });
-    });
-
-    return mapaAportesPorTicker;
+    return mapaResumo;
 }
 
-export function calcularResumoAportesDoTicker(listaAportesDoTicker) {
-    let quantidadeCalculada = 0;
-    let valorInvestidoCalculado = 0;
+function calcularPrecoAtualDoMapa(mapaCotacoes, ticker) {
+    if (!mapaCotacoes || !ticker) {
+        return 0;
+    }
 
-    listaAportesDoTicker.forEach((aporte) => {
-        quantidadeCalculada += converterParaNumeroSeguro(aporte.quantidadeComprada, 0);
-        valorInvestidoCalculado += converterParaNumeroSeguro(aporte.valorTotalAporte, 0);
-    });
+    const itemCotacao = mapaCotacoes[normalizarTicker(ticker)];
 
-    const precoMedioCalculado = quantidadeCalculada > 0
-        ? valorInvestidoCalculado / quantidadeCalculada
-        : 0;
+    if (!itemCotacao) {
+        return 0;
+    }
 
-    return {
-        quantidadeCalculada,
-        valorInvestidoCalculado,
-        precoMedioCalculado,
-        quantidadeDeAportes: listaAportesDoTicker.length
-    };
+    if (Number.isFinite(Number(itemCotacao.regularMarketPrice))) {
+        return Number(itemCotacao.regularMarketPrice);
+    }
+
+    if (Number.isFinite(Number(itemCotacao.price))) {
+        return Number(itemCotacao.price);
+    }
+
+    return 0;
 }
 
-export function enriquecerListaAtivos(listaAtivosOriginal, mapaCotacoes, listaAportes = []) {
-    const mapaAportesPorTicker = agruparAportesPorTicker(listaAportes);
+function obterOrigemCalculoPosicao(resumoAportesTicker, quantidadeCadastro, precoMedioCadastro) {
+    if (
+        resumoAportesTicker &&
+        resumoAportesTicker.quantidadeTotal > 0 &&
+        resumoAportesTicker.valorTotalInvestido > 0
+    ) {
+        return 'aportes';
+    }
 
-    return listaAtivosOriginal.map((ativoOriginal) => {
-        const tickerNormalizado = normalizarTicker(ativoOriginal.ticker);
-        const dadosMercado = mapaCotacoes[tickerNormalizado] || {};
-        const listaAportesDoTicker = mapaAportesPorTicker[tickerNormalizado] || [];
+    if (quantidadeCadastro > 0 && precoMedioCadastro > 0) {
+        return 'cadastro';
+    }
 
-        const quantidadeCadastro = converterParaNumeroSeguro(ativoOriginal.quantidade, 0);
-        const precoMedioCadastro = converterParaNumeroSeguro(ativoOriginal.precoMedio, 0);
+    return 'cadastro';
+}
 
-        const resumoAportes = calcularResumoAportesDoTicker(listaAportesDoTicker);
-        const usarResumoAportes = resumoAportes.quantidadeCalculada > 0;
+export function enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes = {}, listaAportes = []) {
+    const mapaResumoAportesPorTicker = calcularResumoAportesPorTicker(listaAportes);
 
-        const quantidade = usarResumoAportes ? resumoAportes.quantidadeCalculada : quantidadeCadastro;
-        const precoMedio = usarResumoAportes ? resumoAportes.precoMedioCalculado : precoMedioCadastro;
-        const valorTotalInvestido = usarResumoAportes
-            ? resumoAportes.valorInvestidoCalculado
-            : precoMedioCadastro * quantidadeCadastro;
+    return listaAtivosBruta.map((ativoBruto) => {
+        const tickerNormalizado = normalizarTicker(ativoBruto.ticker);
 
-        const precoAtual = converterParaNumeroSeguro(dadosMercado.regularMarketPrice, 0);
-        const dividendYieldAnual = converterParaNumeroSeguro(dadosMercado.dividendYield, 0);
-        const valorTotalAtual = precoAtual * quantidade;
-        const lucroPrejuizo = calcularLucroPrejuizo(valorTotalAtual, valorTotalInvestido);
-        const rendaEstimada = calcularRendaEstimada(precoAtual, dividendYieldAnual, quantidade);
-        const diferencaPrecoTeto = calcularDiferencaParaPrecoTeto(
-            precoAtual,
-            converterParaNumeroSeguro(ativoOriginal.precoTeto, 0)
+        const quantidadeCadastro = converterParaNumeroSeguro(ativoBruto.quantidade, 0);
+        const precoMedioCadastro = converterParaNumeroSeguro(ativoBruto.precoMedio, 0);
+
+        const resumoAportesTicker = mapaResumoAportesPorTicker[tickerNormalizado];
+        const origemCalculoPosicao = obterOrigemCalculoPosicao(
+            resumoAportesTicker,
+            quantidadeCadastro,
+            precoMedioCadastro
         );
 
+        const quantidadeFinal = origemCalculoPosicao === 'aportes'
+            ? converterParaNumeroSeguro(resumoAportesTicker.quantidadeTotal, quantidadeCadastro)
+            : quantidadeCadastro;
+
+        const valorTotalInvestido = origemCalculoPosicao === 'aportes'
+            ? converterParaNumeroSeguro(resumoAportesTicker.valorTotalInvestido, quantidadeCadastro * precoMedioCadastro)
+            : quantidadeCadastro * precoMedioCadastro;
+
+        const precoMedioFinal = quantidadeFinal > 0
+            ? valorTotalInvestido / quantidadeFinal
+            : precoMedioCadastro;
+
+        const precoAtual = calcularPrecoAtualDoMapa(mapaCotacoes, tickerNormalizado);
+        const valorTotalAtual = quantidadeFinal * precoAtual;
+        const lucroPrejuizoValor = valorTotalAtual - valorTotalInvestido;
+        const lucroPrejuizoPercentual = valorTotalInvestido > 0
+            ? (lucroPrejuizoValor / valorTotalInvestido) * 100
+            : 0;
+
+        const rendaMensalEstimada = quantidadeFinal * converterParaNumeroSeguro(ativoBruto.rendaMensalPorCota, 0);
+        const rendaAnualEstimada = rendaMensalEstimada * 12;
+
         return {
-            id: ativoOriginal.id,
-            uid: ativoOriginal.uid,
+            ...ativoBruto,
             ticker: tickerNormalizado,
-            quantidade,
-            precoMedio,
+            quantidade: quantidadeFinal,
             quantidadeCadastro,
+            precoMedio: precoMedioFinal,
             precoMedioCadastro,
-            quantidadeCalculadaPorAportes: resumoAportes.quantidadeCalculada,
-            precoMedioCalculadoPorAportes: resumoAportes.precoMedioCalculado,
-            quantidadeDeAportes: resumoAportes.quantidadeDeAportes,
-            origemCalculoPosicao: usarResumoAportes ? 'aportes' : 'cadastro',
-            nota: converterParaNumeroSeguro(ativoOriginal.nota, 0),
-            precoTeto: converterParaNumeroSeguro(ativoOriginal.precoTeto, 0),
-            diaDataCom: validarDiaDoMes(ativoOriginal.diaDataCom),
-            diaPagamento: validarDiaDoMes(ativoOriginal.diaPagamento),
-            segmento: LISTA_SEGMENTOS_VALIDOS.includes(ativoOriginal.segmento) ? ativoOriginal.segmento : 'Outros',
-            observacao: ativoOriginal.observacao || '',
-            favorito: Boolean(ativoOriginal.favorito),
-            emWatchlist: Boolean(ativoOriginal.emWatchlist),
-            precoAtual,
-            dividendoMensalEstimadoPorCota: rendaEstimada.dividendoMensalEstimadoPorCota,
-            rendaMensalEstimada: rendaEstimada.rendaMensal,
-            rendaAnualEstimada: rendaEstimada.rendaAnual,
-            valorTotalAtual,
             valorTotalInvestido,
-            lucroPrejuizoValor: lucroPrejuizo.valor,
-            lucroPrejuizoPercentual: lucroPrejuizo.percentual,
-            diferencaParaPrecoTetoValor: diferencaPrecoTeto.valor,
-            diferencaParaPrecoTetoPercentual: diferencaPrecoTeto.percentual
+            precoAtual,
+            valorTotalAtual,
+            lucroPrejuizoValor,
+            lucroPrejuizoPercentual,
+            rendaMensalEstimada,
+            rendaAnualEstimada,
+            nota: converterParaNumeroSeguro(ativoBruto.nota, 0),
+            precoTeto: converterParaNumeroSeguro(ativoBruto.precoTeto, 0),
+            diaDataCom: ativoBruto.diaDataCom ?? null,
+            diaPagamento: ativoBruto.diaPagamento ?? null,
+            segmento: ativoBruto.segmento || 'Outros',
+            observacao: ativoBruto.observacao || '',
+            favorito: Boolean(ativoBruto.favorito),
+            emWatchlist: Boolean(ativoBruto.emWatchlist),
+            origemCalculoPosicao
         };
     });
 }
 
 export function obterListaAtivosFiltradaEOrdenada(listaAtivos, filtroSegmentoAtual, ordenacaoCarteiraAtual) {
-    let listaProcessada = filtroSegmentoAtual === 'Todos'
+    const listaFiltrada = filtroSegmentoAtual === 'Todos'
         ? [...listaAtivos]
         : listaAtivos.filter((ativo) => ativo.segmento === filtroSegmentoAtual);
 
+    const listaOrdenada = [...listaFiltrada];
+
     switch (ordenacaoCarteiraAtual) {
         case 'menor-posicao':
-            listaProcessada.sort((ativoA, ativoB) => ativoA.valorTotalAtual - ativoB.valorTotalAtual);
+            listaOrdenada.sort((ativoA, ativoB) => ativoA.valorTotalAtual - ativoB.valorTotalAtual);
             break;
+
         case 'ticker':
-            listaProcessada.sort((ativoA, ativoB) => ativoA.ticker.localeCompare(ativoB.ticker));
+            listaOrdenada.sort((ativoA, ativoB) => ativoA.ticker.localeCompare(ativoB.ticker));
             break;
+
         case 'nota':
-            listaProcessada.sort((ativoA, ativoB) => ativoB.nota - ativoA.nota);
+            listaOrdenada.sort((ativoA, ativoB) => ativoB.nota - ativoA.nota);
             break;
+
         case 'projecao':
-            listaProcessada.sort((ativoA, ativoB) => ativoB.rendaMensalEstimada - ativoA.rendaMensalEstimada);
+            listaOrdenada.sort((ativoA, ativoB) => ativoB.rendaMensalEstimada - ativoA.rendaMensalEstimada);
             break;
+
         case 'maior-posicao':
         default:
-            listaProcessada.sort((ativoA, ativoB) => ativoB.valorTotalAtual - ativoA.valorTotalAtual);
+            listaOrdenada.sort((ativoA, ativoB) => ativoB.valorTotalAtual - ativoA.valorTotalAtual);
             break;
     }
 
-    return listaProcessada;
+    return listaOrdenada;
 }
 
 export function gerarListaAlertas(listaAtivos) {
-    const diaAtual = new Date().getDate();
     const listaAlertas = [];
+    const diaAtual = new Date().getDate();
 
     listaAtivos.forEach((ativo) => {
-        if (ativo.precoTeto > 0 && ativo.precoAtual > ativo.precoTeto) {
+        if (ativo.precoTeto > 0 && ativo.precoAtual > 0 && ativo.precoAtual > ativo.precoTeto) {
             listaAlertas.push({
-                ticker: ativo.ticker,
-                tipo: 'Acima do teto',
-                classeSelo: 'acima-teto',
-                classeCartao: 'alerta-vermelho',
-                mensagem: 'O ativo está acima do preço teto definido. Considere revisar a tese ou aguardar melhor ponto de entrada.',
-                precoAtual: ativo.precoAtual
+                id: `${ativo.id}-acima-teto`,
+                tipo: 'acima-do-teto',
+                titulo: `${ativo.ticker} acima do teto`,
+                descricao: `Preço atual acima do preço teto definido.`,
+                ticker: ativo.ticker
             });
         }
 
-        if (ativo.diaDataCom && calcularDistanciaCircularEntreDias(ativo.diaDataCom, diaAtual) <= 3) {
-            listaAlertas.push({
-                ticker: ativo.ticker,
-                tipo: 'Data com',
-                classeSelo: 'data-proxima',
-                classeCartao: 'alerta-azul',
-                mensagem: 'A data com está próxima. Bom momento para revisar posição, calendário e estratégia de aporte.',
-                precoAtual: ativo.precoAtual
-            });
+        if (ativo.diaDataCom) {
+            const distanciaDataCom = calcularDistanciaCircularEntreDias(ativo.diaDataCom, diaAtual);
+
+            if (distanciaDataCom >= 0 && distanciaDataCom <= 5) {
+                listaAlertas.push({
+                    id: `${ativo.id}-data-com-proxima`,
+                    tipo: 'data-proxima',
+                    titulo: `${ativo.ticker} com data com próxima`,
+                    descricao: `Data com prevista para o dia ${ativo.diaDataCom}.`,
+                    ticker: ativo.ticker
+                });
+            }
         }
 
-        if (ativo.emWatchlist && ativo.precoTeto > 0 && ativo.precoAtual > 0 && ativo.precoAtual <= ativo.precoTeto) {
-            listaAlertas.push({
-                ticker: ativo.ticker,
-                tipo: 'Watchlist',
-                classeSelo: 'watchlist',
-                classeCartao: 'alerta-rosa',
-                mensagem: 'Ativo da watchlist negociando dentro do preço teto. Pode ser um candidato para avaliação mais profunda.',
-                precoAtual: ativo.precoAtual
-            });
+        if (ativo.diaPagamento) {
+            const distanciaPagamento = calcularDistanciaCircularEntreDias(ativo.diaPagamento, diaAtual);
+
+            if (distanciaPagamento >= 0 && distanciaPagamento <= 5) {
+                listaAlertas.push({
+                    id: `${ativo.id}-pagamento-proximo`,
+                    tipo: 'pagamento-proximo',
+                    titulo: `${ativo.ticker} com pagamento próximo`,
+                    descricao: `Pagamento previsto para o dia ${ativo.diaPagamento}.`,
+                    ticker: ativo.ticker
+                });
+            }
         }
 
-        if (ativo.origemCalculoPosicao === 'aportes') {
+        if (ativo.emWatchlist) {
             listaAlertas.push({
-                ticker: ativo.ticker,
-                tipo: 'Preço médio real',
-                classeSelo: 'favorito',
-                classeCartao: 'alerta-azul',
-                mensagem: 'Este ativo está usando o histórico de aportes como base principal do preço médio e da quantidade.',
-                precoAtual: ativo.precoAtual
+                id: `${ativo.id}-watchlist`,
+                tipo: 'watchlist',
+                titulo: `${ativo.ticker} está em watchlist`,
+                descricao: `Ativo marcado para observação.`,
+                ticker: ativo.ticker
             });
         }
     });
@@ -243,55 +246,49 @@ export function gerarListaAlertas(listaAtivos) {
     return listaAlertas;
 }
 
-export function gerarSimulacaoGlobalDeAporte(valorTotalAporte, listaRanking) {
-    const valorAporteSeguro = converterParaNumeroSeguro(valorTotalAporte, 0);
+export function gerarSimulacaoGlobalDeAporte(valorAporte, listaRanking) {
+    const valorAporteConvertido = converterParaNumeroSeguro(valorAporte, 0);
 
-    if (valorAporteSeguro <= 0 || !listaRanking.length) {
+    if (valorAporteConvertido <= 0 || !Array.isArray(listaRanking) || listaRanking.length === 0) {
         return {
-            valorTotalAporte: 0,
-            valorDistribuido: 0,
-            saldoResidual: 0,
-            listaDistribuicao: []
+            valorTotalAporte: valorAporteConvertido,
+            listaSugestoes: []
         };
     }
 
-    const listaElegivel = listaRanking
-        .filter((ativo) => ativo.precoAtual > 0)
-        .slice(0, 5);
+    const listaBase = listaRanking.slice(0, 5);
+    const somaScores = listaBase.reduce((soma, item) => soma + converterParaNumeroSeguro(item.score, 0), 0);
 
-    if (!listaElegivel.length) {
+    if (somaScores <= 0) {
         return {
-            valorTotalAporte: valorAporteSeguro,
-            valorDistribuido: 0,
-            saldoResidual: valorAporteSeguro,
-            listaDistribuicao: []
+            valorTotalAporte: valorAporteConvertido,
+            listaSugestoes: []
         };
     }
 
-    const somaDosScores = listaElegivel.reduce((soma, ativo) => soma + converterParaNumeroSeguro(ativo.score, 0), 0);
+    const listaSugestoes = listaBase.map((itemRanking) => {
+        const score = converterParaNumeroSeguro(itemRanking.score, 0);
+        const percentualDistribuicao = score / somaScores;
+        const valorSugerido = valorAporteConvertido * percentualDistribuicao;
+        const precoAtual = converterParaNumeroSeguro(itemRanking.precoAtual, 0);
 
-    const listaDistribuicao = listaElegivel.map((ativo) => {
-        const peso = somaDosScores > 0 ? ativo.score / somaDosScores : 1 / listaElegivel.length;
-        const valorSugerido = valorAporteSeguro * peso;
-        const quantidadeEstimativa = ativo.precoAtual > 0 ? Math.floor(valorSugerido / ativo.precoAtual) : 0;
+        const quantidadeSugerida = precoAtual > 0
+            ? Math.floor(valorSugerido / precoAtual)
+            : 0;
 
         return {
-            id: ativo.id,
-            ticker: ativo.ticker,
-            segmento: ativo.segmento,
-            score: ativo.score,
+            id: itemRanking.id,
+            ticker: itemRanking.ticker,
+            score,
+            percentualDistribuicao,
             valorSugerido,
-            quantidadeEstimativa
+            precoAtual,
+            quantidadeSugerida
         };
     });
 
-    const valorDistribuido = listaDistribuicao.reduce((soma, item) => soma + item.valorSugerido, 0);
-    const saldoResidual = Math.max(0, valorAporteSeguro - valorDistribuido);
-
     return {
-        valorTotalAporte: valorAporteSeguro,
-        valorDistribuido,
-        saldoResidual,
-        listaDistribuicao
+        valorTotalAporte: valorAporteConvertido,
+        listaSugestoes
     };
 }
