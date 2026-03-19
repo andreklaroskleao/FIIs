@@ -1,23 +1,28 @@
 import { normalizarTicker } from './formatadores.js';
 
-function criarMapaCotacoesVazio(listaTickers) {
+const URL_BASE_BRAPI = 'https://brapi.dev/api/quote';
+
+function montarMapaCotacoesVazio(listaTickers) {
     const mapaCotacoes = {};
 
     listaTickers.forEach((ticker) => {
         const tickerNormalizado = normalizarTicker(ticker);
-        if (tickerNormalizado) {
-            mapaCotacoes[tickerNormalizado] = {
-                regularMarketPrice: 0,
-                dividendYield: 0
-            };
+
+        if (!tickerNormalizado) {
+            return;
         }
+
+        mapaCotacoes[tickerNormalizado] = {
+            symbol: tickerNormalizado,
+            regularMarketPrice: 0
+        };
     });
 
     return mapaCotacoes;
 }
 
-export async function buscarCotacoesNaBrapi(listaTickers) {
-    const listaNormalizada = Array.from(
+export async function buscarCotacoesNaBrapi(listaTickers = []) {
+    const listaTickersNormalizados = Array.from(
         new Set(
             (listaTickers || [])
                 .map((ticker) => normalizarTicker(ticker))
@@ -25,35 +30,46 @@ export async function buscarCotacoesNaBrapi(listaTickers) {
         )
     );
 
-    if (!listaNormalizada.length) {
+    if (listaTickersNormalizados.length === 0) {
         return {};
     }
 
-    const mapaCotacoesPadrao = criarMapaCotacoesVazio(listaNormalizada);
+    const mapaCotacoesPadrao = montarMapaCotacoesVazio(listaTickersNormalizados);
 
     try {
-        const simbolos = listaNormalizada.join(',');
-        const url = `https://brapi.dev/api/quote/${simbolos}?range=1d&interval=1d&fundamental=true`;
+        const parametroTickers = encodeURIComponent(listaTickersNormalizados.join(','));
+        const url = `${URL_BASE_BRAPI}/${parametroTickers}`;
 
-        const resposta = await fetch(url);
+        const resposta = await fetch(url, {
+            method: 'GET'
+        });
 
         if (!resposta.ok) {
             return mapaCotacoesPadrao;
         }
 
-        const dados = await resposta.json();
-        const resultados = Array.isArray(dados?.results) ? dados.results : [];
+        const dadosResposta = await resposta.json();
+        const listaResultados = Array.isArray(dadosResposta?.results) ? dadosResposta.results : [];
 
-        resultados.forEach((itemResultado) => {
-            const tickerNormalizado = normalizarTicker(itemResultado.symbol);
+        const mapaCotacoes = { ...mapaCotacoesPadrao };
 
-            mapaCotacoesPadrao[tickerNormalizado] = {
-                regularMarketPrice: Number(itemResultado.regularMarketPrice) || 0,
-                dividendYield: Number(itemResultado.dividendYield) || 0
+        listaResultados.forEach((itemResultado) => {
+            const tickerNormalizado = normalizarTicker(itemResultado?.symbol);
+
+            if (!tickerNormalizado) {
+                return;
+            }
+
+            mapaCotacoes[tickerNormalizado] = {
+                ...itemResultado,
+                symbol: tickerNormalizado,
+                regularMarketPrice: Number.isFinite(Number(itemResultado?.regularMarketPrice))
+                    ? Number(itemResultado.regularMarketPrice)
+                    : 0
             };
         });
 
-        return mapaCotacoesPadrao;
+        return mapaCotacoes;
     } catch {
         return mapaCotacoesPadrao;
     }
