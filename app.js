@@ -96,15 +96,18 @@ const CHAVE_LOCAL_STORAGE_SUBABA_ANALISES = 'fii_insight_subaba_analises';
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
     informacoesUsuario: document.getElementById('informacoes-usuario'),
+
     corpoTabelaAtivos: document.getElementById('corpo-tabela-ativos'),
     listaCardsMobileAtivos: document.getElementById('lista-cards-mobile-ativos'),
     corpoTabelaProventos: document.getElementById('corpo-tabela-proventos'),
     painelHistoricoAportes: document.getElementById('painel-historico-aportes'),
+
     textoPatrimonioTotal: document.getElementById('texto-patrimonio-total'),
     textoRendaMensal: document.getElementById('texto-renda-mensal'),
     textoRendaPorHora: document.getElementById('texto-renda-por-hora'),
     textoYieldOnCostMedio: document.getElementById('texto-yield-on-cost-medio'),
     textoQuedaEstimada: document.getElementById('texto-queda-estimada'),
+
     painelRebalanceamento: document.getElementById('painel-rebalanceamento'),
     painelWatchlist: document.getElementById('painel-watchlist'),
     painelComparador: document.getElementById('painel-comparador'),
@@ -113,26 +116,35 @@ const elementosInterface = {
     painelAlertas: document.getElementById('painel-alertas'),
     painelSimuladorGlobal: document.getElementById('painel-simulador-global'),
     painelCalendarioCarteira: document.getElementById('painel-calendario-carteira'),
+
     campoValorAporteGlobal: document.getElementById('campo-valor-aporte-global'),
+    campoCaixaDisponivel: document.getElementById('campo-caixa-disponivel'),
+
     botaoExportarRelatorio: document.getElementById('botao-exportar-relatorio'),
     botaoLimparComparador: document.getElementById('botao-limpar-comparador'),
-    campoCaixaDisponivel: document.getElementById('campo-caixa-disponivel'),
+
     graficoProventos: document.getElementById('grafico-proventos'),
     graficoAlocacaoSegmentos: document.getElementById('grafico-alocacao-segmentos'),
+
     tituloFormularioAtivo: document.getElementById('titulo-formulario-ativo'),
     botaoSalvarAtivo: document.getElementById('botao-salvar-ativo'),
     botaoCancelarEdicaoAtivo: document.getElementById('botao-cancelar-edicao-ativo'),
+
     tituloFormularioProvento: document.getElementById('titulo-formulario-provento'),
     botaoSalvarProvento: document.getElementById('botao-salvar-provento'),
     botaoCancelarEdicaoProvento: document.getElementById('botao-cancelar-edicao-provento'),
+
     campoMetaPatrimonio: document.getElementById('campo-meta-patrimonio'),
     campoMetaRendaMensal: document.getElementById('campo-meta-renda-mensal'),
     cardMetaPatrimonio: document.getElementById('card-meta-patrimonio'),
     cardMetaRenda: document.getElementById('card-meta-renda'),
+
     botaoExportarBackup: document.getElementById('botao-exportar-backup'),
     campoImportarBackup: document.getElementById('campo-importar-backup'),
+
     iconeModoPrivacidade: document.getElementById('icone-modo-privacidade'),
     botaoModoPrivacidade: document.getElementById('botao-modo-privacidade'),
+
     campoTickerAporte: document.getElementById('campo-ticker-aporte'),
     campoQuantidadeAporte: document.getElementById('campo-quantidade-aporte'),
     campoPrecoAporte: document.getElementById('campo-preco-aporte'),
@@ -140,13 +152,16 @@ const elementosInterface = {
     campoObservacaoAporte: document.getElementById('campo-observacao-aporte'),
     botaoSalvarAporte: document.getElementById('botao-salvar-aporte'),
     botaoCancelarEdicaoAporte: document.getElementById('botao-cancelar-edicao-aporte'),
+
     containerFiltrosSegmento: document.getElementById('container-filtros-segmento'),
     containerFiltrosInteligentes: document.getElementById('container-filtros-inteligentes'),
     containerOrdenacaoCarteira: document.getElementById('container-ordenacao-carteira'),
+
     navegacaoAbasPrincipais: document.getElementById('navegacao-abas-principais'),
     navegacaoSubabasCarteira: document.getElementById('navegacao-subabas-carteira'),
     navegacaoSubabasAportes: document.getElementById('navegacao-subabas-aportes'),
     navegacaoSubabasAnalises: document.getElementById('navegacao-subabas-analises'),
+
     secaoVisaoGeral: document.getElementById('secao-visao-geral'),
     secaoCarteira: document.getElementById('secao-carteira'),
     secaoAportes: document.getElementById('secao-aportes'),
@@ -154,13 +169,28 @@ const elementosInterface = {
     secaoAnalises: document.getElementById('secao-analises'),
     secaoListas: document.getElementById('secao-listas'),
     secaoConfiguracoes: document.getElementById('secao-configuracoes'),
+
     subabaCarteiraGestao: document.getElementById('subaba-carteira-gestao'),
     subabaCarteiraLista: document.getElementById('subaba-carteira-lista'),
     subabaAportesRegistrar: document.getElementById('subaba-aportes-registrar'),
     subabaAportesHistorico: document.getElementById('subaba-aportes-historico'),
     subabaAnalisesSimulador: document.getElementById('subaba-analises-simulador'),
     subabaAnalisesComparador: document.getElementById('subaba-analises-comparador'),
-    subabaAnalisesRanking: document.getElementById('subaba-analises-ranking')
+    subabaAnalisesRanking: document.getElementById('subaba-analises-ranking'),
+
+    botaoAcaoRapidaNovoAtivo: document.getElementById('botao-acao-rapida-novo-ativo'),
+    botaoAcaoRapidaNovoAporte: document.getElementById('botao-acao-rapida-novo-aporte'),
+    botaoAcaoRapidaNovoProvento: document.getElementById('botao-acao-rapida-novo-provento'),
+    botaoAcaoRapidaComparador: document.getElementById('botao-acao-rapida-comparador'),
+    botaoAcaoRapidaBackup: document.getElementById('botao-acao-rapida-backup'),
+
+    contadorAbaVisaoGeral: document.getElementById('contador-aba-visao-geral'),
+    contadorAbaCarteira: document.getElementById('contador-aba-carteira'),
+    contadorAbaAportes: document.getElementById('contador-aba-aportes'),
+    contadorAbaProventos: document.getElementById('contador-aba-proventos'),
+    contadorAbaAnalises: document.getElementById('contador-aba-analises'),
+    contadorAbaListas: document.getElementById('contador-aba-listas'),
+    contadorAbaConfiguracoes: document.getElementById('contador-aba-configuracoes')
 };
 
 const camposFormularioAtivo = {
@@ -276,6 +306,7 @@ function carregarComparadorDoLocalStorage() {
 
     try {
         const listaConvertida = JSON.parse(comparadorSalvo);
+
         if (Array.isArray(listaConvertida)) {
             estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaConvertida.slice(0, 2);
         } else {
@@ -303,9 +334,10 @@ function carregarObservacoesWatchlistDoLocalStorage() {
 
     try {
         const objetoConvertido = JSON.parse(observacoesSalvas);
-        estadoAplicacao.mapaObservacoesWatchlist = typeof objetoConvertido === 'object' && objetoConvertido !== null
-            ? objetoConvertido
-            : {};
+        estadoAplicacao.mapaObservacoesWatchlist =
+            typeof objetoConvertido === 'object' && objetoConvertido !== null
+                ? objetoConvertido
+                : {};
     } catch {
         estadoAplicacao.mapaObservacoesWatchlist = {};
     }
@@ -661,6 +693,7 @@ function resetarPainel() {
 
     limparFormularioAporte();
     renderizarMetas(0, 0);
+    atualizarContadoresDasAbas();
 }
 
 function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
@@ -734,7 +767,12 @@ function filtrarListaAtivosPorFiltroInteligente(listaAtivos) {
         case 'watchlist':
             return listaAtivos.filter((ativo) => ativo.emWatchlist);
         case 'oportunidades':
-            return listaAtivos.filter((ativo) => ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto && !ativo.emWatchlist);
+            return listaAtivos.filter((ativo) =>
+                ativo.precoAtual > 0 &&
+                ativo.precoTeto > 0 &&
+                ativo.precoAtual <= ativo.precoTeto &&
+                !ativo.emWatchlist
+            );
         case 'acima-do-teto':
             return listaAtivos.filter((ativo) => ativo.precoTeto > 0 && ativo.precoAtual > ativo.precoTeto);
         case 'todos':
@@ -771,6 +809,47 @@ function limparObservacoesWatchlistDeAtivosInexistentes() {
 
     estadoAplicacao.mapaObservacoesWatchlist = novoMapa;
     salvarObservacoesWatchlistNoLocalStorage();
+}
+
+function atualizarContadoresDasAbas() {
+    const quantidadeAtivos = estadoAplicacao.listaAtivosEmMemoria.length;
+    const quantidadeAportes = estadoAplicacao.listaAportesEmMemoria.length;
+    const quantidadeProventos = estadoAplicacao.listaProventosEmMemoria.length;
+    const quantidadeAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria).length;
+
+    const quantidadeFavoritos =
+        estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.favorito).length;
+
+    const quantidadeWatchlist =
+        estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.emWatchlist).length;
+
+    if (elementosInterface.contadorAbaVisaoGeral) {
+        elementosInterface.contadorAbaVisaoGeral.textContent = String(quantidadeAlertas);
+    }
+
+    if (elementosInterface.contadorAbaCarteira) {
+        elementosInterface.contadorAbaCarteira.textContent = String(quantidadeAtivos);
+    }
+
+    if (elementosInterface.contadorAbaAportes) {
+        elementosInterface.contadorAbaAportes.textContent = String(quantidadeAportes);
+    }
+
+    if (elementosInterface.contadorAbaProventos) {
+        elementosInterface.contadorAbaProventos.textContent = String(quantidadeProventos);
+    }
+
+    if (elementosInterface.contadorAbaAnalises) {
+        elementosInterface.contadorAbaAnalises.textContent = String(Math.min(99, quantidadeAtivos));
+    }
+
+    if (elementosInterface.contadorAbaListas) {
+        elementosInterface.contadorAbaListas.textContent = String(quantidadeFavoritos + quantidadeWatchlist);
+    }
+
+    if (elementosInterface.contadorAbaConfiguracoes) {
+        elementosInterface.contadorAbaConfiguracoes.textContent = '2';
+    }
 }
 
 function prepararEdicaoAporte(identificadorAporte) {
@@ -975,6 +1054,8 @@ function renderizarTudo() {
             estadoAplicacao.listaAportesEmMemoria
         );
     }
+
+    atualizarContadoresDasAbas();
 }
 
 function renderizarProventos() {
@@ -989,7 +1070,8 @@ function renderizarProventos() {
 
     estadoAplicacao.listaProventosEmMemoria.forEach((provento) => {
         mapaProventosAgrupadosPorMes[provento.mesAno] =
-            converterParaNumeroSeguro(mapaProventosAgrupadosPorMes[provento.mesAno], 0) + converterParaNumeroSeguro(provento.valor, 0);
+            converterParaNumeroSeguro(mapaProventosAgrupadosPorMes[provento.mesAno], 0) +
+            converterParaNumeroSeguro(provento.valor, 0);
     });
 
     const listaMesesOrdenada = Object.keys(mapaProventosAgrupadosPorMes).sort((mesA, mesB) => mesA.localeCompare(mesB));
@@ -1002,6 +1084,8 @@ function renderizarProventos() {
             listaMesesOrdenada.map((mesAno) => mapaProventosAgrupadosPorMes[mesAno])
         );
     }
+
+    atualizarContadoresDasAbas();
 }
 
 async function atualizarListaAtivosEnriquecida() {
@@ -1049,34 +1133,38 @@ function assinarColecaoAtivos() {
 
     const consultaAtivos = query(collection(db, 'ativos'), where('uid', '==', estadoAplicacao.usuarioAtual.uid));
 
-    estadoAplicacao.cancelarInscricaoAtivos = onSnapshot(consultaAtivos, async (snapshot) => {
-        const listaAtivosBruta = snapshot.docs.map((documento) => ({
-            id: documento.id,
-            ...documento.data()
-        }));
+    estadoAplicacao.cancelarInscricaoAtivos = onSnapshot(
+        consultaAtivos,
+        async (snapshot) => {
+            const listaAtivosBruta = snapshot.docs.map((documento) => ({
+                id: documento.id,
+                ...documento.data()
+            }));
 
-        const mapaCotacoes = await buscarCotacoesNaBrapi(listaAtivosBruta.map((ativo) => ativo.ticker));
+            const mapaCotacoes = await buscarCotacoesNaBrapi(listaAtivosBruta.map((ativo) => ativo.ticker));
 
-        estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
-            listaAtivosBruta,
-            mapaCotacoes,
-            estadoAplicacao.listaAportesEmMemoria
-        );
+            estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
+                listaAtivosBruta,
+                mapaCotacoes,
+                estadoAplicacao.listaAportesEmMemoria
+            );
 
-        renderizarTudo();
-    }, (erro) => {
-        console.error('Erro ao escutar ativos:', erro);
+            renderizarTudo();
+        },
+        (erro) => {
+            console.error('Erro ao escutar ativos:', erro);
 
-        if (elementosInterface.corpoTabelaAtivos) {
-            elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 italic">Erro ao carregar ativos.</td></tr>';
+            if (elementosInterface.corpoTabelaAtivos) {
+                elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 italic">Erro ao carregar ativos.</td></tr>';
+            }
+
+            if (elementosInterface.listaCardsMobileAtivos) {
+                elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-red-500 italic">Erro ao carregar ativos.</div>';
+            }
+
+            mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os ativos.', 'erro');
         }
-
-        if (elementosInterface.listaCardsMobileAtivos) {
-            elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-red-500 italic">Erro ao carregar ativos.</div>';
-        }
-
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os ativos.', 'erro');
-    });
+    );
 }
 
 function assinarColecaoProventos() {
@@ -1090,20 +1178,24 @@ function assinarColecaoProventos() {
 
     const consultaProventos = query(collection(db, 'proventos'), where('uid', '==', estadoAplicacao.usuarioAtual.uid));
 
-    estadoAplicacao.cancelarInscricaoProventos = onSnapshot(consultaProventos, (snapshot) => {
-        estadoAplicacao.listaProventosEmMemoria = snapshot.docs.map((documento) => ({
-            id: documento.id,
-            ticker: normalizarTicker(documento.data().ticker),
-            valor: converterParaNumeroSeguro(documento.data().valor, 0),
-            mesAno: documento.data().mesAno || ''
-        }));
+    estadoAplicacao.cancelarInscricaoProventos = onSnapshot(
+        consultaProventos,
+        (snapshot) => {
+            estadoAplicacao.listaProventosEmMemoria = snapshot.docs.map((documento) => ({
+                id: documento.id,
+                ticker: normalizarTicker(documento.data().ticker),
+                valor: converterParaNumeroSeguro(documento.data().valor, 0),
+                mesAno: documento.data().mesAno || ''
+            }));
 
-        renderizarProventos();
-        renderizarTudo();
-    }, (erro) => {
-        console.error('Erro ao escutar proventos:', erro);
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os proventos.', 'erro');
-    });
+            renderizarProventos();
+            renderizarTudo();
+        },
+        (erro) => {
+            console.error('Erro ao escutar proventos:', erro);
+            mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os proventos.', 'erro');
+        }
+    );
 }
 
 function assinarColecaoAportes() {
@@ -1117,17 +1209,21 @@ function assinarColecaoAportes() {
 
     const consultaAportes = query(collection(db, 'aportes'), where('uid', '==', estadoAplicacao.usuarioAtual.uid));
 
-    estadoAplicacao.cancelarInscricaoAportes = onSnapshot(consultaAportes, async (snapshot) => {
-        estadoAplicacao.listaAportesEmMemoria = snapshot.docs.map((documento) => ({
-            id: documento.id,
-            ...documento.data()
-        }));
+    estadoAplicacao.cancelarInscricaoAportes = onSnapshot(
+        consultaAportes,
+        async (snapshot) => {
+            estadoAplicacao.listaAportesEmMemoria = snapshot.docs.map((documento) => ({
+                id: documento.id,
+                ...documento.data()
+            }));
 
-        await atualizarListaAtivosEnriquecida();
-    }, (erro) => {
-        console.error('Erro ao escutar aportes:', erro);
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os aportes.', 'erro');
-    });
+            await atualizarListaAtivosEnriquecida();
+        },
+        (erro) => {
+            console.error('Erro ao escutar aportes:', erro);
+            mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os aportes.', 'erro');
+        }
+    );
 }
 
 function cancelarEdicaoAtivo() {
@@ -1333,13 +1429,16 @@ async function salvarAtivo() {
 
         if (ativoDuplicado) {
             const confirmouContinuacao = confirm('Já existe um ativo com esse ticker. Deseja salvar mesmo assim?');
+
             if (!confirmouContinuacao) {
                 return;
             }
         }
 
         if (estadoAplicacao.identificadorAtivoEmEdicao) {
-            const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao);
+            const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find(
+                (ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao
+            );
 
             await updateDoc(doc(db, 'ativos', estadoAplicacao.identificadorAtivoEmEdicao), {
                 ...dadosAtivo,
@@ -1584,6 +1683,42 @@ function inicializarEventosDaInterface() {
         });
     }
 
+    if (elementosInterface.botaoAcaoRapidaNovoAtivo) {
+        elementosInterface.botaoAcaoRapidaNovoAtivo.addEventListener('click', () => {
+            alternarAbaPrincipal('carteira');
+            alternarSubaba('carteira', 'gestao');
+            camposFormularioAtivo.ticker?.focus();
+        });
+    }
+
+    if (elementosInterface.botaoAcaoRapidaNovoAporte) {
+        elementosInterface.botaoAcaoRapidaNovoAporte.addEventListener('click', () => {
+            alternarAbaPrincipal('aportes');
+            alternarSubaba('aportes', 'registrar');
+            elementosInterface.campoTickerAporte?.focus();
+        });
+    }
+
+    if (elementosInterface.botaoAcaoRapidaNovoProvento) {
+        elementosInterface.botaoAcaoRapidaNovoProvento.addEventListener('click', () => {
+            alternarAbaPrincipal('proventos');
+            camposFormularioProvento.ticker?.focus();
+        });
+    }
+
+    if (elementosInterface.botaoAcaoRapidaComparador) {
+        elementosInterface.botaoAcaoRapidaComparador.addEventListener('click', () => {
+            alternarAbaPrincipal('analises');
+            alternarSubaba('analises', 'comparador');
+        });
+    }
+
+    if (elementosInterface.botaoAcaoRapidaBackup) {
+        elementosInterface.botaoAcaoRapidaBackup.addEventListener('click', () => {
+            alternarAbaPrincipal('configuracoes');
+        });
+    }
+
     if (elementosInterface.containerFiltrosSegmento) {
         elementosInterface.containerFiltrosSegmento.addEventListener('click', (evento) => {
             const botaoFiltro = evento.target.closest('.botao-filtro');
@@ -1791,9 +1926,10 @@ function inicializarEventosDaInterface() {
                 delete estadoAplicacao.mapaObservacoesWatchlist[botaoExcluirAtivo.dataset.id];
                 salvarObservacoesWatchlistNoLocalStorage();
 
-                estadoAplicacao.listaAtivosSelecionadosParaComparacao = estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter(
-                    (item) => item !== botaoExcluirAtivo.dataset.id
-                );
+                estadoAplicacao.listaAtivosSelecionadosParaComparacao =
+                    estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter(
+                        (item) => item !== botaoExcluirAtivo.dataset.id
+                    );
 
                 salvarComparadorNoLocalStorage();
 
@@ -1849,7 +1985,8 @@ function inicializarEventosDaInterface() {
         const campoObservacaoWatchlist = evento.target.closest('.campo-observacao-watchlist');
 
         if (campoObservacaoWatchlist) {
-            estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
+            estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] =
+                campoObservacaoWatchlist.value || '';
             salvarObservacoesWatchlistNoLocalStorage();
             renderizarTudo();
         }
@@ -1935,12 +2072,18 @@ function inicializarEventosDaInterface() {
     }
 
     Object.values(camposFormularioAtivo).filter(Boolean).forEach((campo) => {
-        campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean)));
+        campo.addEventListener('input', () => {
+            limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
+        });
     });
 
     Object.values(camposFormularioProvento).filter(Boolean).forEach((campo) => {
-        campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean)));
+        campo.addEventListener('input', () => {
+            limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
+        });
     });
+
+    atualizarContadoresDasAbas();
 }
 
 inicializarEventosDaInterface();
