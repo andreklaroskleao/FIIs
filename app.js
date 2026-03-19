@@ -35,13 +35,20 @@ import {
     converterParaNumeroSeguro,
     calcularDistanciaCircularEntreDias,
     enriquecerListaAtivos,
-    obterListaAtivosFiltradaEOrdenada
+    obterListaAtivosFiltradaEOrdenada,
+    gerarListaAlertas,
+    gerarSimulacaoGlobalDeAporte
 } from './services/calculos-carteira.js';
 import { buscarCotacoesNaBrapi } from './services/brapi-service.js';
 import { renderizarGraficoProventos, renderizarGraficoSegmentos } from './ui/renderizacao-graficos.js';
 import { renderizarHistoricoProventos } from './ui/renderizacao-proventos.js';
 import { renderizarTabelaAtivos } from './ui/renderizacao-ativos.js';
-import { obterStatusAtivo } from './features/score-oportunidade.js';
+import { renderizarCardsMobileAtivos } from './ui/renderizacao-cards-mobile.js';
+import { renderizarPainelHistoricoAportes } from './ui/renderizacao-aportes.js';
+import {
+    obterStatusAtivo,
+    gerarRankingDeOportunidades
+} from './features/score-oportunidade.js';
 import {
     calcularProgressoMetaRenda,
     calcularProgressoMetaPatrimonio
@@ -56,15 +63,39 @@ import {
     renderizarCardMetaRenda
 } from './ui/renderizacao-metas.js';
 import { renderizarPainelWatchlist } from './ui/renderizacao-watchlist.js';
+import { renderizarPainelComparador } from './ui/renderizacao-comparador.js';
+import { renderizarPainelFavoritos } from './ui/renderizacao-favoritos.js';
+import { renderizarPainelRankingOportunidades } from './ui/renderizacao-ranking.js';
+import { renderizarPainelAlertas } from './ui/renderizacao-alertas.js';
+import { renderizarPainelSimuladorGlobal } from './ui/renderizacao-simulador-global.js';
+import { renderizarPainelCalendarioCarteira } from './ui/renderizacao-calendario.js';
+import {
+    gerarConteudoRelatorioCarteira,
+    exportarRelatorioCarteiraComoTxt
+} from './features/exportacao-relatorio.js';
+import {
+    montarDadosAporte,
+    salvarAporteNoFirestore,
+    excluirAporteNoFirestore
+} from './features/aportes-carteira.js';
 
 const CHAVE_LOCAL_STORAGE_META_PATRIMONIO = 'fii_insight_meta_patrimonio';
 const CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL = 'fii_insight_meta_renda_mensal';
+const CHAVE_LOCAL_STORAGE_FILTRO_SEGMENTO = 'fii_insight_filtro_segmento';
+const CHAVE_LOCAL_STORAGE_FILTRO_INTELIGENTE = 'fii_insight_filtro_inteligente';
+const CHAVE_LOCAL_STORAGE_ORDENACAO = 'fii_insight_ordenacao';
+const CHAVE_LOCAL_STORAGE_COMPARADOR = 'fii_insight_comparador';
+const CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE = 'fii_insight_modo_privacidade';
+const CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST = 'fii_insight_observacoes_watchlist';
+const CHAVE_LOCAL_STORAGE_APORTE_GLOBAL = 'fii_insight_aporte_global';
 
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
     informacoesUsuario: document.getElementById('informacoes-usuario'),
     corpoTabelaAtivos: document.getElementById('corpo-tabela-ativos'),
+    listaCardsMobileAtivos: document.getElementById('lista-cards-mobile-ativos'),
     corpoTabelaProventos: document.getElementById('corpo-tabela-proventos'),
+    painelHistoricoAportes: document.getElementById('painel-historico-aportes'),
     textoPatrimonioTotal: document.getElementById('texto-patrimonio-total'),
     textoRendaMensal: document.getElementById('texto-renda-mensal'),
     textoRendaPorHora: document.getElementById('texto-renda-por-hora'),
@@ -72,6 +103,15 @@ const elementosInterface = {
     textoQuedaEstimada: document.getElementById('texto-queda-estimada'),
     painelRebalanceamento: document.getElementById('painel-rebalanceamento'),
     painelWatchlist: document.getElementById('painel-watchlist'),
+    painelComparador: document.getElementById('painel-comparador'),
+    painelFavoritos: document.getElementById('painel-favoritos'),
+    painelRankingOportunidades: document.getElementById('painel-ranking-oportunidades'),
+    painelAlertas: document.getElementById('painel-alertas'),
+    painelSimuladorGlobal: document.getElementById('painel-simulador-global'),
+    painelCalendarioCarteira: document.getElementById('painel-calendario-carteira'),
+    campoValorAporteGlobal: document.getElementById('campo-valor-aporte-global'),
+    botaoExportarRelatorio: document.getElementById('botao-exportar-relatorio'),
+    botaoLimparComparador: document.getElementById('botao-limpar-comparador'),
     campoCaixaDisponivel: document.getElementById('campo-caixa-disponivel'),
     secaoPainel: document.getElementById('secao-painel'),
     secaoProventos: document.getElementById('secao-proventos'),
@@ -88,7 +128,15 @@ const elementosInterface = {
     cardMetaPatrimonio: document.getElementById('card-meta-patrimonio'),
     cardMetaRenda: document.getElementById('card-meta-renda'),
     botaoExportarBackup: document.getElementById('botao-exportar-backup'),
-    campoImportarBackup: document.getElementById('campo-importar-backup')
+    campoImportarBackup: document.getElementById('campo-importar-backup'),
+    iconeModoPrivacidade: document.getElementById('icone-modo-privacidade'),
+    campoTickerAporte: document.getElementById('campo-ticker-aporte'),
+    campoQuantidadeAporte: document.getElementById('campo-quantidade-aporte'),
+    campoPrecoAporte: document.getElementById('campo-preco-aporte'),
+    campoDataAporte: document.getElementById('campo-data-aporte'),
+    campoObservacaoAporte: document.getElementById('campo-observacao-aporte'),
+    botaoSalvarAporte: document.getElementById('botao-salvar-aporte'),
+    botaoCancelarEdicaoAporte: document.getElementById('botao-cancelar-edicao-aporte')
 };
 
 const camposFormularioAtivo = {
@@ -109,6 +157,25 @@ const camposFormularioProvento = {
     mes: document.getElementById('campo-mes-provento')
 };
 
+function salvarModoPrivacidadeNoLocalStorage() {
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE,
+        estadoAplicacao.modoPrivacidadeAtivo ? '1' : '0'
+    );
+}
+
+function carregarModoPrivacidadeDoLocalStorage() {
+    const valorSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE);
+    estadoAplicacao.modoPrivacidadeAtivo = valorSalvo === '1';
+    document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
+    elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
+}
+
+function salvarMetasNoLocalStorage() {
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_META_PATRIMONIO, String(elementosInterface.campoMetaPatrimonio.value || ''));
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL, String(elementosInterface.campoMetaRendaMensal.value || ''));
+}
+
 function carregarMetasDoLocalStorage() {
     const metaPatrimonioSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_META_PATRIMONIO);
     const metaRendaMensalSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL);
@@ -122,16 +189,106 @@ function carregarMetasDoLocalStorage() {
     }
 }
 
-function salvarMetasNoLocalStorage() {
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_META_PATRIMONIO,
-        String(elementosInterface.campoMetaPatrimonio.value || '')
-    );
+function salvarFiltroEOrdenacaoNoLocalStorage() {
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_FILTRO_SEGMENTO, estadoAplicacao.filtroSegmentoAtual);
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_FILTRO_INTELIGENTE, estadoAplicacao.filtroInteligenteAtual);
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_ORDENACAO, estadoAplicacao.ordenacaoCarteiraAtual);
+}
 
+function carregarFiltroEOrdenacaoDoLocalStorage() {
+    const filtroSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_FILTRO_SEGMENTO);
+    const filtroInteligenteSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_FILTRO_INTELIGENTE);
+    const ordenacaoSalva = localStorage.getItem(CHAVE_LOCAL_STORAGE_ORDENACAO);
+
+    if (filtroSalvo) {
+        estadoAplicacao.filtroSegmentoAtual = filtroSalvo;
+    }
+
+    if (filtroInteligenteSalvo) {
+        estadoAplicacao.filtroInteligenteAtual = filtroInteligenteSalvo;
+    }
+
+    if (ordenacaoSalva) {
+        estadoAplicacao.ordenacaoCarteiraAtual = ordenacaoSalva;
+    }
+
+    document.querySelectorAll('.botao-filtro').forEach((botao) => {
+        botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
+    });
+
+    document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
+        botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
+    });
+
+    document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
+        botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
+    });
+}
+
+function salvarComparadorNoLocalStorage() {
     localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL,
-        String(elementosInterface.campoMetaRendaMensal.value || '')
+        CHAVE_LOCAL_STORAGE_COMPARADOR,
+        JSON.stringify(estadoAplicacao.listaAtivosSelecionadosParaComparacao || [])
     );
+}
+
+function carregarComparadorDoLocalStorage() {
+    const comparadorSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_COMPARADOR);
+
+    if (!comparadorSalvo) {
+        estadoAplicacao.listaAtivosSelecionadosParaComparacao = [];
+        return;
+    }
+
+    try {
+        const listaConvertida = JSON.parse(comparadorSalvo);
+        if (Array.isArray(listaConvertida)) {
+            estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaConvertida.slice(0, 2);
+        } else {
+            estadoAplicacao.listaAtivosSelecionadosParaComparacao = [];
+        }
+    } catch {
+        estadoAplicacao.listaAtivosSelecionadosParaComparacao = [];
+    }
+}
+
+function salvarObservacoesWatchlistNoLocalStorage() {
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST,
+        JSON.stringify(estadoAplicacao.mapaObservacoesWatchlist || {})
+    );
+}
+
+function carregarObservacoesWatchlistDoLocalStorage() {
+    const observacoesSalvas = localStorage.getItem(CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST);
+
+    if (!observacoesSalvas) {
+        estadoAplicacao.mapaObservacoesWatchlist = {};
+        return;
+    }
+
+    try {
+        const objetoConvertido = JSON.parse(observacoesSalvas);
+        estadoAplicacao.mapaObservacoesWatchlist = typeof objetoConvertido === 'object' && objetoConvertido !== null
+            ? objetoConvertido
+            : {};
+    } catch {
+        estadoAplicacao.mapaObservacoesWatchlist = {};
+    }
+}
+
+function salvarAporteGlobalNoLocalStorage() {
+    localStorage.setItem(
+        CHAVE_LOCAL_STORAGE_APORTE_GLOBAL,
+        String(elementosInterface.campoValorAporteGlobal.value || '')
+    );
+}
+
+function carregarAporteGlobalNoLocalStorage() {
+    const valorSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE_APORTE_GLOBAL);
+    if (valorSalvo !== null) {
+        elementosInterface.campoValorAporteGlobal.value = valorSalvo;
+    }
 }
 
 function atualizarBlocoUsuario(estaLogado) {
@@ -180,11 +337,69 @@ function cancelarInscricoesAtivas() {
         estadoAplicacao.cancelarInscricaoProventos();
         estadoAplicacao.cancelarInscricaoProventos = null;
     }
+
+    if (typeof estadoAplicacao.cancelarInscricaoAportes === 'function') {
+        estadoAplicacao.cancelarInscricaoAportes();
+        estadoAplicacao.cancelarInscricaoAportes = null;
+    }
+}
+
+function gerarEventosCalendarioCarteira(listaAtivos) {
+    const diaAtual = new Date().getDate();
+    const listaEventosCalendario = [];
+
+    listaAtivos.forEach((ativo) => {
+        if (ativo.diaDataCom) {
+            listaEventosCalendario.push({
+                id: `${ativo.id}-data-com`,
+                ticker: ativo.ticker,
+                segmento: ativo.segmento,
+                tipo: 'Data com',
+                dia: ativo.diaDataCom,
+                distanciaDias: calcularDistanciaCircularEntreDias(ativo.diaDataCom, diaAtual)
+            });
+        }
+
+        if (ativo.diaPagamento) {
+            listaEventosCalendario.push({
+                id: `${ativo.id}-pagamento`,
+                ticker: ativo.ticker,
+                segmento: ativo.segmento,
+                tipo: 'Pagamento',
+                dia: ativo.diaPagamento,
+                distanciaDias: calcularDistanciaCircularEntreDias(ativo.diaPagamento, diaAtual)
+            });
+        }
+    });
+
+    return listaEventosCalendario.sort((eventoA, eventoB) => {
+        if (eventoA.distanciaDias !== eventoB.distanciaDias) {
+            return eventoA.distanciaDias - eventoB.distanciaDias;
+        }
+
+        if (eventoA.dia !== eventoB.dia) {
+            return eventoA.dia - eventoB.dia;
+        }
+
+        return eventoA.ticker.localeCompare(eventoB.ticker);
+    });
+}
+
+function limparFormularioAporte() {
+    estadoAplicacao.identificadorAporteEmEdicao = null;
+    elementosInterface.campoTickerAporte.value = '';
+    elementosInterface.campoQuantidadeAporte.value = '';
+    elementosInterface.campoPrecoAporte.value = '';
+    elementosInterface.campoDataAporte.value = '';
+    elementosInterface.campoObservacaoAporte.value = '';
+    elementosInterface.botaoSalvarAporte.textContent = 'Registrar aporte';
+    elementosInterface.botaoCancelarEdicaoAporte.classList.add('hidden');
 }
 
 function resetarPainel() {
     estadoAplicacao.listaAtivosEmMemoria = [];
     estadoAplicacao.listaProventosEmMemoria = [];
+    estadoAplicacao.listaAportesEmMemoria = [];
     estadoAplicacao.mapaLinhasExpandidas = {};
 
     elementosInterface.textoPatrimonioTotal.textContent = 'R$ 0,00';
@@ -194,7 +409,15 @@ function resetarPainel() {
     elementosInterface.textoQuedaEstimada.textContent = '- R$ 0,00';
     elementosInterface.painelRebalanceamento.innerHTML = '<p class="text-[10px] italic p-4 text-slate-600">Sem dados para rebalanceamento.</p>';
     elementosInterface.painelWatchlist.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>';
+    elementosInterface.painelFavoritos.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo favorito.</div>';
+    elementosInterface.painelRankingOportunidades.innerHTML = '<div class="text-[11px] text-slate-500 italic">Sem ativos para ranquear.</div>';
+    elementosInterface.painelAlertas.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum alerta no momento.</div>';
+    elementosInterface.painelComparador.innerHTML = '<div class="text-[11px] text-slate-500 italic">Selecione até 2 ativos na tabela para comparar.</div>';
+    elementosInterface.painelSimuladorGlobal.innerHTML = '<div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>';
+    elementosInterface.painelCalendarioCarteira.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum evento disponível.</div>';
+    elementosInterface.painelHistoricoAportes.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>';
     elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td></tr>';
+    elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">Faça login para carregar seus ativos.</div>';
     elementosInterface.corpoTabelaProventos.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td></tr>';
 
     if (estadoAplicacao.instanciaGraficoProventos) {
@@ -207,6 +430,7 @@ function resetarPainel() {
         estadoAplicacao.instanciaGraficoSegmentos = null;
     }
 
+    limparFormularioAporte();
     renderizarMetas(0, 0);
 }
 
@@ -217,17 +441,8 @@ function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
     const progressoMetaPatrimonio = calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio);
     const progressoMetaRenda = calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal);
 
-    renderizarCardMetaPatrimonio(
-        elementosInterface.cardMetaPatrimonio,
-        progressoMetaPatrimonio,
-        patrimonioAtual
-    );
-
-    renderizarCardMetaRenda(
-        elementosInterface.cardMetaRenda,
-        progressoMetaRenda,
-        rendaMensalAtual
-    );
+    renderizarCardMetaPatrimonio(elementosInterface.cardMetaPatrimonio, progressoMetaPatrimonio, patrimonioAtual);
+    renderizarCardMetaRenda(elementosInterface.cardMetaRenda, progressoMetaRenda, rendaMensalAtual);
 }
 
 function atualizarResumoPainel(resultadoRenderizacao) {
@@ -254,17 +469,135 @@ function atualizarResumoPainel(resultadoRenderizacao) {
     renderizarMetas(resultadoRenderizacao.patrimonioTotal, resultadoRenderizacao.projecaoMensalTotal);
 }
 
+function filtrarListaAtivosPorFiltroInteligente(listaAtivos) {
+    switch (estadoAplicacao.filtroInteligenteAtual) {
+        case 'favoritos':
+            return listaAtivos.filter((ativo) => ativo.favorito);
+        case 'watchlist':
+            return listaAtivos.filter((ativo) => ativo.emWatchlist);
+        case 'oportunidades':
+            return listaAtivos.filter((ativo) => ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto && !ativo.emWatchlist);
+        case 'acima-do-teto':
+            return listaAtivos.filter((ativo) => ativo.precoTeto > 0 && ativo.precoAtual > ativo.precoTeto);
+        case 'todos':
+        default:
+            return [...listaAtivos];
+    }
+}
+
+function obterAtivosSelecionadosParaComparacao() {
+    const listaIdsValidos = estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter((identificadorAtivo) =>
+        estadoAplicacao.listaAtivosEmMemoria.some((ativo) => ativo.id === identificadorAtivo)
+    );
+
+    if (listaIdsValidos.length !== estadoAplicacao.listaAtivosSelecionadosParaComparacao.length) {
+        estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaIdsValidos.slice(0, 2);
+        salvarComparadorNoLocalStorage();
+    }
+
+    return estadoAplicacao.listaAtivosSelecionadosParaComparacao
+        .map((identificadorAtivo) => estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === identificadorAtivo))
+        .filter(Boolean)
+        .slice(0, 2);
+}
+
+function limparObservacoesWatchlistDeAtivosInexistentes() {
+    const conjuntoIdsExistentes = new Set(estadoAplicacao.listaAtivosEmMemoria.map((ativo) => ativo.id));
+    const novoMapa = {};
+
+    Object.entries(estadoAplicacao.mapaObservacoesWatchlist || {}).forEach(([identificadorAtivo, observacao]) => {
+        if (conjuntoIdsExistentes.has(identificadorAtivo)) {
+            novoMapa[identificadorAtivo] = observacao;
+        }
+    });
+
+    estadoAplicacao.mapaObservacoesWatchlist = novoMapa;
+    salvarObservacoesWatchlistNoLocalStorage();
+}
+
+function prepararEdicaoAporte(identificadorAporte) {
+    const aporte = estadoAplicacao.listaAportesEmMemoria.find((item) => item.id === identificadorAporte);
+
+    if (!aporte) {
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte não encontrado.', 'erro');
+        return;
+    }
+
+    estadoAplicacao.identificadorAporteEmEdicao = identificadorAporte;
+    elementosInterface.campoTickerAporte.value = aporte.ticker || '';
+    elementosInterface.campoQuantidadeAporte.value = aporte.quantidadeComprada || '';
+    elementosInterface.campoPrecoAporte.value = aporte.precoPorCota || '';
+    elementosInterface.campoDataAporte.value = aporte.dataAporte || '';
+    elementosInterface.campoObservacaoAporte.value = aporte.observacao || '';
+    elementosInterface.botaoSalvarAporte.textContent = 'Atualizar aporte';
+    elementosInterface.botaoCancelarEdicaoAporte.classList.remove('hidden');
+}
+
+async function salvarAporte() {
+    if (!estadoAplicacao.usuarioAtual) {
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Faça login primeiro.', 'info');
+        return;
+    }
+
+    try {
+        const dadosAporte = montarDadosAporte({
+            usuarioAtual: estadoAplicacao.usuarioAtual,
+            ticker: elementosInterface.campoTickerAporte.value,
+            quantidadeComprada: elementosInterface.campoQuantidadeAporte.value,
+            precoPorCota: elementosInterface.campoPrecoAporte.value,
+            dataAporte: elementosInterface.campoDataAporte.value,
+            observacao: elementosInterface.campoObservacaoAporte.value
+        });
+
+        const mensagemSucesso = await salvarAporteNoFirestore({
+            db,
+            identificadorAporteEmEdicao: estadoAplicacao.identificadorAporteEmEdicao,
+            dadosAporte
+        });
+
+        const ativoEncontrado = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.ticker === dadosAporte.ticker);
+
+        if (!ativoEncontrado) {
+            mostrarNotificacao(
+                elementosInterface.containerNotificacoes,
+                `${mensagemSucesso} Cadastre também o ativo principal para refletir totalmente no painel.`,
+                'info'
+            );
+        } else {
+            mostrarNotificacao(elementosInterface.containerNotificacoes, mensagemSucesso, 'sucesso');
+        }
+
+        limparFormularioAporte();
+    } catch (erro) {
+        mostrarNotificacao(elementosInterface.containerNotificacoes, erro.message || 'Erro ao salvar aporte.', 'erro');
+    }
+}
+
 function renderizarTudo() {
+    limparObservacoesWatchlistDeAtivosInexistentes();
+
+    const listaAtivosFiltradaInteligente = filtrarListaAtivosPorFiltroInteligente(estadoAplicacao.listaAtivosEmMemoria);
+
     const resultadoRenderizacao = renderizarTabelaAtivos({
         corpoTabelaAtivos: elementosInterface.corpoTabelaAtivos,
-        listaAtivos: estadoAplicacao.listaAtivosEmMemoria,
-        listaProventos: estadoAplicacao.listaProventosEmMemoria,
+        listaAtivos: listaAtivosFiltradaInteligente,
         filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
         ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
         caixaDisponivel: converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel.value, 0),
         mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
+        listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
         obterListaAtivosFiltradaEOrdenada,
-        calcularDistanciaCircularEntreDias,
+        obterStatusAtivo
+    });
+
+    renderizarCardsMobileAtivos({
+        listaCardsMobileAtivos: elementosInterface.listaCardsMobileAtivos,
+        listaAtivos: listaAtivosFiltradaInteligente,
+        filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
+        ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
+        mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
+        listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
+        obterListaAtivosFiltradaEOrdenada,
         obterStatusAtivo
     });
 
@@ -278,8 +611,41 @@ function renderizarTudo() {
 
     renderizarPainelWatchlist(
         elementosInterface.painelWatchlist,
-        estadoAplicacao.listaAtivosEmMemoria
+        estadoAplicacao.listaAtivosEmMemoria,
+        estadoAplicacao.mapaObservacoesWatchlist
     );
+
+    renderizarPainelFavoritos(elementosInterface.painelFavoritos, estadoAplicacao.listaAtivosEmMemoria);
+
+    const patrimonioTotal = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.valorTotalAtual, 0);
+    const somaDasNotas = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.nota, 0);
+    const caixaDisponivel = converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel.value, 0);
+
+    const listaRanking = gerarRankingDeOportunidades(
+        estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => !ativo.emWatchlist),
+        patrimonioTotal,
+        somaDasNotas,
+        caixaDisponivel
+    );
+
+    renderizarPainelRankingOportunidades(elementosInterface.painelRankingOportunidades, listaRanking);
+
+    const listaAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria);
+    renderizarPainelAlertas(elementosInterface.painelAlertas, listaAlertas);
+
+    renderizarPainelComparador(elementosInterface.painelComparador, obterAtivosSelecionadosParaComparacao());
+
+    const resultadoSimulacaoGlobal = gerarSimulacaoGlobalDeAporte(
+        converterParaNumeroSeguro(elementosInterface.campoValorAporteGlobal.value, 0),
+        listaRanking
+    );
+
+    renderizarPainelSimuladorGlobal(elementosInterface.painelSimuladorGlobal, resultadoSimulacaoGlobal);
+
+    const listaEventosCalendario = gerarEventosCalendarioCarteira(estadoAplicacao.listaAtivosEmMemoria);
+    renderizarPainelCalendarioCarteira(elementosInterface.painelCalendarioCarteira, listaEventosCalendario);
+
+    renderizarPainelHistoricoAportes(elementosInterface.painelHistoricoAportes, estadoAplicacao.listaAportesEmMemoria);
 }
 
 function renderizarProventos() {
@@ -301,6 +667,40 @@ function renderizarProventos() {
     );
 }
 
+async function atualizarListaAtivosEnriquecida() {
+    if (!estadoAplicacao.usuarioAtual || !estadoAplicacao.listaAtivosEmMemoria.length) {
+        renderizarTudo();
+        return;
+    }
+
+    const listaAtivosBruta = estadoAplicacao.listaAtivosEmMemoria.map((ativo) => ({
+        id: ativo.id,
+        uid: ativo.uid,
+        ticker: ativo.ticker,
+        quantidade: ativo.quantidadeCadastro ?? ativo.quantidade,
+        precoMedio: ativo.precoMedioCadastro ?? ativo.precoMedio,
+        nota: ativo.nota,
+        precoTeto: ativo.precoTeto,
+        diaDataCom: ativo.diaDataCom,
+        diaPagamento: ativo.diaPagamento,
+        segmento: ativo.segmento,
+        observacao: ativo.observacao,
+        favorito: ativo.favorito,
+        emWatchlist: ativo.emWatchlist
+    }));
+
+    const tickers = listaAtivosBruta.map((ativo) => ativo.ticker);
+    const mapaCotacoes = await buscarCotacoesNaBrapi(tickers);
+
+    estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
+        listaAtivosBruta,
+        mapaCotacoes,
+        estadoAplicacao.listaAportesEmMemoria
+    );
+
+    renderizarTudo();
+}
+
 function assinarColecaoAtivos() {
     if (!estadoAplicacao.usuarioAtual) {
         return;
@@ -319,11 +719,16 @@ function assinarColecaoAtivos() {
         }));
 
         const mapaCotacoes = await buscarCotacoesNaBrapi(listaAtivosBruta.map((ativo) => ativo.ticker));
-        estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes);
+        estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
+            listaAtivosBruta,
+            mapaCotacoes,
+            estadoAplicacao.listaAportesEmMemoria
+        );
         renderizarTudo();
     }, (erro) => {
         console.error('Erro ao escutar ativos:', erro);
         elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 italic">Erro ao carregar ativos.</td></tr>';
+        elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-red-500 italic">Erro ao carregar ativos.</div>';
         mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os ativos.', 'erro');
     });
 }
@@ -352,6 +757,30 @@ function assinarColecaoProventos() {
     }, (erro) => {
         console.error('Erro ao escutar proventos:', erro);
         mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os proventos.', 'erro');
+    });
+}
+
+function assinarColecaoAportes() {
+    if (!estadoAplicacao.usuarioAtual) {
+        return;
+    }
+
+    if (typeof estadoAplicacao.cancelarInscricaoAportes === 'function') {
+        estadoAplicacao.cancelarInscricaoAportes();
+    }
+
+    const consultaAportes = query(collection(db, 'aportes'), where('uid', '==', estadoAplicacao.usuarioAtual.uid));
+
+    estadoAplicacao.cancelarInscricaoAportes = onSnapshot(consultaAportes, async (snapshot) => {
+        estadoAplicacao.listaAportesEmMemoria = snapshot.docs.map((documento) => ({
+            id: documento.id,
+            ...documento.data()
+        }));
+
+        await atualizarListaAtivosEnriquecida();
+    }, (erro) => {
+        console.error('Erro ao escutar aportes:', erro);
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os aportes.', 'erro');
     });
 }
 
@@ -554,13 +983,84 @@ async function alternarWatchlist(identificadorAtivo) {
     });
 }
 
+function alternarAtivoNoComparador(identificadorAtivo) {
+    const listaAtual = estadoAplicacao.listaAtivosSelecionadosParaComparacao;
+
+    if (listaAtual.includes(identificadorAtivo)) {
+        estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaAtual.filter((item) => item !== identificadorAtivo);
+        salvarComparadorNoLocalStorage();
+        return;
+    }
+
+    if (listaAtual.length >= 2) {
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'O comparador aceita no máximo 2 ativos.', 'info');
+        return;
+    }
+
+    estadoAplicacao.listaAtivosSelecionadosParaComparacao = [...listaAtual, identificadorAtivo];
+    salvarComparadorNoLocalStorage();
+}
+
+function limparComparador() {
+    estadoAplicacao.listaAtivosSelecionadosParaComparacao = [];
+    salvarComparadorNoLocalStorage();
+    renderizarTudo();
+}
+
+function exportarRelatorioCarteira() {
+    const patrimonioTotal = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.valorTotalAtual, 0);
+    const rendaMensal = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.rendaMensalEstimada, 0);
+    const valorTotalInvestido = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.valorTotalInvestido, 0);
+    const yieldOnCost = valorTotalInvestido > 0 ? ((rendaMensal * 12 / valorTotalInvestido) * 100) : 0;
+    const quedaEstimada = patrimonioTotal * 0.05;
+    const somaDasNotas = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.nota, 0);
+    const caixaDisponivel = converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel.value, 0);
+
+    const listaFavoritos = estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.favorito);
+    const listaWatchlist = estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.emWatchlist);
+    const listaAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria);
+    const listaRanking = gerarRankingDeOportunidades(
+        estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => !ativo.emWatchlist),
+        patrimonioTotal,
+        somaDasNotas,
+        caixaDisponivel
+    );
+    const listaEventosCalendario = gerarEventosCalendarioCarteira(estadoAplicacao.listaAtivosEmMemoria);
+
+    const conteudoRelatorio = gerarConteudoRelatorioCarteira({
+        patrimonioTotal,
+        rendaMensal,
+        yieldOnCost,
+        quedaEstimada,
+        listaFavoritos,
+        listaWatchlist,
+        listaAlertas,
+        listaRanking,
+        listaEventosCalendario,
+        listaAtivos: estadoAplicacao.listaAtivosEmMemoria
+    });
+
+    exportarRelatorioCarteiraComoTxt(
+        `relatorio-fii-insight-${new Date().toISOString().slice(0, 10)}.txt`,
+        conteudoRelatorio
+    );
+
+    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Relatório exportado com sucesso.', 'sucesso');
+}
+
 function inicializarEventosDaInterface() {
     carregarMetasDoLocalStorage();
+    carregarFiltroEOrdenacaoDoLocalStorage();
+    carregarComparadorDoLocalStorage();
+    carregarModoPrivacidadeDoLocalStorage();
+    carregarObservacoesWatchlistDoLocalStorage();
+    carregarAporteGlobalNoLocalStorage();
 
     document.getElementById('botao-modo-privacidade').addEventListener('click', () => {
         estadoAplicacao.modoPrivacidadeAtivo = !estadoAplicacao.modoPrivacidadeAtivo;
         document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
-        document.getElementById('icone-modo-privacidade').innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
+        elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
+        salvarModoPrivacidadeNoLocalStorage();
     });
 
     document.getElementById('container-filtros-segmento').addEventListener('click', (evento) => {
@@ -570,9 +1070,26 @@ function inicializarEventosDaInterface() {
         }
 
         estadoAplicacao.filtroSegmentoAtual = botaoFiltro.dataset.filtro;
+        salvarFiltroEOrdenacaoNoLocalStorage();
 
         document.querySelectorAll('.botao-filtro').forEach((botao) => {
             botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
+        });
+
+        renderizarTudo();
+    });
+
+    document.getElementById('container-filtros-inteligentes').addEventListener('click', (evento) => {
+        const botaoFiltroInteligente = evento.target.closest('.botao-filtro-inteligente');
+        if (!botaoFiltroInteligente) {
+            return;
+        }
+
+        estadoAplicacao.filtroInteligenteAtual = botaoFiltroInteligente.dataset.filtroInteligente;
+        salvarFiltroEOrdenacaoNoLocalStorage();
+
+        document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
+            botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
         });
 
         renderizarTudo();
@@ -585,6 +1102,7 @@ function inicializarEventosDaInterface() {
         }
 
         estadoAplicacao.ordenacaoCarteiraAtual = botaoOrdenacao.dataset.ordenacao;
+        salvarFiltroEOrdenacaoNoLocalStorage();
 
         document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
             botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
@@ -610,11 +1128,22 @@ function inicializarEventosDaInterface() {
         });
     });
 
+    elementosInterface.botaoLimparComparador.addEventListener('click', limparComparador);
+    elementosInterface.botaoExportarRelatorio.addEventListener('click', exportarRelatorioCarteira);
+
     elementosInterface.campoCaixaDisponivel.addEventListener('input', renderizarTudo);
+
+    elementosInterface.campoValorAporteGlobal.addEventListener('input', () => {
+        salvarAporteGlobalNoLocalStorage();
+        renderizarTudo();
+    });
+
     elementosInterface.botaoSalvarAtivo.addEventListener('click', salvarAtivo);
     elementosInterface.botaoCancelarEdicaoAtivo.addEventListener('click', cancelarEdicaoAtivo);
     elementosInterface.botaoSalvarProvento.addEventListener('click', salvarProvento);
     elementosInterface.botaoCancelarEdicaoProvento.addEventListener('click', cancelarEdicaoProvento);
+    elementosInterface.botaoSalvarAporte.addEventListener('click', salvarAporte);
+    elementosInterface.botaoCancelarEdicaoAporte.addEventListener('click', limparFormularioAporte);
 
     elementosInterface.campoMetaPatrimonio.addEventListener('input', () => {
         salvarMetasNoLocalStorage();
@@ -627,16 +1156,8 @@ function inicializarEventosDaInterface() {
     });
 
     elementosInterface.botaoExportarBackup.addEventListener('click', () => {
-        exportarCarteiraParaJson(
-            estadoAplicacao.listaAtivosEmMemoria,
-            estadoAplicacao.listaProventosEmMemoria
-        );
-
-        mostrarNotificacao(
-            elementosInterface.containerNotificacoes,
-            'Backup exportado com sucesso.',
-            'sucesso'
-        );
+        exportarCarteiraParaJson(estadoAplicacao.listaAtivosEmMemoria, estadoAplicacao.listaProventosEmMemoria);
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Backup exportado com sucesso.', 'sucesso');
     });
 
     elementosInterface.campoImportarBackup.addEventListener('change', async (evento) => {
@@ -674,23 +1195,20 @@ function inicializarEventosDaInterface() {
                 'sucesso'
             );
         } catch (erro) {
-            mostrarNotificacao(
-                elementosInterface.containerNotificacoes,
-                `Erro ao importar backup: ${erro.message}`,
-                'erro'
-            );
+            mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao importar backup: ${erro.message}`, 'erro');
         } finally {
             evento.target.value = '';
         }
     });
 
-    elementosInterface.corpoTabelaAtivos.addEventListener('click', async (evento) => {
+    const tratarCliqueAcoesAtivo = async (evento) => {
         const botaoEditarAtivo = evento.target.closest('.botao-editar-ativo');
         const botaoExcluirAtivo = evento.target.closest('.botao-excluir-ativo');
         const botaoDetalhesAtivo = evento.target.closest('.botao-detalhes-ativo');
         const botaoRegistrarProvento = evento.target.closest('.botao-registrar-provento');
         const botaoAlternarFavorito = evento.target.closest('.botao-alternar-favorito');
         const botaoAlternarWatchlist = evento.target.closest('.botao-alternar-watchlist');
+        const botaoAlternarComparador = evento.target.closest('.botao-alternar-comparador');
 
         if (botaoEditarAtivo) {
             await prepararEdicaoAtivo(botaoEditarAtivo.dataset.id);
@@ -708,6 +1226,14 @@ function inicializarEventosDaInterface() {
                 if (estadoAplicacao.identificadorAtivoEmEdicao === botaoExcluirAtivo.dataset.id) {
                     cancelarEdicaoAtivo();
                 }
+
+                delete estadoAplicacao.mapaObservacoesWatchlist[botaoExcluirAtivo.dataset.id];
+                salvarObservacoesWatchlistNoLocalStorage();
+
+                estadoAplicacao.listaAtivosSelecionadosParaComparacao = estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter(
+                    (item) => item !== botaoExcluirAtivo.dataset.id
+                );
+                salvarComparadorNoLocalStorage();
 
                 mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo excluído com sucesso.', 'sucesso');
             } catch (erro) {
@@ -740,23 +1266,27 @@ function inicializarEventosDaInterface() {
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao alterar watchlist: ${erro.message}`, 'erro');
             }
         }
-    });
 
-    elementosInterface.corpoTabelaAtivos.addEventListener('input', (evento) => {
-        const campoSimulacaoAporte = evento.target.closest('.campo-simulacao-aporte');
-        if (!campoSimulacaoAporte) {
-            return;
+        if (botaoAlternarComparador) {
+            alternarAtivoNoComparador(botaoAlternarComparador.dataset.id);
+            renderizarTudo();
         }
+    };
 
-        const identificadorAtivo = campoSimulacaoAporte.dataset.id;
-        const ativo = estadoAplicacao.listaAtivosEmMemoria.find((item) => item.id === identificadorAtivo);
-        if (!ativo) {
-            return;
+    elementosInterface.corpoTabelaAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
+    elementosInterface.listaCardsMobileAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
+
+    const tratarInputAtivo = (evento) => {
+        const campoObservacaoWatchlist = evento.target.closest('.campo-observacao-watchlist');
+        if (campoObservacaoWatchlist) {
+            estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
+            salvarObservacoesWatchlistNoLocalStorage();
+            renderizarTudo();
         }
+    };
 
-        ativo.valorSimulacaoAporte = converterParaNumeroSeguro(campoSimulacaoAporte.value, 0);
-        renderizarTudo();
-    });
+    elementosInterface.corpoTabelaAtivos.addEventListener('input', tratarInputAtivo);
+    elementosInterface.listaCardsMobileAtivos.addEventListener('input', tratarInputAtivo);
 
     elementosInterface.corpoTabelaProventos.addEventListener('click', async (evento) => {
         const botaoEditarProvento = evento.target.closest('.botao-editar-provento');
@@ -789,6 +1319,37 @@ function inicializarEventosDaInterface() {
         }
     });
 
+    elementosInterface.painelHistoricoAportes.addEventListener('click', async (evento) => {
+        const botaoEditarAporte = evento.target.closest('.botao-editar-aporte');
+        const botaoExcluirAporte = evento.target.closest('.botao-excluir-aporte');
+
+        if (botaoEditarAporte) {
+            prepararEdicaoAporte(botaoEditarAporte.dataset.id);
+        }
+
+        if (botaoExcluirAporte) {
+            const confirmouExclusao = confirm('Deseja realmente excluir este aporte?');
+            if (!confirmouExclusao) {
+                return;
+            }
+
+            try {
+                await excluirAporteNoFirestore({
+                    db,
+                    identificadorAporte: botaoExcluirAporte.dataset.id
+                });
+
+                if (estadoAplicacao.identificadorAporteEmEdicao === botaoExcluirAporte.dataset.id) {
+                    limparFormularioAporte();
+                }
+
+                mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte excluído com sucesso.', 'sucesso');
+            } catch (erro) {
+                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir aporte: ${erro.message}`, 'erro');
+            }
+        }
+    });
+
     Object.values(camposFormularioAtivo).forEach((campo) => {
         campo.addEventListener('input', () => limparErrosDosCampos(Object.values(camposFormularioAtivo)));
     });
@@ -809,12 +1370,14 @@ onAuthStateChanged(auth, (usuario) => {
         atualizarBlocoUsuario(true);
         assinarColecaoAtivos();
         assinarColecaoProventos();
+        assinarColecaoAportes();
         return;
     }
 
     estadoAplicacao.usuarioAtual = null;
     cancelarEdicaoAtivo();
     cancelarEdicaoProvento();
+    limparFormularioAporte();
     atualizarBlocoUsuario(false);
     resetarPainel();
 });
