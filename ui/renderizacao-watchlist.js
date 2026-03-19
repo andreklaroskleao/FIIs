@@ -1,6 +1,6 @@
 import { escaparHtml, formatarMoeda } from '../services/formatadores.js';
 
-export function renderizarPainelWatchlist(painelWatchlist, listaAtivos) {
+export function renderizarPainelWatchlist(painelWatchlist, listaAtivos, mapaObservacoesWatchlist) {
     const listaWatchlist = listaAtivos.filter((ativo) => ativo.emWatchlist);
 
     if (!listaWatchlist.length) {
@@ -9,6 +9,8 @@ export function renderizarPainelWatchlist(painelWatchlist, listaAtivos) {
     }
 
     painelWatchlist.innerHTML = listaWatchlist.map((ativo) => {
+        const observacaoWatchlist = mapaObservacoesWatchlist[ativo.id] || '';
+
         return `
             <div class="cartao-watchlist">
                 <div class="flex items-center justify-between gap-3 mb-2">
@@ -20,7 +22,7 @@ export function renderizarPainelWatchlist(painelWatchlist, listaAtivos) {
                     <span class="text-[10px] uppercase font-black text-slate-500">${escaparHtml(ativo.segmento)}</span>
                 </div>
 
-                <div class="space-y-1 text-[11px]">
+                <div class="space-y-1 text-[11px] mb-3">
                     <div class="text-slate-400">
                         Preço atual: <span class="font-black text-white valor-sensivel">R$ ${formatarMoeda(ativo.precoAtual)}</span>
                     </div>
@@ -30,6 +32,18 @@ export function renderizarPainelWatchlist(painelWatchlist, listaAtivos) {
                     <div class="text-slate-400">
                         Nota: <span class="font-black text-blue-300">${ativo.nota}</span>
                     </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
+                        Observação da watchlist
+                    </label>
+                    <textarea
+                        class="textarea-watchlist campo-observacao-watchlist"
+                        data-id="${escaparHtml(ativo.id)}"
+                        placeholder="Escreva por que este ativo está em observação"
+                    >${escaparHtml(observacaoWatchlist)}</textarea>
+                    <div class="area-observacao-watchlist">${escaparHtml(observacaoWatchlist || 'Sem observação registrada.')}</div>
                 </div>
             </div>
         `;
