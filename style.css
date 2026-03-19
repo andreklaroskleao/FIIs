@@ -56,7 +56,28 @@ body {
     box-shadow: 0 12px 24px rgba(16, 185, 129, 0.18);
 }
 
-.secao-aba-principal {
+.botao-subaba {
+    background: #0f172a;
+    color: #94a3b8;
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 1px solid #1e293b;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.botao-subaba.ativa {
+    background: rgba(59, 130, 246, 0.16);
+    color: #bfdbfe;
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
+.secao-aba-principal,
+.secao-subaba {
     animation: aparecerSecao 0.2s ease;
 }
 
