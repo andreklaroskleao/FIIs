@@ -25,7 +25,6 @@ import {
 import { estadoAplicacao } from './state/store.js';
 import { escaparHtml, normalizarTicker, formatarMesAno, formatarMoeda } from './services/formatadores.js';
 import {
-    LISTA_SEGMENTOS_VALIDOS,
     validarDiaDoMes,
     validarDadosAtivo,
     validarDadosProvento,
@@ -43,6 +42,18 @@ import { renderizarGraficoProventos, renderizarGraficoSegmentos } from './ui/ren
 import { renderizarHistoricoProventos } from './ui/renderizacao-proventos.js';
 import { renderizarTabelaAtivos } from './ui/renderizacao-ativos.js';
 import { obterStatusAtivo } from './features/score-oportunidade.js';
+import {
+    calcularProgressoMetaRenda,
+    calcularProgressoMetaPatrimonio
+} from './features/metas-carteira.js';
+import {
+    exportarCarteiraParaJson,
+    importarCarteiraDeArquivo
+} from './features/exportacao-importacao.js';
+import {
+    renderizarCardMetaPatrimonio,
+    renderizarCardMetaRenda
+} from './ui/renderizacao-metas.js';
 
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
@@ -65,7 +76,13 @@ const elementosInterface = {
     botaoCancelarEdicaoAtivo: document.getElementById('botao-cancelar-edicao-ativo'),
     tituloFormularioProvento: document.getElementById('titulo-formulario-provento'),
     botaoSalvarProvento: document.getElementById('botao-salvar-provento'),
-    botaoCancelarEdicaoProvento: document.getElementById('botao-cancelar-edicao-provento')
+    botaoCancelarEdicaoProvento: document.getElementById('botao-cancelar-edicao-provento'),
+    campoMetaPatrimonio: document.getElementById('campo-meta-patrimonio'),
+    campoMetaRendaMensal: document.getElementById('campo-meta-renda-mensal'),
+    cardMetaPatrimonio: document.getElementById('card-meta-patrimonio'),
+    cardMetaRenda: document.getElementById('card-meta-renda'),
+    botaoExportarBackup: document.getElementById('botao-exportar-backup'),
+    campoImportarBackup: document.getElementById('campo-importar-backup')
 };
 
 const camposFormularioAtivo = {
@@ -157,6 +174,28 @@ function resetarPainel() {
         estadoAplicacao.instanciaGraficoSegmentos.destroy();
         estadoAplicacao.instanciaGraficoSegmentos = null;
     }
+
+    renderizarMetas(0, 0);
+}
+
+function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
+    const metaPatrimonio = converterParaNumeroSeguro(elementosInterface.campoMetaPatrimonio.value, 0);
+    const metaRendaMensal = converterParaNumeroSeguro(elementosInterface.campoMetaRendaMensal.value, 0);
+
+    const progressoMetaPatrimonio = calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio);
+    const progressoMetaRenda = calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal);
+
+    renderizarCardMetaPatrimonio(
+        elementosInterface.cardMetaPatrimonio,
+        progressoMetaPatrimonio,
+        patrimonioAtual
+    );
+
+    renderizarCardMetaRenda(
+        elementosInterface.cardMetaRenda,
+        progressoMetaRenda,
+        rendaMensalAtual
+    );
 }
 
 function atualizarResumoPainel(resultadoRenderizacao) {
@@ -179,6 +218,8 @@ function atualizarResumoPainel(resultadoRenderizacao) {
                 </div>
             `;
         }).join('') || '<p class="text-[10px] italic p-4 text-slate-600">Alocação equilibrada.</p>';
+
+    renderizarMetas(resultadoRenderizacao.patrimonioTotal, resultadoRenderizacao.projecaoMensalTotal);
 }
 
 function renderizarTudo() {
@@ -506,6 +547,54 @@ function inicializarEventosDaInterface() {
     elementosInterface.botaoCancelarEdicaoAtivo.addEventListener('click', cancelarEdicaoAtivo);
     elementosInterface.botaoSalvarProvento.addEventListener('click', salvarProvento);
     elementosInterface.botaoCancelarEdicaoProvento.addEventListener('click', cancelarEdicaoProvento);
+
+    elementosInterface.campoMetaPatrimonio.addEventListener('input', () => {
+        renderizarTudo();
+    });
+
+    elementosInterface.campoMetaRendaMensal.addEventListener('input', () => {
+        renderizarTudo();
+    });
+
+    elementosInterface.botaoExportarBackup.addEventListener('click', () => {
+        exportarCarteiraParaJson(
+            estadoAplicacao.listaAtivosEmMemoria,
+            estadoAplicacao.listaProventosEmMemoria
+        );
+
+        mostrarNotificacao(
+            elementosInterface.containerNotificacoes,
+            'Backup exportado com sucesso.',
+            'sucesso'
+        );
+    });
+
+    elementosInterface.campoImportarBackup.addEventListener('change', async (evento) => {
+        const arquivo = evento.target.files?.[0];
+        if (!arquivo) {
+            return;
+        }
+
+        try {
+            const dadosImportados = await importarCarteiraDeArquivo(arquivo);
+
+            mostrarNotificacao(
+                elementosInterface.containerNotificacoes,
+                `Backup lido com sucesso. Ativos: ${dadosImportados.ativos.length}, Proventos: ${dadosImportados.proventos.length}.`,
+                'sucesso'
+            );
+
+            console.log('Dados importados:', dadosImportados);
+        } catch (erro) {
+            mostrarNotificacao(
+                elementosInterface.containerNotificacoes,
+                `Erro ao importar backup: ${erro.message}`,
+                'erro'
+            );
+        } finally {
+            evento.target.value = '';
+        }
+    });
 
     elementosInterface.corpoTabelaAtivos.addEventListener('click', async (evento) => {
         const botaoEditarAtivo = evento.target.closest('.botao-editar-ativo');
