@@ -1,37 +1,60 @@
-export function calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio) {
-    const meta = Number(metaPatrimonio) || 0;
+import { converterParaNumeroSeguro } from '../services/calculos-carteira.js';
 
-    if (meta <= 0) {
-        return {
-            percentualConcluido: 0,
-            valorFaltante: 0
-        };
+function calcularPercentualAtualEmRelacaoAMeta(valorAtual, valorMeta) {
+    const valorAtualSeguro = converterParaNumeroSeguro(valorAtual, 0);
+    const valorMetaSeguro = converterParaNumeroSeguro(valorMeta, 0);
+
+    if (valorMetaSeguro <= 0) {
+        return 0;
     }
 
-    const percentualConcluido = (Number(patrimonioAtual || 0) / meta) * 100;
-    const valorFaltante = Math.max(0, meta - Number(patrimonioAtual || 0));
+    return (valorAtualSeguro / valorMetaSeguro) * 100;
+}
+
+export function calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio) {
+    const patrimonioAtualSeguro = converterParaNumeroSeguro(patrimonioAtual, 0);
+    const metaPatrimonioSegura = converterParaNumeroSeguro(metaPatrimonio, 0);
+
+    const percentualAtual = calcularPercentualAtualEmRelacaoAMeta(
+        patrimonioAtualSeguro,
+        metaPatrimonioSegura
+    );
+
+    const percentualExibicao = Math.min(100, percentualAtual);
+    const valorRestante = Math.max(0, metaPatrimonioSegura - patrimonioAtualSeguro);
+    const metaConcluida = metaPatrimonioSegura > 0 && patrimonioAtualSeguro >= metaPatrimonioSegura;
 
     return {
-        percentualConcluido,
-        valorFaltante
+        titulo: 'Meta de patrimônio',
+        valorAtual: patrimonioAtualSeguro,
+        valorMeta: metaPatrimonioSegura,
+        valorRestante,
+        percentualAtual,
+        percentualExibicao,
+        metaConcluida
     };
 }
 
 export function calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal) {
-    const meta = Number(metaRendaMensal) || 0;
+    const rendaMensalAtualSegura = converterParaNumeroSeguro(rendaMensalAtual, 0);
+    const metaRendaMensalSegura = converterParaNumeroSeguro(metaRendaMensal, 0);
 
-    if (meta <= 0) {
-        return {
-            percentualConcluido: 0,
-            valorFaltante: 0
-        };
-    }
+    const percentualAtual = calcularPercentualAtualEmRelacaoAMeta(
+        rendaMensalAtualSegura,
+        metaRendaMensalSegura
+    );
 
-    const percentualConcluido = (Number(rendaMensalAtual || 0) / meta) * 100;
-    const valorFaltante = Math.max(0, meta - Number(rendaMensalAtual || 0));
+    const percentualExibicao = Math.min(100, percentualAtual);
+    const valorRestante = Math.max(0, metaRendaMensalSegura - rendaMensalAtualSegura);
+    const metaConcluida = metaRendaMensalSegura > 0 && rendaMensalAtualSegura >= metaRendaMensalSegura;
 
     return {
-        percentualConcluido,
-        valorFaltante
+        titulo: 'Meta de renda mensal',
+        valorAtual: rendaMensalAtualSegura,
+        valorMeta: metaRendaMensalSegura,
+        valorRestante,
+        percentualAtual,
+        percentualExibicao,
+        metaConcluida
     };
 }
