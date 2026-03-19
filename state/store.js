@@ -2,14 +2,20 @@ export const estadoAplicacao = {
     usuarioAtual: null,
     identificadorAtivoEmEdicao: null,
     identificadorProventoEmEdicao: null,
+    identificadorAporteEmEdicao: null,
     filtroSegmentoAtual: 'Todos',
+    filtroInteligenteAtual: 'todos',
     ordenacaoCarteiraAtual: 'maior-posicao',
     modoPrivacidadeAtivo: false,
     instanciaGraficoProventos: null,
     instanciaGraficoSegmentos: null,
     listaAtivosEmMemoria: [],
     listaProventosEmMemoria: [],
+    listaAportesEmMemoria: [],
+    listaAtivosSelecionadosParaComparacao: [],
+    mapaObservacoesWatchlist: {},
     mapaLinhasExpandidas: {},
     cancelarInscricaoAtivos: null,
-    cancelarInscricaoProventos: null
+    cancelarInscricaoProventos: null,
+    cancelarInscricaoAportes: null
 };
