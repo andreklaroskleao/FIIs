@@ -1,33 +1,33 @@
-import { formatarMoeda } from '../services/formatadores.js';
+import { formatarMoeda, formatarPercentual } from '../services/formatadores.js';
 
-export function renderizarCardMetaPatrimonio(elemento, progressoMetaPatrimonio, patrimonioAtual) {
-    elemento.innerHTML = `
+export function renderizarCardMetaPatrimonio(cardMetaPatrimonio, progressoMetaPatrimonio, patrimonioAtual) {
+    cardMetaPatrimonio.innerHTML = `
         <div class="titulo-cartao-meta">Meta de patrimônio</div>
         <div class="valor-cartao-meta valor-sensivel">R$ ${formatarMoeda(patrimonioAtual)}</div>
         <div class="texto-meta-secundario">
-            ${progressoMetaPatrimonio.atingida
-                ? 'Meta atingida'
-                : `Faltam R$ ${formatarMoeda(progressoMetaPatrimonio.faltante)}`}
+            Progresso: ${formatarPercentual(progressoMetaPatrimonio.percentualConcluido)}
+        </div>
+        <div class="texto-meta-secundario">
+            Falta: R$ ${formatarMoeda(progressoMetaPatrimonio.valorFaltante)}
         </div>
         <div class="barra-progresso-meta">
-            <div class="preenchimento-barra-meta" style="width:${progressoMetaPatrimonio.percentual}%"></div>
+            <div class="preenchimento-barra-meta" style="width: ${Math.min(100, progressoMetaPatrimonio.percentualConcluido)}%"></div>
         </div>
-        <div class="texto-meta-secundario">${progressoMetaPatrimonio.percentual.toFixed(1)}% concluído</div>
     `;
 }
 
-export function renderizarCardMetaRenda(elemento, progressoMetaRenda, rendaMensalAtual) {
-    elemento.innerHTML = `
+export function renderizarCardMetaRenda(cardMetaRenda, progressoMetaRenda, rendaMensalAtual) {
+    cardMetaRenda.innerHTML = `
         <div class="titulo-cartao-meta">Meta de renda mensal</div>
         <div class="valor-cartao-meta valor-sensivel">R$ ${formatarMoeda(rendaMensalAtual)}</div>
         <div class="texto-meta-secundario">
-            ${progressoMetaRenda.atingida
-                ? 'Meta atingida'
-                : `Faltam R$ ${formatarMoeda(progressoMetaRenda.faltante)}`}
+            Progresso: ${formatarPercentual(progressoMetaRenda.percentualConcluido)}
+        </div>
+        <div class="texto-meta-secundario">
+            Falta: R$ ${formatarMoeda(progressoMetaRenda.valorFaltante)}
         </div>
         <div class="barra-progresso-meta">
-            <div class="preenchimento-barra-meta" style="width:${progressoMetaRenda.percentual}%"></div>
+            <div class="preenchimento-barra-meta" style="width: ${Math.min(100, progressoMetaRenda.percentualConcluido)}%"></div>
         </div>
-        <div class="texto-meta-secundario">${progressoMetaRenda.percentual.toFixed(1)}% concluído</div>
     `;
 }
