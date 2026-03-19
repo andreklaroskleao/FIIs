@@ -1,0 +1,28 @@
+export function exportarCarteiraParaJson(listaAtivos, listaProventos, nomeArquivo = 'backup-carteira.json') {
+    const conteudo = {
+        versao: 1,
+        exportadoEm: new Date().toISOString(),
+        ativos: listaAtivos,
+        proventos: listaProventos
+    };
+
+    const blob = new Blob([JSON.stringify(conteudo, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nomeArquivo;
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+export async function importarCarteiraDeArquivo(arquivo) {
+    const texto = await arquivo.text();
+    const dados = JSON.parse(texto);
+
+    return {
+        ativos: Array.isArray(dados.ativos) ? dados.ativos : [],
+        proventos: Array.isArray(dados.proventos) ? dados.proventos : []
+    };
+}

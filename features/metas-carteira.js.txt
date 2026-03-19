@@ -1,0 +1,37 @@
+export function calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal) {
+    if (!metaRendaMensal || metaRendaMensal <= 0) {
+        return {
+            percentual: 0,
+            faltante: 0,
+            atingida: false
+        };
+    }
+
+    const percentual = Math.min(100, (rendaMensalAtual / metaRendaMensal) * 100);
+    const faltante = Math.max(0, metaRendaMensal - rendaMensalAtual);
+
+    return {
+        percentual,
+        faltante,
+        atingida: rendaMensalAtual >= metaRendaMensal
+    };
+}
+
+export function calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio) {
+    if (!metaPatrimonio || metaPatrimonio <= 0) {
+        return {
+            percentual: 0,
+            faltante: 0,
+            atingida: false
+        };
+    }
+
+    const percentual = Math.min(100, (patrimonioAtual / metaPatrimonio) * 100);
+    const faltante = Math.max(0, metaPatrimonio - patrimonioAtual);
+
+    return {
+        percentual,
+        faltante,
+        atingida: patrimonioAtual >= metaPatrimonio
+    };
+}

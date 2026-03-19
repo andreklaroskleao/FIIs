@@ -1,0 +1,112 @@
+import { LISTA_SEGMENTOS_VALIDOS, validarDiaDoMes } from './validacoes.js';
+import { normalizarTicker } from './formatadores.js';
+
+export function converterParaNumeroSeguro(valor, valorPadrao = 0) {
+    const numeroConvertido = Number(valor);
+    return Number.isFinite(numeroConvertido) ? numeroConvertido : valorPadrao;
+}
+
+export function calcularDistanciaCircularEntreDias(diaA, diaB) {
+    const diferencaAbsoluta = Math.abs(diaA - diaB);
+    return Math.min(diferencaAbsoluta, 31 - diferencaAbsoluta);
+}
+
+export function calcularLucroPrejuizo(valorTotalAtual, valorTotalInvestido) {
+    const valor = valorTotalAtual - valorTotalInvestido;
+    const percentual = valorTotalInvestido > 0 ? (valor / valorTotalInvestido) * 100 : 0;
+
+    return { valor, percentual };
+}
+
+export function calcularRendaEstimada(precoAtual, dividendYieldAnual, quantidade) {
+    const dividendoMensalEstimadoPorCota = dividendYieldAnual > 0
+        ? (precoAtual * (dividendYieldAnual / 100)) / 12
+        : precoAtual * 0.008;
+
+    const rendaMensal = quantidade * dividendoMensalEstimadoPorCota;
+    const rendaAnual = rendaMensal * 12;
+
+    return {
+        dividendoMensalEstimadoPorCota,
+        rendaMensal,
+        rendaAnual
+    };
+}
+
+export function calcularDiferencaParaPrecoTeto(precoAtual, precoTeto) {
+    const valor = precoTeto - precoAtual;
+    const percentual = precoAtual > 0 ? ((precoTeto - precoAtual) / precoAtual) * 100 : 0;
+
+    return {
+        valor,
+        percentual
+    };
+}
+
+export function enriquecerListaAtivos(listaAtivosOriginal, mapaCotacoes) {
+    return listaAtivosOriginal.map((ativoOriginal) => {
+        const tickerNormalizado = normalizarTicker(ativoOriginal.ticker);
+        const dadosMercado = mapaCotacoes[tickerNormalizado] || {};
+        const precoAtual = converterParaNumeroSeguro(dadosMercado.regularMarketPrice, 0);
+        const dividendYieldAnual = converterParaNumeroSeguro(dadosMercado.dividendYield, 0);
+        const quantidade = converterParaNumeroSeguro(ativoOriginal.quantidade, 0);
+        const precoMedio = converterParaNumeroSeguro(ativoOriginal.precoMedio, 0);
+
+        const valorTotalAtual = precoAtual * quantidade;
+        const valorTotalInvestido = precoMedio * quantidade;
+        const lucroPrejuizo = calcularLucroPrejuizo(valorTotalAtual, valorTotalInvestido);
+        const rendaEstimada = calcularRendaEstimada(precoAtual, dividendYieldAnual, quantidade);
+        const diferencaPrecoTeto = calcularDiferencaParaPrecoTeto(precoAtual, converterParaNumeroSeguro(ativoOriginal.precoTeto, 0));
+
+        return {
+            id: ativoOriginal.id,
+            uid: ativoOriginal.uid,
+            ticker: tickerNormalizado,
+            quantidade,
+            precoMedio,
+            nota: converterParaNumeroSeguro(ativoOriginal.nota, 0),
+            precoTeto: converterParaNumeroSeguro(ativoOriginal.precoTeto, 0),
+            diaDataCom: validarDiaDoMes(ativoOriginal.diaDataCom),
+            diaPagamento: validarDiaDoMes(ativoOriginal.diaPagamento),
+            segmento: LISTA_SEGMENTOS_VALIDOS.includes(ativoOriginal.segmento) ? ativoOriginal.segmento : 'Outros',
+            observacao: ativoOriginal.observacao || '',
+            precoAtual,
+            dividendoMensalEstimadoPorCota: rendaEstimada.dividendoMensalEstimadoPorCota,
+            rendaMensalEstimada: rendaEstimada.rendaMensal,
+            rendaAnualEstimada: rendaEstimada.rendaAnual,
+            valorTotalAtual,
+            valorTotalInvestido,
+            lucroPrejuizoValor: lucroPrejuizo.valor,
+            lucroPrejuizoPercentual: lucroPrejuizo.percentual,
+            diferencaParaPrecoTetoValor: diferencaPrecoTeto.valor,
+            diferencaParaPrecoTetoPercentual: diferencaPrecoTeto.percentual
+        };
+    });
+}
+
+export function obterListaAtivosFiltradaEOrdenada(listaAtivos, filtroSegmentoAtual, ordenacaoCarteiraAtual) {
+    let listaProcessada = filtroSegmentoAtual === 'Todos'
+        ? [...listaAtivos]
+        : listaAtivos.filter((ativo) => ativo.segmento === filtroSegmentoAtual);
+
+    switch (ordenacaoCarteiraAtual) {
+        case 'menor-posicao':
+            listaProcessada.sort((ativoA, ativoB) => ativoA.valorTotalAtual - ativoB.valorTotalAtual);
+            break;
+        case 'ticker':
+            listaProcessada.sort((ativoA, ativoB) => ativoA.ticker.localeCompare(ativoB.ticker));
+            break;
+        case 'nota':
+            listaProcessada.sort((ativoA, ativoB) => ativoB.nota - ativoA.nota);
+            break;
+        case 'projecao':
+            listaProcessada.sort((ativoA, ativoB) => ativoB.rendaMensalEstimada - ativoA.rendaMensalEstimada);
+            break;
+        case 'maior-posicao':
+        default:
+            listaProcessada.sort((ativoA, ativoB) => ativoB.valorTotalAtual - ativoA.valorTotalAtual);
+            break;
+    }
+
+    return listaProcessada;
+}
