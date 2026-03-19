@@ -1,34 +1,62 @@
 export function escaparHtml(valor) {
-    return String(valor || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return String(valor ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
-export function normalizarTicker(valor) {
-    return String(valor || '').trim().toUpperCase().replace(/\s+/g, '');
+export function normalizarTicker(ticker) {
+    return String(ticker ?? '')
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, '');
 }
 
 export function formatarMoeda(valor, casasDecimais = 2) {
-    return Number(valor || 0).toLocaleString('pt-BR', {
+    const numero = Number(valor);
+
+    if (!Number.isFinite(numero)) {
+        return (0).toLocaleString('pt-BR', {
+            minimumFractionDigits: casasDecimais,
+            maximumFractionDigits: casasDecimais
+        });
+    }
+
+    return numero.toLocaleString('pt-BR', {
         minimumFractionDigits: casasDecimais,
         maximumFractionDigits: casasDecimais
     });
 }
 
+export function formatarPercentual(valor, casasDecimais = 2) {
+    const numero = Number(valor);
+
+    if (!Number.isFinite(numero)) {
+        return '0,00%';
+    }
+
+    return `${numero.toLocaleString('pt-BR', {
+        minimumFractionDigits: casasDecimais,
+        maximumFractionDigits: casasDecimais
+    })}%`;
+}
+
 export function formatarMesAno(valorMesAno) {
-    if (!valorMesAno || !valorMesAno.includes('-')) {
-        return '--';
+    if (!valorMesAno || !/^\d{4}-\d{2}$/.test(valorMesAno)) {
+        return valorMesAno || '--';
     }
 
     const [ano, mes] = valorMesAno.split('-');
-    return `${mes}/${ano}`;
+    const data = new Date(Number(ano), Number(mes) - 1, 1);
+
+    return data.toLocaleDateString('pt-BR', {
+        month: 'short',
+        year: 'numeric'
+    });
 }
 
 export function obterClasseResultadoValor(valor) {
-    if (valor > 0) return 'valor-positivo';
-    if (valor < 0) return 'valor-negativo';
-    return '';
+    return Number(valor) >= 0 ? 'valor-positivo' : 'valor-negativo';
 }
