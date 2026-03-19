@@ -1,50 +1,60 @@
 import { normalizarTicker } from './formatadores.js';
 
-const CHAVE_API_BRAPI = 'hshuPrGV3kvLM6Yh8FEDrD';
-const TAMANHO_LOTE_BRAPI = 20;
-
-export async function buscarCotacoesNaBrapi(listaTickers) {
-    if (!Array.isArray(listaTickers) || listaTickers.length === 0) {
-        return {};
-    }
-
-    const listaUnicaTickers = [];
-    const mapaTickersJaProcessados = {};
+function criarMapaCotacoesVazio(listaTickers) {
+    const mapaCotacoes = {};
 
     listaTickers.forEach((ticker) => {
         const tickerNormalizado = normalizarTicker(ticker);
-        if (tickerNormalizado && !mapaTickersJaProcessados[tickerNormalizado]) {
-            mapaTickersJaProcessados[tickerNormalizado] = true;
-            listaUnicaTickers.push(tickerNormalizado);
+        if (tickerNormalizado) {
+            mapaCotacoes[tickerNormalizado] = {
+                regularMarketPrice: 0,
+                dividendYield: 0
+            };
         }
     });
 
-    const mapaCotacoes = {};
+    return mapaCotacoes;
+}
 
-    for (let indice = 0; indice < listaUnicaTickers.length; indice += TAMANHO_LOTE_BRAPI) {
-        const loteAtual = listaUnicaTickers.slice(indice, indice + TAMANHO_LOTE_BRAPI);
-        const tickersConcatenados = encodeURIComponent(loteAtual.join(','));
+export async function buscarCotacoesNaBrapi(listaTickers) {
+    const listaNormalizada = Array.from(
+        new Set(
+            (listaTickers || [])
+                .map((ticker) => normalizarTicker(ticker))
+                .filter(Boolean)
+        )
+    );
 
-        try {
-            const resposta = await fetch(`https://brapi.dev/api/quote/${tickersConcatenados}?token=${CHAVE_API_BRAPI}`);
-
-            if (!resposta.ok) {
-                throw new Error(`HTTP ${resposta.status}`);
-            }
-
-            const dadosResposta = await resposta.json();
-
-            if (Array.isArray(dadosResposta.results)) {
-                dadosResposta.results.forEach((ativo) => {
-                    if (ativo && ativo.symbol) {
-                        mapaCotacoes[ativo.symbol] = ativo;
-                    }
-                });
-            }
-        } catch (erro) {
-            console.error('Erro ao buscar cotações na BRAPI:', erro);
-        }
+    if (!listaNormalizada.length) {
+        return {};
     }
 
-    return mapaCotacoes;
+    const mapaCotacoesPadrao = criarMapaCotacoesVazio(listaNormalizada);
+
+    try {
+        const simbolos = listaNormalizada.join(',');
+        const url = `https://brapi.dev/api/quote/${simbolos}?range=1d&interval=1d&fundamental=true`;
+
+        const resposta = await fetch(url);
+
+        if (!resposta.ok) {
+            return mapaCotacoesPadrao;
+        }
+
+        const dados = await resposta.json();
+        const resultados = Array.isArray(dados?.results) ? dados.results : [];
+
+        resultados.forEach((itemResultado) => {
+            const tickerNormalizado = normalizarTicker(itemResultado.symbol);
+
+            mapaCotacoesPadrao[tickerNormalizado] = {
+                regularMarketPrice: Number(itemResultado.regularMarketPrice) || 0,
+                dividendYield: Number(itemResultado.dividendYield) || 0
+            };
+        });
+
+        return mapaCotacoesPadrao;
+    } catch {
+        return mapaCotacoesPadrao;
+    }
 }
