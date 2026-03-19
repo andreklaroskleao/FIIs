@@ -98,7 +98,7 @@ export function renderizarCardsMobileAtivos({
                                     ${renderizarBlocoCampo('Data com', ativo.diaDataCom == null ? '--' : String(ativo.diaDataCom))}
                                     ${renderizarBlocoCampo('Pagamento', ativo.diaPagamento == null ? '--' : String(ativo.diaPagamento))}
                                     ${renderizarBlocoCampo('Renda anual', `R$ ${formatarMoeda(ativo.rendaAnualEstimada)}`, 'valor-sensivel text-emerald-400')}
-                                    ${renderizarBlocoCampo('Alocação real', `${(pesoReal * 100).toFixed(2)}%`)}
+                                    ${renderizarBlocoCampo('Origem do cálculo', ativo.origemCalculoPosicao === 'aportes' ? 'Aportes' : 'Cadastro')}
                                 </div>
 
                                 <div class="mt-3">
