@@ -1,5 +1,9 @@
 export function escaparHtml(valor) {
-    return String(valor ?? '')
+    if (valor === null || valor === undefined) {
+        return '';
+    }
+
+    return String(valor)
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;')
@@ -7,56 +11,85 @@ export function escaparHtml(valor) {
         .replaceAll("'", '&#039;');
 }
 
-export function normalizarTicker(ticker) {
-    return String(ticker ?? '')
+export function normalizarTicker(valor) {
+    if (valor === null || valor === undefined) {
+        return '';
+    }
+
+    return String(valor)
         .trim()
         .toUpperCase()
         .replace(/\s+/g, '');
 }
 
-export function formatarMoeda(valor, casasDecimais = 2) {
-    const numero = Number(valor);
+export function formatarMoeda(valor, quantidadeCasasDecimais = 2) {
+    const numeroConvertido = Number(valor);
 
-    if (!Number.isFinite(numero)) {
-        return (0).toLocaleString('pt-BR', {
-            minimumFractionDigits: casasDecimais,
-            maximumFractionDigits: casasDecimais
-        });
+    if (!Number.isFinite(numeroConvertido)) {
+        return Number(0).toFixed(quantidadeCasasDecimais).replace('.', ',');
     }
 
-    return numero.toLocaleString('pt-BR', {
-        minimumFractionDigits: casasDecimais,
-        maximumFractionDigits: casasDecimais
+    return numeroConvertido.toLocaleString('pt-BR', {
+        minimumFractionDigits: quantidadeCasasDecimais,
+        maximumFractionDigits: quantidadeCasasDecimais
     });
 }
 
-export function formatarPercentual(valor, casasDecimais = 2) {
-    const numero = Number(valor);
+export function formatarPercentual(valor, quantidadeCasasDecimais = 2) {
+    const numeroConvertido = Number(valor);
 
-    if (!Number.isFinite(numero)) {
-        return '0,00%';
+    if (!Number.isFinite(numeroConvertido)) {
+        return `0,00%`;
     }
 
-    return `${numero.toLocaleString('pt-BR', {
-        minimumFractionDigits: casasDecimais,
-        maximumFractionDigits: casasDecimais
+    return `${numeroConvertido.toLocaleString('pt-BR', {
+        minimumFractionDigits: quantidadeCasasDecimais,
+        maximumFractionDigits: quantidadeCasasDecimais
     })}%`;
 }
 
 export function formatarMesAno(valorMesAno) {
-    if (!valorMesAno || !/^\d{4}-\d{2}$/.test(valorMesAno)) {
-        return valorMesAno || '--';
+    if (!valorMesAno || typeof valorMesAno !== 'string') {
+        return '--';
     }
 
-    const [ano, mes] = valorMesAno.split('-');
-    const data = new Date(Number(ano), Number(mes) - 1, 1);
+    const correspondencia = valorMesAno.match(/^(\d{4})-(\d{2})$/);
 
-    return data.toLocaleDateString('pt-BR', {
-        month: 'short',
-        year: 'numeric'
-    });
+    if (!correspondencia) {
+        return valorMesAno;
+    }
+
+    const ano = Number(correspondencia[1]);
+    const mes = Number(correspondencia[2]);
+
+    const nomesMeses = [
+        'Jan',
+        'Fev',
+        'Mar',
+        'Abr',
+        'Mai',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Set',
+        'Out',
+        'Nov',
+        'Dez'
+    ];
+
+    if (mes < 1 || mes > 12) {
+        return valorMesAno;
+    }
+
+    return `${nomesMeses[mes - 1]}/${ano}`;
 }
 
 export function obterClasseResultadoValor(valor) {
-    return Number(valor) >= 0 ? 'valor-positivo' : 'valor-negativo';
+    const numeroConvertido = Number(valor);
+
+    if (!Number.isFinite(numeroConvertido) || numeroConvertido === 0) {
+        return '';
+    }
+
+    return numeroConvertido > 0 ? 'valor-positivo' : 'valor-negativo';
 }
