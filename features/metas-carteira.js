@@ -1,37 +1,37 @@
-export function calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal) {
-    if (!metaRendaMensal || metaRendaMensal <= 0) {
+export function calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio) {
+    const meta = Number(metaPatrimonio) || 0;
+
+    if (meta <= 0) {
         return {
-            percentual: 0,
-            faltante: 0,
-            atingida: false
+            percentualConcluido: 0,
+            valorFaltante: 0
         };
     }
 
-    const percentual = Math.min(100, (rendaMensalAtual / metaRendaMensal) * 100);
-    const faltante = Math.max(0, metaRendaMensal - rendaMensalAtual);
+    const percentualConcluido = (Number(patrimonioAtual || 0) / meta) * 100;
+    const valorFaltante = Math.max(0, meta - Number(patrimonioAtual || 0));
 
     return {
-        percentual,
-        faltante,
-        atingida: rendaMensalAtual >= metaRendaMensal
+        percentualConcluido,
+        valorFaltante
     };
 }
 
-export function calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio) {
-    if (!metaPatrimonio || metaPatrimonio <= 0) {
+export function calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal) {
+    const meta = Number(metaRendaMensal) || 0;
+
+    if (meta <= 0) {
         return {
-            percentual: 0,
-            faltante: 0,
-            atingida: false
+            percentualConcluido: 0,
+            valorFaltante: 0
         };
     }
 
-    const percentual = Math.min(100, (patrimonioAtual / metaPatrimonio) * 100);
-    const faltante = Math.max(0, metaPatrimonio - patrimonioAtual);
+    const percentualConcluido = (Number(rendaMensalAtual || 0) / meta) * 100;
+    const valorFaltante = Math.max(0, meta - Number(rendaMensalAtual || 0));
 
     return {
-        percentual,
-        faltante,
-        atingida: patrimonioAtual >= metaPatrimonio
+        percentualConcluido,
+        valorFaltante
     };
 }
