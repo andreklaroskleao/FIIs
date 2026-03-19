@@ -1,58 +1,109 @@
 import { converterParaNumeroSeguro } from '../services/calculos-carteira.js';
 
-export function calcularScoreAtivo(ativo, pesoReal, pesoIdeal, caixaDisponivel = 0) {
-    let score = 0;
+export function obterStatusAtivo(ativo, patrimonioTotal = 0, somaDasNotas = 0) {
+    const precoAtual = converterParaNumeroSeguro(ativo?.precoAtual, 0);
+    const precoTeto = converterParaNumeroSeguro(ativo?.precoTeto, 0);
+    const nota = converterParaNumeroSeguro(ativo?.nota, 0);
+    const valorTotalAtual = converterParaNumeroSeguro(ativo?.valorTotalAtual, 0);
+    const patrimonioTotalSeguro = converterParaNumeroSeguro(patrimonioTotal, 0);
+    const somaDasNotasSegura = converterParaNumeroSeguro(somaDasNotas, 0);
 
-    if (ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto) {
-        score += 3;
+    const percentualAlocacaoAtual = patrimonioTotalSeguro > 0
+        ? (valorTotalAtual / patrimonioTotalSeguro) * 100
+        : 0;
+
+    const percentualAlocacaoAlvo = somaDasNotasSegura > 0
+        ? (nota / somaDasNotasSegura) * 100
+        : 0;
+
+    const abaixoDoPrecoTeto = precoAtual > 0 && precoTeto > 0 && precoAtual <= precoTeto;
+    const acimaDoPrecoTeto = precoAtual > 0 && precoTeto > 0 && precoAtual > precoTeto;
+    const abaixoDoPesoAlvo = percentualAlocacaoAtual < percentualAlocacaoAlvo;
+
+    let tipoStatus = 'neutro';
+    let textoStatus = 'Neutro';
+
+    if (acimaDoPrecoTeto) {
+        tipoStatus = 'acima-teto';
+        textoStatus = 'Acima do teto';
+    } else if (abaixoDoPrecoTeto && abaixoDoPesoAlvo) {
+        tipoStatus = 'oportunidade';
+        textoStatus = 'Oportunidade';
+    } else if (abaixoDoPesoAlvo) {
+        tipoStatus = 'peso-baixo';
+        textoStatus = 'Abaixo do peso';
     }
 
-    if (ativo.nota > 0) {
-        score += ativo.nota * 0.4;
-    }
-
-    if (pesoReal < pesoIdeal) {
-        score += 2;
-    }
-
-    if (ativo.rendaMensalEstimada > 0) {
-        score += 1;
-    }
-
-    if (caixaDisponivel > 0 && ativo.precoAtual > 0 && caixaDisponivel >= ativo.precoAtual) {
-        score += 0.5;
-    }
-
-    return Number(score.toFixed(1));
+    return {
+        tipoStatus,
+        textoStatus,
+        percentualAlocacaoAtual,
+        percentualAlocacaoAlvo,
+        abaixoDoPrecoTeto,
+        acimaDoPrecoTeto,
+        abaixoDoPesoAlvo
+    };
 }
 
-export function obterStatusAtivo(ativo, pesoReal, pesoIdeal) {
-    if (ativo.precoTeto > 0 && ativo.precoAtual > 0 && ativo.precoAtual > ativo.precoTeto) {
-        return { rotulo: 'Acima do teto', classe: 'acima-teto' };
-    }
+export function gerarRankingDeOportunidades(listaAtivos, patrimonioTotal = 0, somaDasNotas = 0, caixaDisponivel = 0) {
+    const patrimonioTotalSeguro = converterParaNumeroSeguro(patrimonioTotal, 0);
+    const somaDasNotasSegura = converterParaNumeroSeguro(somaDasNotas, 0);
+    const caixaDisponivelSeguro = converterParaNumeroSeguro(caixaDisponivel, 0);
 
-    if (pesoReal < pesoIdeal && ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto) {
-        return { rotulo: 'Oportunidade', classe: 'oportunidade' };
-    }
+    const listaRanking = (listaAtivos || []).map((ativo) => {
+        const precoAtual = converterParaNumeroSeguro(ativo.precoAtual, 0);
+        const precoTeto = converterParaNumeroSeguro(ativo.precoTeto, 0);
+        const nota = converterParaNumeroSeguro(ativo.nota, 0);
+        const valorTotalAtual = converterParaNumeroSeguro(ativo.valorTotalAtual, 0);
 
-    if (pesoReal < pesoIdeal) {
-        return { rotulo: 'Peso baixo', classe: 'peso-baixo' };
-    }
+        const percentualAlocacaoAtual = patrimonioTotalSeguro > 0
+            ? (valorTotalAtual / patrimonioTotalSeguro) * 100
+            : 0;
 
-    return { rotulo: 'Neutro', classe: 'neutro' };
-}
+        const percentualAlocacaoAlvo = somaDasNotasSegura > 0
+            ? (nota / somaDasNotasSegura) * 100
+            : 0;
 
-export function gerarRankingDeOportunidades(listaAtivos, patrimonioTotal, somaDasNotas, caixaDisponivel) {
-    return listaAtivos
-        .map((ativo) => {
-            const pesoReal = patrimonioTotal > 0 ? ativo.valorTotalAtual / patrimonioTotal : 0;
-            const pesoIdeal = somaDasNotas > 0 ? ativo.nota / somaDasNotas : 0;
-            const score = calcularScoreAtivo(ativo, pesoReal, pesoIdeal, caixaDisponivel);
+        const descontoPercentual = precoTeto > 0 && precoAtual > 0
+            ? ((precoTeto - precoAtual) / precoTeto) * 100
+            : 0;
 
-            return {
-                ...ativo,
-                score: converterParaNumeroSeguro(score, 0)
-            };
-        })
-        .sort((ativoA, ativoB) => ativoB.score - ativoA.score);
+        const defasagemAlocacao = Math.max(0, percentualAlocacaoAlvo - percentualAlocacaoAtual);
+        const quantidadeMaximaComCaixa = precoAtual > 0
+            ? Math.floor(caixaDisponivelSeguro / precoAtual)
+            : 0;
+
+        let score = 0;
+        score += nota * 10;
+        score += descontoPercentual > 0 ? descontoPercentual * 2 : 0;
+        score += defasagemAlocacao * 4;
+        score += ativo.favorito ? 5 : 0;
+        score -= ativo.emWatchlist ? 8 : 0;
+        score -= precoAtual > precoTeto && precoTeto > 0 ? 20 : 0;
+
+        return {
+            id: ativo.id,
+            ticker: ativo.ticker,
+            score: Number(score.toFixed(2)),
+            nota,
+            precoAtual,
+            precoTeto,
+            percentualAlocacaoAtual,
+            percentualAlocacaoAlvo,
+            descontoPercentual,
+            defasagemAlocacao,
+            quantidadeMaximaComCaixa,
+            rendaMensalEstimada: converterParaNumeroSeguro(ativo.rendaMensalEstimada, 0),
+            valorTotalAtual,
+            favorito: Boolean(ativo.favorito),
+            emWatchlist: Boolean(ativo.emWatchlist)
+        };
+    });
+
+    return listaRanking
+        .sort((itemA, itemB) => itemB.score - itemA.score)
+        .map((item, indice) => ({
+            ...item,
+            posicaoRanking: indice + 1
+        }));
 }
