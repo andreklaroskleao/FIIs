@@ -1832,6 +1832,55 @@ async function instalarAplicativoProgressivo() {
         return;
     }
 
+    await eventoInstalacaoAdiado.prompt();
+    await eventoInstalacaoAdiado.userChoice;
+
+    eventoInstalacaoAdiado = null;
+    esconderInstalacaoAplicativo();
+}
+
+window.addEventListener('beforeinstallprompt', (evento) => {
+    evento.preventDefault();
+    eventoInstalacaoAdiado = evento;
+    exibirInstalacaoAplicativo();
+});
+
+window.addEventListener('appinstalled', () => {
+    eventoInstalacaoAdiado = null;
+    esconderInstalacaoAplicativo();
+});
+
+window.addEventListener('load', () => {
+    const elementosInstalacao = obterElementoInstalacaoAplicativo();
+
+    if (elementosInstalacao.botaoTopo) {
+        elementosInstalacao.botaoTopo.addEventListener('click', instalarAplicativoProgressivo);
+    }
+
+    if (elementosInstalacao.botaoPainel) {
+        elementosInstalacao.botaoPainel.addEventListener('click', instalarAplicativoProgressivo);
+    }
+
+    if (elementosInstalacao.botaoFecharPainel) {
+        elementosInstalacao.botaoFecharPainel.addEventListener('click', esconderInstalacaoAplicativo);
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        try {
+            await navigator.serviceWorker.register('./service-worker.js');
+            console.log('Service Worker registrado com sucesso.');
+        } catch (erro) {
+            console.error('Erro ao registrar o Service Worker:', erro);
+        }
+    });
+}
+async function instalarAplicativoProgressivo() {
+    if (!eventoInstalacaoAdiado) {
+        return;
+    }
+
     eventoInstalacaoAdiado.prompt();
 
     const resultadoEscolha = await eventoInstalacaoAdiado.userChoice;
