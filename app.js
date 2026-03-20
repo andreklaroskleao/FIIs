@@ -92,10 +92,14 @@ const CHAVE_LOCAL_STORAGE_ABA_PRINCIPAL = 'fii_insight_aba_principal';
 const CHAVE_LOCAL_STORAGE_SUBABA_CARTEIRA = 'fii_insight_subaba_carteira';
 const CHAVE_LOCAL_STORAGE_SUBABA_APORTES = 'fii_insight_subaba_aportes';
 const CHAVE_LOCAL_STORAGE_SUBABA_ANALISES = 'fii_insight_subaba_analises';
+const CHAVE_LOCAL_STORAGE_MENU_RECOLHIDO = 'fii_insight_menu_recolhido';
 
 const elementosInterface = {
     containerNotificacoes: document.getElementById('container-notificacoes'),
     informacoesUsuario: document.getElementById('informacoes-usuario'),
+
+    menuSuperior: document.getElementById('menu-superior'),
+    botaoAlternarMenu: document.getElementById('botao-alternar-menu'),
 
     corpoTabelaAtivos: document.getElementById('corpo-tabela-ativos'),
     listaCardsMobileAtivos: document.getElementById('lista-cards-mobile-ativos'),
@@ -226,6 +230,32 @@ function carregarModoPrivacidadeDoLocalStorage() {
     if (elementosInterface.iconeModoPrivacidade) {
         elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
     }
+}
+
+function salvarEstadoMenuNoLocalStorage(menuRecolhido) {
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_MENU_RECOLHIDO, menuRecolhido ? '1' : '0');
+}
+
+function carregarEstadoMenuDoLocalStorage() {
+    const menuRecolhido = localStorage.getItem(CHAVE_LOCAL_STORAGE_MENU_RECOLHIDO) === '1';
+    aplicarEstadoVisualDoMenu(menuRecolhido);
+}
+
+function aplicarEstadoVisualDoMenu(menuRecolhido) {
+    if (elementosInterface.menuSuperior) {
+        elementosInterface.menuSuperior.classList.toggle('menu-recolhido', menuRecolhido);
+    }
+
+    if (elementosInterface.botaoAlternarMenu) {
+        elementosInterface.botaoAlternarMenu.textContent = menuRecolhido ? 'Mostrar menu' : 'Ocultar menu';
+    }
+}
+
+function alternarMenuSuperior() {
+    const estaRecolhido = elementosInterface.menuSuperior?.classList.contains('menu-recolhido');
+    const proximoEstado = !estaRecolhido;
+    aplicarEstadoVisualDoMenu(proximoEstado);
+    salvarEstadoMenuNoLocalStorage(proximoEstado);
 }
 
 function salvarMetasNoLocalStorage() {
@@ -1616,11 +1646,16 @@ function inicializarEventosDaInterface() {
     carregarModoPrivacidadeDoLocalStorage();
     carregarObservacoesWatchlistDoLocalStorage();
     carregarAporteGlobalNoLocalStorage();
+    carregarEstadoMenuDoLocalStorage();
 
     alternarAbaPrincipal(carregarAbaPrincipalDoLocalStorage());
     alternarSubaba('carteira', carregarSubabaDoLocalStorage('carteira'));
     alternarSubaba('aportes', carregarSubabaDoLocalStorage('aportes'));
     alternarSubaba('analises', carregarSubabaDoLocalStorage('analises'));
+
+    if (elementosInterface.botaoAlternarMenu) {
+        elementosInterface.botaoAlternarMenu.addEventListener('click', alternarMenuSuperior);
+    }
 
     if (elementosInterface.navegacaoAbasPrincipais) {
         elementosInterface.navegacaoAbasPrincipais.addEventListener('click', (evento) => {
