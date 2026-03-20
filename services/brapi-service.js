@@ -1,5 +1,6 @@
 import { normalizarTicker } from './formatadores.js';
 
+const tokenBrapi = 'hshuPrGV3kvLM6Yh8FEDrD';
 const URL_BASE_BRAPI = 'https://brapi.dev/api/quote';
 const CHAVE_LOCAL_STORAGE_CACHE_COTACOES = 'fii_insight_cache_cotacoes';
 const TEMPO_CACHE_MILISSEGUNDOS = 1000 * 60 * 30;
