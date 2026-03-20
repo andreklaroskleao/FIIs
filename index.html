@@ -14,7 +14,9 @@
 
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="./assets/logo-fii-insight.svg">
-    <link rel="apple-touch-icon" href="./assets/logo-fii-insight.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/logo-fii-insight-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./assets/logo-fii-insight-512.png">
+    <link rel="apple-touch-icon" href="./assets/logo-fii-insight-192.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,6 +43,10 @@
             </div>
 
             <div class="flex items-center gap-4">
+                <button id="botao-instalar-aplicativo" type="button" class="hidden bg-cyan-600 px-4 py-2 rounded-xl font-black text-[11px] uppercase shadow-lg hover:bg-cyan-500 transition">
+                    Instalar App
+                </button>
+
                 <button id="botao-modo-privacidade" type="button" class="p-2 bg-slate-800 rounded-xl hover:bg-slate-700 transition" title="Alternar modo privacidade">
                     <span id="icone-modo-privacidade">👁️</span>
                 </button>
@@ -48,6 +54,27 @@
                 <div id="informacoes-usuario">
                     <button id="botao-login-html" type="button" class="bg-emerald-600 px-6 py-2 rounded-xl font-black text-[11px] uppercase shadow-lg shadow-emerald-900/20 hover:bg-emerald-500 transition">
                         Login Google
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="painel-instalacao-aplicativo" class="hidden bg-slate-900/70 border border-cyan-800/40 rounded-2xl p-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-black text-cyan-300 uppercase tracking-widest">Instalar FII Insight</h2>
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Adicione o aplicativo à tela inicial para abrir como app e ter melhor experiência no celular e no desktop.
+                    </p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button id="botao-instalar-aplicativo-painel" type="button" class="bg-cyan-600 px-4 py-2 rounded-xl font-black text-[11px] uppercase shadow-lg hover:bg-cyan-500 transition">
+                        Instalar
+                    </button>
+
+                    <button id="botao-fechar-painel-instalacao" type="button" class="bg-slate-800 px-4 py-2 rounded-xl font-black text-[11px] uppercase shadow-lg hover:bg-slate-700 transition">
+                        Agora não
                     </button>
                 </div>
             </div>
