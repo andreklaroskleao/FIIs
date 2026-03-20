@@ -1832,6 +1832,66 @@ async function instalarAplicativoProgressivo() {
         return;
     }
 
+    eventoInstalacaoAdiado.prompt();
+
+    const resultadoEscolha = await eventoInstalacaoAdiado.userChoice;
+
+    if (resultadoEscolha.outcome === 'accepted') {
+        console.log('Instalação do aplicativo aceita.');
+    } else {
+        console.log('Instalação do aplicativo recusada.');
+    }
+
+    eventoInstalacaoAdiado = null;
+    esconderInstalacaoAplicativo();
+}
+
+window.addEventListener('beforeinstallprompt', (evento) => {
+    evento.preventDefault();
+    eventoInstalacaoAdiado = evento;
+    exibirInstalacaoAplicativo();
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('Aplicativo instalado com sucesso.');
+    eventoInstalacaoAdiado = null;
+    esconderInstalacaoAplicativo();
+});
+
+window.addEventListener('load', () => {
+    const elementosInstalacao = obterElementoInstalacaoAplicativo();
+
+    if (elementosInstalacao.botaoTopo) {
+        elementosInstalacao.botaoTopo.addEventListener('click', instalarAplicativoProgressivo);
+    }
+
+    if (elementosInstalacao.botaoPainel) {
+        elementosInstalacao.botaoPainel.addEventListener('click', instalarAplicativoProgressivo);
+    }
+
+    if (elementosInstalacao.botaoFecharPainel) {
+        elementosInstalacao.botaoFecharPainel.addEventListener('click', esconderInstalacaoAplicativo);
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        try {
+            await navigator.serviceWorker.register('./service-worker.js');
+            console.log('Service Worker registrado com sucesso.');
+        } catch (erro) {
+            console.error('Erro ao registrar o Service Worker:', erro);
+        }
+    });
+} elementosInstalacao.painel.classList.remove('hidden');
+    }
+}
+
+async function instalarAplicativoProgressivo() {
+    if (!eventoInstalacaoAdiado) {
+        return;
+    }
+
     await eventoInstalacaoAdiado.prompt();
     await eventoInstalacaoAdiado.userChoice;
 
