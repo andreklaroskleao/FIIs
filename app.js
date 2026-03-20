@@ -24,12 +24,7 @@ import {
 
 import { estadoAplicacao } from './state/store.js';
 import { escaparHtml, normalizarTicker, formatarMesAno, formatarMoeda } from './services/formatadores.js';
-import {
-    validarDiaDoMes,
-    validarDadosAtivo,
-    validarDadosProvento,
-    limparErrosDosCampos
-} from './services/validacoes.js';
+import { validarDiaDoMes, validarDadosAtivo, validarDadosProvento, limparErrosDosCampos } from './services/validacoes.js';
 import { mostrarNotificacao } from './services/notificacoes.js';
 import {
     converterParaNumeroSeguro,
@@ -45,23 +40,10 @@ import { renderizarHistoricoProventos } from './ui/renderizacao-proventos.js';
 import { renderizarTabelaAtivos } from './ui/renderizacao-ativos.js';
 import { renderizarCardsMobileAtivos } from './ui/renderizacao-cards-mobile.js';
 import { renderizarPainelHistoricoAportes } from './ui/renderizacao-aportes.js';
-import {
-    obterStatusAtivo,
-    gerarRankingDeOportunidades
-} from './features/score-oportunidade.js';
-import {
-    calcularProgressoMetaRenda,
-    calcularProgressoMetaPatrimonio
-} from './features/metas-carteira.js';
-import {
-    exportarCarteiraParaJson,
-    importarCarteiraDeArquivo,
-    restaurarBackupNoFirestore
-} from './features/exportacao-importacao.js';
-import {
-    renderizarCardMetaPatrimonio,
-    renderizarCardMetaRenda
-} from './ui/renderizacao-metas.js';
+import { obterStatusAtivo, gerarRankingDeOportunidades } from './features/score-oportunidade.js';
+import { calcularProgressoMetaRenda, calcularProgressoMetaPatrimonio } from './features/metas-carteira.js';
+import { exportarCarteiraParaJson, importarCarteiraDeArquivo, restaurarBackupNoFirestore } from './features/exportacao-importacao.js';
+import { renderizarCardMetaPatrimonio, renderizarCardMetaRenda } from './ui/renderizacao-metas.js';
 import { renderizarPainelWatchlist } from './ui/renderizacao-watchlist.js';
 import { renderizarPainelComparador } from './ui/renderizacao-comparador.js';
 import { renderizarPainelFavoritos } from './ui/renderizacao-favoritos.js';
@@ -69,15 +51,8 @@ import { renderizarPainelRankingOportunidades } from './ui/renderizacao-ranking.
 import { renderizarPainelAlertas } from './ui/renderizacao-alertas.js';
 import { renderizarPainelSimuladorGlobal } from './ui/renderizacao-simulador-global.js';
 import { renderizarPainelCalendarioCarteira } from './ui/renderizacao-calendario.js';
-import {
-    gerarConteudoRelatorioCarteira,
-    exportarRelatorioCarteiraComoTxt
-} from './features/exportacao-relatorio.js';
-import {
-    montarDadosAporte,
-    salvarAporteNoFirestore,
-    excluirAporteNoFirestore
-} from './features/aportes-carteira.js';
+import { gerarConteudoRelatorioCarteira, exportarRelatorioCarteiraComoTxt } from './features/exportacao-relatorio.js';
+import { montarDadosAporte, salvarAporteNoFirestore, excluirAporteNoFirestore } from './features/aportes-carteira.js';
 
 const CHAVE_LOCAL_STORAGE_META_PATRIMONIO = 'fii_insight_meta_patrimonio';
 const CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL = 'fii_insight_meta_renda_mensal';
@@ -216,19 +191,16 @@ const camposFormularioProvento = {
     mes: document.getElementById('campo-mes-provento')
 };
 
-function adicionarEventoSeElementoExistir(elemento, evento, manipulador) {
+function adicionarEventoSeElementoExistir(elemento, nomeEvento, manipulador) {
     if (!elemento) {
         return;
     }
 
-    elemento.addEventListener(evento, manipulador);
+    elemento.addEventListener(nomeEvento, manipulador);
 }
 
 function salvarModoPrivacidadeNoLocalStorage() {
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE,
-        estadoAplicacao.modoPrivacidadeAtivo ? '1' : '0'
-    );
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE, estadoAplicacao.modoPrivacidadeAtivo ? '1' : '0');
 }
 
 function carregarModoPrivacidadeDoLocalStorage() {
@@ -439,25 +411,25 @@ function alternarAbaPrincipal(abaSelecionada) {
 
 function alternarSubaba(grupo, subabaSelecionada) {
     const mapaSubabas = {
-        'carteira': {
+        carteira: {
             secoes: {
-                'gestao': elementosInterface.subabaCarteiraGestao,
-                'lista': elementosInterface.subabaCarteiraLista
+                gestao: elementosInterface.subabaCarteiraGestao,
+                lista: elementosInterface.subabaCarteiraLista
             },
             seletorBotoes: '[data-subaba-grupo="carteira"]'
         },
-        'aportes': {
+        aportes: {
             secoes: {
-                'registrar': elementosInterface.subabaAportesRegistrar,
-                'historico': elementosInterface.subabaAportesHistorico
+                registrar: elementosInterface.subabaAportesRegistrar,
+                historico: elementosInterface.subabaAportesHistorico
             },
             seletorBotoes: '[data-subaba-grupo="aportes"]'
         },
-        'analises': {
+        analises: {
             secoes: {
-                'simulador': elementosInterface.subabaAnalisesSimulador,
-                'comparador': elementosInterface.subabaAnalisesComparador,
-                'ranking': elementosInterface.subabaAnalisesRanking
+                simulador: elementosInterface.subabaAnalisesSimulador,
+                comparador: elementosInterface.subabaAnalisesComparador,
+                ranking: elementosInterface.subabaAnalisesRanking
             },
             seletorBotoes: '[data-subaba-grupo="analises"]'
         }
@@ -484,6 +456,32 @@ function alternarSubaba(grupo, subabaSelecionada) {
     salvarSubabaNoLocalStorage(grupo, subabaSelecionada);
 }
 
+function vincularBotaoLoginAtual() {
+    const botaoLoginPadrao = document.getElementById('botao-login-html');
+    const botaoLoginRenderizado = document.getElementById('botao-login');
+    const botaoAlvo = botaoLoginRenderizado || botaoLoginPadrao;
+
+    if (!botaoAlvo) {
+        return;
+    }
+
+    if (botaoAlvo.dataset.loginVinculado === '1') {
+        return;
+    }
+
+    botaoAlvo.dataset.loginVinculado = '1';
+
+    botaoAlvo.addEventListener('click', async () => {
+        try {
+            await setPersistence(auth, browserLocalPersistence);
+            await signInWithPopup(auth, provider);
+        } catch (erro) {
+            console.error('Erro no login:', erro);
+            mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro no login: ${erro.message}`, 'erro');
+        }
+    });
+}
+
 function atualizarBlocoUsuario(estaLogado) {
     if (!elementosInterface.informacoesUsuario) {
         return;
@@ -504,6 +502,7 @@ function atualizarBlocoUsuario(estaLogado) {
                     await signOut(auth);
                     mostrarNotificacao(elementosInterface.containerNotificacoes, 'Sessão encerrada com sucesso.', 'info');
                 } catch (erro) {
+                    console.error('Erro ao sair:', erro);
                     mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao sair: ${erro.message}`, 'erro');
                 }
             });
@@ -518,18 +517,7 @@ function atualizarBlocoUsuario(estaLogado) {
         </button>
     `;
 
-    const botaoLogin = document.getElementById('botao-login');
-
-    if (botaoLogin) {
-        botaoLogin.addEventListener('click', async () => {
-            try {
-                await setPersistence(auth, browserLocalPersistence);
-                await signInWithPopup(auth, provider);
-            } catch (erro) {
-                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro no login: ${erro.message}`, 'erro');
-            }
-        });
-    }
+    vincularBotaoLoginAtual();
 }
 
 function cancelarInscricoesAtivas() {
@@ -577,17 +565,7 @@ function gerarEventosCalendarioCarteira(listaAtivos) {
         }
     });
 
-    return listaEventosCalendario.sort((eventoA, eventoB) => {
-        if (eventoA.distanciaDias !== eventoB.distanciaDias) {
-            return eventoA.distanciaDias - eventoB.distanciaDias;
-        }
-
-        if (eventoA.dia !== eventoB.dia) {
-            return eventoA.dia - eventoB.dia;
-        }
-
-        return eventoA.ticker.localeCompare(eventoB.ticker);
-    });
+    return listaEventosCalendario.sort((eventoA, eventoB) => eventoA.distanciaDias - eventoB.distanciaDias);
 }
 
 function limparFormularioAporte() {
@@ -622,6 +600,22 @@ function limparFormularioAporte() {
     }
 }
 
+function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
+    const metaPatrimonio = converterParaNumeroSeguro(elementosInterface.campoMetaPatrimonio?.value, 0);
+    const metaRendaMensal = converterParaNumeroSeguro(elementosInterface.campoMetaRendaMensal?.value, 0);
+
+    const progressoMetaPatrimonio = calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio);
+    const progressoMetaRenda = calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal);
+
+    if (elementosInterface.cardMetaPatrimonio) {
+        renderizarCardMetaPatrimonio(elementosInterface.cardMetaPatrimonio, progressoMetaPatrimonio, patrimonioAtual);
+    }
+
+    if (elementosInterface.cardMetaRenda) {
+        renderizarCardMetaRenda(elementosInterface.cardMetaRenda, progressoMetaRenda, rendaMensalAtual);
+    }
+}
+
 function resetarPainel() {
     estadoAplicacao.listaAtivosEmMemoria = [];
     estadoAplicacao.listaProventosEmMemoria = [];
@@ -648,8 +642,28 @@ function resetarPainel() {
         elementosInterface.textoQuedaEstimada.textContent = '- R$ 0,00';
     }
 
-    if (elementosInterface.painelRebalanceamento) {
-        elementosInterface.painelRebalanceamento.innerHTML = '<p class="text-[10px] italic p-4 text-slate-600">Sem dados para rebalanceamento.</p>';
+    if (elementosInterface.corpoTabelaAtivos) {
+        elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td></tr>';
+    }
+
+    if (elementosInterface.listaCardsMobileAtivos) {
+        elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">Faça login para carregar seus ativos.</div>';
+    }
+
+    if (elementosInterface.corpoTabelaProventos) {
+        elementosInterface.corpoTabelaProventos.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td></tr>';
+    }
+
+    if (elementosInterface.painelHistoricoAportes) {
+        elementosInterface.painelHistoricoAportes.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>';
+    }
+
+    if (elementosInterface.painelAlertas) {
+        elementosInterface.painelAlertas.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum alerta no momento.</div>';
+    }
+
+    if (elementosInterface.painelCalendarioCarteira) {
+        elementosInterface.painelCalendarioCarteira.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum evento disponível.</div>';
     }
 
     if (elementosInterface.painelWatchlist) {
@@ -664,10 +678,6 @@ function resetarPainel() {
         elementosInterface.painelRankingOportunidades.innerHTML = '<div class="text-[11px] text-slate-500 italic">Sem ativos para ranquear.</div>';
     }
 
-    if (elementosInterface.painelAlertas) {
-        elementosInterface.painelAlertas.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum alerta no momento.</div>';
-    }
-
     if (elementosInterface.painelComparador) {
         elementosInterface.painelComparador.innerHTML = '<div class="text-[11px] text-slate-500 italic">Selecione até 2 ativos na tabela para comparar.</div>';
     }
@@ -676,95 +686,7 @@ function resetarPainel() {
         elementosInterface.painelSimuladorGlobal.innerHTML = '<div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>';
     }
 
-    if (elementosInterface.painelCalendarioCarteira) {
-        elementosInterface.painelCalendarioCarteira.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum evento disponível.</div>';
-    }
-
-    if (elementosInterface.painelHistoricoAportes) {
-        elementosInterface.painelHistoricoAportes.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>';
-    }
-
-    if (elementosInterface.corpoTabelaAtivos) {
-        elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td></tr>';
-    }
-
-    if (elementosInterface.listaCardsMobileAtivos) {
-        elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">Faça login para carregar seus ativos.</div>';
-    }
-
-    if (elementosInterface.corpoTabelaProventos) {
-        elementosInterface.corpoTabelaProventos.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td></tr>';
-    }
-
-    if (estadoAplicacao.instanciaGraficoProventos) {
-        estadoAplicacao.instanciaGraficoProventos.destroy();
-        estadoAplicacao.instanciaGraficoProventos = null;
-    }
-
-    if (estadoAplicacao.instanciaGraficoSegmentos) {
-        estadoAplicacao.instanciaGraficoSegmentos.destroy();
-        estadoAplicacao.instanciaGraficoSegmentos = null;
-    }
-
-    limparFormularioAporte();
     renderizarMetas(0, 0);
-    atualizarContadoresDasAbas();
-}
-
-function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
-    const metaPatrimonio = converterParaNumeroSeguro(elementosInterface.campoMetaPatrimonio?.value, 0);
-    const metaRendaMensal = converterParaNumeroSeguro(elementosInterface.campoMetaRendaMensal?.value, 0);
-
-    const progressoMetaPatrimonio = calcularProgressoMetaPatrimonio(patrimonioAtual, metaPatrimonio);
-    const progressoMetaRenda = calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal);
-
-    if (elementosInterface.cardMetaPatrimonio) {
-        renderizarCardMetaPatrimonio(elementosInterface.cardMetaPatrimonio, progressoMetaPatrimonio, patrimonioAtual);
-    }
-
-    if (elementosInterface.cardMetaRenda) {
-        renderizarCardMetaRenda(elementosInterface.cardMetaRenda, progressoMetaRenda, rendaMensalAtual);
-    }
-}
-
-function atualizarResumoPainel(resultadoRenderizacao) {
-    if (elementosInterface.textoPatrimonioTotal) {
-        elementosInterface.textoPatrimonioTotal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal)}`;
-    }
-
-    if (elementosInterface.textoRendaMensal) {
-        elementosInterface.textoRendaMensal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal)}`;
-    }
-
-    if (elementosInterface.textoRendaPorHora) {
-        elementosInterface.textoRendaPorHora.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal / 720, 4)} / hora`;
-    }
-
-    if (elementosInterface.textoYieldOnCostMedio) {
-        elementosInterface.textoYieldOnCostMedio.textContent = resultadoRenderizacao.valorTotalInvestidoCarteira > 0
-            ? `${((resultadoRenderizacao.projecaoMensalTotal * 12 / resultadoRenderizacao.valorTotalInvestidoCarteira) * 100).toFixed(2)}%`
-            : '0.00%';
-    }
-
-    if (elementosInterface.textoQuedaEstimada) {
-        elementosInterface.textoQuedaEstimada.textContent = `- R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal * 0.05)} (Stress 5%)`;
-    }
-
-    if (elementosInterface.painelRebalanceamento) {
-        elementosInterface.painelRebalanceamento.innerHTML = resultadoRenderizacao.listaSugestoesRebalanceamento
-            .sort((sugestaoA, sugestaoB) => sugestaoB.nota - sugestaoA.nota)
-            .slice(0, 2)
-            .map((sugestao) => {
-                return `
-                    <div class="bg-slate-900/60 p-4 rounded-2xl border border-blue-900/30">
-                        <div class="text-[8px] text-blue-400 font-black mb-1 uppercase tracking-widest">Rebalancear</div>
-                        <div class="text-lg font-black text-white">${escaparHtml(sugestao.ticker)} <span class="text-emerald-500">+${sugestao.quantidadeSugerida} un.</span></div>
-                    </div>
-                `;
-            }).join('') || '<p class="text-[10px] italic p-4 text-slate-600">Alocação equilibrada.</p>';
-    }
-
-    renderizarMetas(resultadoRenderizacao.patrimonioTotal, resultadoRenderizacao.projecaoMensalTotal);
 }
 
 function filtrarListaAtivosPorFiltroInteligente(listaAtivos) {
@@ -774,9 +696,9 @@ function filtrarListaAtivosPorFiltroInteligente(listaAtivos) {
         case 'watchlist':
             return listaAtivos.filter((ativo) => ativo.emWatchlist);
         case 'oportunidades':
-            return listaAtivos.filter((ativo) => ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto && !ativo.emWatchlist);
+            return listaAtivos.filter((ativo) => ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto);
         case 'acima-do-teto':
-            return listaAtivos.filter((ativo) => ativo.precoTeto > 0 && ativo.precoAtual > ativo.precoTeto);
+            return listaAtivos.filter((ativo) => ativo.precoAtual > ativo.precoTeto && ativo.precoTeto > 0);
         case 'todos':
         default:
             return [...listaAtivos];
@@ -784,33 +706,10 @@ function filtrarListaAtivosPorFiltroInteligente(listaAtivos) {
 }
 
 function obterAtivosSelecionadosParaComparacao() {
-    const listaIdsValidos = estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter((identificadorAtivo) =>
-        estadoAplicacao.listaAtivosEmMemoria.some((ativo) => ativo.id === identificadorAtivo)
-    );
-
-    if (listaIdsValidos.length !== estadoAplicacao.listaAtivosSelecionadosParaComparacao.length) {
-        estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaIdsValidos.slice(0, 2);
-        salvarComparadorNoLocalStorage();
-    }
-
-    return estadoAplicacao.listaAtivosSelecionadosParaComparacao
+    return (estadoAplicacao.listaAtivosSelecionadosParaComparacao || [])
         .map((identificadorAtivo) => estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === identificadorAtivo))
         .filter(Boolean)
         .slice(0, 2);
-}
-
-function limparObservacoesWatchlistDeAtivosInexistentes() {
-    const conjuntoIdsExistentes = new Set(estadoAplicacao.listaAtivosEmMemoria.map((ativo) => ativo.id));
-    const novoMapa = {};
-
-    Object.entries(estadoAplicacao.mapaObservacoesWatchlist || {}).forEach(([identificadorAtivo, observacao]) => {
-        if (conjuntoIdsExistentes.has(identificadorAtivo)) {
-            novoMapa[identificadorAtivo] = observacao;
-        }
-    });
-
-    estadoAplicacao.mapaObservacoesWatchlist = novoMapa;
-    salvarObservacoesWatchlistNoLocalStorage();
 }
 
 function atualizarContadoresDasAbas() {
@@ -838,7 +737,7 @@ function atualizarContadoresDasAbas() {
     }
 
     if (elementosInterface.contadorAbaAnalises) {
-        elementosInterface.contadorAbaAnalises.textContent = String(Math.min(99, quantidadeAtivos));
+        elementosInterface.contadorAbaAnalises.textContent = String(quantidadeAtivos);
     }
 
     if (elementosInterface.contadorAbaListas) {
@@ -850,82 +749,44 @@ function atualizarContadoresDasAbas() {
     }
 }
 
-function prepararEdicaoAporte(identificadorAporte) {
-    const aporte = estadoAplicacao.listaAportesEmMemoria.find((item) => item.id === identificadorAporte);
+function limparObservacoesWatchlistDeAtivosInexistentes() {
+    const conjuntoIdsExistentes = new Set(estadoAplicacao.listaAtivosEmMemoria.map((ativo) => ativo.id));
+    const novoMapa = {};
 
-    if (!aporte) {
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte não encontrado.', 'erro');
-        return;
-    }
+    Object.entries(estadoAplicacao.mapaObservacoesWatchlist || {}).forEach(([identificadorAtivo, observacao]) => {
+        if (conjuntoIdsExistentes.has(identificadorAtivo)) {
+            novoMapa[identificadorAtivo] = observacao;
+        }
+    });
 
-    estadoAplicacao.identificadorAporteEmEdicao = identificadorAporte;
-
-    if (elementosInterface.campoTickerAporte) {
-        elementosInterface.campoTickerAporte.value = aporte.ticker || '';
-    }
-
-    if (elementosInterface.campoQuantidadeAporte) {
-        elementosInterface.campoQuantidadeAporte.value = aporte.quantidadeComprada || '';
-    }
-
-    if (elementosInterface.campoPrecoAporte) {
-        elementosInterface.campoPrecoAporte.value = aporte.precoPorCota || '';
-    }
-
-    if (elementosInterface.campoDataAporte) {
-        elementosInterface.campoDataAporte.value = aporte.dataAporte || '';
-    }
-
-    if (elementosInterface.campoObservacaoAporte) {
-        elementosInterface.campoObservacaoAporte.value = aporte.observacao || '';
-    }
-
-    if (elementosInterface.botaoSalvarAporte) {
-        elementosInterface.botaoSalvarAporte.textContent = 'Atualizar aporte';
-    }
-
-    if (elementosInterface.botaoCancelarEdicaoAporte) {
-        elementosInterface.botaoCancelarEdicaoAporte.classList.remove('hidden');
-    }
-
-    alternarAbaPrincipal('aportes');
-    alternarSubaba('aportes', 'registrar');
+    estadoAplicacao.mapaObservacoesWatchlist = novoMapa;
+    salvarObservacoesWatchlistNoLocalStorage();
 }
 
-async function salvarAporte() {
-    if (!estadoAplicacao.usuarioAtual) {
-        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Faça login primeiro.', 'info');
-        return;
+function atualizarResumoPainel(resultadoRenderizacao) {
+    if (elementosInterface.textoPatrimonioTotal) {
+        elementosInterface.textoPatrimonioTotal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal)}`;
     }
 
-    try {
-        const dadosAporte = montarDadosAporte({
-            usuarioAtual: estadoAplicacao.usuarioAtual,
-            ticker: elementosInterface.campoTickerAporte?.value,
-            quantidadeComprada: elementosInterface.campoQuantidadeAporte?.value,
-            precoPorCota: elementosInterface.campoPrecoAporte?.value,
-            dataAporte: elementosInterface.campoDataAporte?.value,
-            observacao: elementosInterface.campoObservacaoAporte?.value
-        });
-
-        const mensagemSucesso = await salvarAporteNoFirestore({
-            db,
-            identificadorAporteEmEdicao: estadoAplicacao.identificadorAporteEmEdicao,
-            dadosAporte
-        });
-
-        const ativoEncontrado = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.ticker === dadosAporte.ticker);
-
-        if (!ativoEncontrado) {
-            mostrarNotificacao(elementosInterface.containerNotificacoes, `${mensagemSucesso} Cadastre também o ativo principal para refletir totalmente no painel.`, 'info');
-        } else {
-            mostrarNotificacao(elementosInterface.containerNotificacoes, mensagemSucesso, 'sucesso');
-        }
-
-        limparFormularioAporte();
-    } catch (erro) {
-        mostrarNotificacao(elementosInterface.containerNotificacoes, erro.message || 'Erro ao salvar aporte.', 'erro');
+    if (elementosInterface.textoRendaMensal) {
+        elementosInterface.textoRendaMensal.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal)}`;
     }
+
+    if (elementosInterface.textoRendaPorHora) {
+        elementosInterface.textoRendaPorHora.textContent = `R$ ${formatarMoeda(resultadoRenderizacao.projecaoMensalTotal / 720, 4)} / hora`;
+    }
+
+    if (elementosInterface.textoYieldOnCostMedio) {
+        elementosInterface.textoYieldOnCostMedio.textContent = resultadoRenderizacao.valorTotalInvestidoCarteira > 0
+            ? `${((resultadoRenderizacao.projecaoMensalTotal * 12 / resultadoRenderizacao.valorTotalInvestidoCarteira) * 100).toFixed(2)}%`
+            : '0.00%';
+    }
+
+    if (elementosInterface.textoQuedaEstimada) {
+        elementosInterface.textoQuedaEstimada.textContent = `- R$ ${formatarMoeda(resultadoRenderizacao.patrimonioTotal * 0.05)}`;
+    }
+
+    renderizarMetas(resultadoRenderizacao.patrimonioTotal, resultadoRenderizacao.projecaoMensalTotal);
 }
 
 function renderizarTudo() {
@@ -933,21 +794,21 @@ function renderizarTudo() {
 
     const listaAtivosFiltradaInteligente = filtrarListaAtivosPorFiltroInteligente(estadoAplicacao.listaAtivosEmMemoria);
 
-    if (!elementosInterface.corpoTabelaAtivos) {
-        return;
-    }
+    if (elementosInterface.corpoTabelaAtivos) {
+        const resultadoRenderizacao = renderizarTabelaAtivos({
+            corpoTabelaAtivos: elementosInterface.corpoTabelaAtivos,
+            listaAtivos: listaAtivosFiltradaInteligente,
+            filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
+            ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
+            caixaDisponivel: converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel?.value, 0),
+            mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
+            listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
+            obterListaAtivosFiltradaEOrdenada,
+            obterStatusAtivo
+        });
 
-    const resultadoRenderizacao = renderizarTabelaAtivos({
-        corpoTabelaAtivos: elementosInterface.corpoTabelaAtivos,
-        listaAtivos: listaAtivosFiltradaInteligente,
-        filtroSegmentoAtual: estadoAplicacao.filtroSegmentoAtual,
-        ordenacaoCarteiraAtual: estadoAplicacao.ordenacaoCarteiraAtual,
-        caixaDisponivel: converterParaNumeroSeguro(elementosInterface.campoCaixaDisponivel?.value, 0),
-        mapaLinhasExpandidas: estadoAplicacao.mapaLinhasExpandidas,
-        listaAtivosSelecionadosParaComparacao: estadoAplicacao.listaAtivosSelecionadosParaComparacao,
-        obterListaAtivosFiltradaEOrdenada,
-        obterStatusAtivo
-    });
+        atualizarResumoPainel(resultadoRenderizacao);
+    }
 
     if (elementosInterface.listaCardsMobileAtivos) {
         renderizarCardsMobileAtivos({
@@ -962,13 +823,37 @@ function renderizarTudo() {
         });
     }
 
-    atualizarResumoPainel(resultadoRenderizacao);
+    if (elementosInterface.corpoTabelaProventos) {
+        renderizarHistoricoProventos(elementosInterface.corpoTabelaProventos, estadoAplicacao.listaProventosEmMemoria);
+    }
+
+    if (elementosInterface.painelHistoricoAportes) {
+        renderizarPainelHistoricoAportes(elementosInterface.painelHistoricoAportes, estadoAplicacao.listaAportesEmMemoria);
+    }
 
     if (elementosInterface.graficoAlocacaoSegmentos) {
         estadoAplicacao.instanciaGraficoSegmentos = renderizarGraficoSegmentos(
             elementosInterface.graficoAlocacaoSegmentos,
             estadoAplicacao.instanciaGraficoSegmentos,
             estadoAplicacao.listaAtivosEmMemoria
+        );
+    }
+
+    const mapaProventosAgrupadosPorMes = {};
+    estadoAplicacao.listaProventosEmMemoria.forEach((provento) => {
+        mapaProventosAgrupadosPorMes[provento.mesAno] =
+            converterParaNumeroSeguro(mapaProventosAgrupadosPorMes[provento.mesAno], 0) +
+            converterParaNumeroSeguro(provento.valor, 0);
+    });
+
+    const listaMesesOrdenada = Object.keys(mapaProventosAgrupadosPorMes).sort((mesA, mesB) => mesA.localeCompare(mesB));
+
+    if (elementosInterface.graficoProventos) {
+        estadoAplicacao.instanciaGraficoProventos = renderizarGraficoProventos(
+            elementosInterface.graficoProventos,
+            estadoAplicacao.instanciaGraficoProventos,
+            listaMesesOrdenada.map(formatarMesAno),
+            listaMesesOrdenada.map((mesAno) => mapaProventosAgrupadosPorMes[mesAno])
         );
     }
 
@@ -1020,37 +905,6 @@ function renderizarTudo() {
         renderizarPainelCalendarioCarteira(elementosInterface.painelCalendarioCarteira, listaEventosCalendario);
     }
 
-    if (elementosInterface.painelHistoricoAportes) {
-        renderizarPainelHistoricoAportes(elementosInterface.painelHistoricoAportes, estadoAplicacao.listaAportesEmMemoria);
-    }
-
-    atualizarContadoresDasAbas();
-}
-
-function renderizarProventos() {
-    if (elementosInterface.corpoTabelaProventos) {
-        renderizarHistoricoProventos(elementosInterface.corpoTabelaProventos, estadoAplicacao.listaProventosEmMemoria);
-    }
-
-    const mapaProventosAgrupadosPorMes = {};
-
-    estadoAplicacao.listaProventosEmMemoria.forEach((provento) => {
-        mapaProventosAgrupadosPorMes[provento.mesAno] =
-            converterParaNumeroSeguro(mapaProventosAgrupadosPorMes[provento.mesAno], 0) +
-            converterParaNumeroSeguro(provento.valor, 0);
-    });
-
-    const listaMesesOrdenada = Object.keys(mapaProventosAgrupadosPorMes).sort((mesA, mesB) => mesA.localeCompare(mesB));
-
-    if (elementosInterface.graficoProventos) {
-        estadoAplicacao.instanciaGraficoProventos = renderizarGraficoProventos(
-            elementosInterface.graficoProventos,
-            estadoAplicacao.instanciaGraficoProventos,
-            listaMesesOrdenada.map(formatarMesAno),
-            listaMesesOrdenada.map((mesAno) => mapaProventosAgrupadosPorMes[mesAno])
-        );
-    }
-
     atualizarContadoresDasAbas();
 }
 
@@ -1080,7 +934,12 @@ async function atualizarListaAtivosEnriquecida() {
     const tickers = listaAtivosBruta.map((ativo) => ativo.ticker);
     const mapaCotacoes = await buscarCotacoesNaBrapi(tickers);
 
-    estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes, estadoAplicacao.listaAportesEmMemoria);
+    estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
+        listaAtivosBruta,
+        mapaCotacoes,
+        estadoAplicacao.listaAportesEmMemoria
+    );
+
     renderizarTudo();
 }
 
@@ -1104,20 +963,17 @@ function assinarColecaoAtivos() {
             }));
 
             const mapaCotacoes = await buscarCotacoesNaBrapi(listaAtivosBruta.map((ativo) => ativo.ticker));
-            estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes, estadoAplicacao.listaAportesEmMemoria);
+
+            estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
+                listaAtivosBruta,
+                mapaCotacoes,
+                estadoAplicacao.listaAportesEmMemoria
+            );
+
             renderizarTudo();
         },
         (erro) => {
             console.error('Erro ao escutar ativos:', erro);
-
-            if (elementosInterface.corpoTabelaAtivos) {
-                elementosInterface.corpoTabelaAtivos.innerHTML = '<tr><td colspan="7" class="p-10 text-center text-red-500 italic">Erro ao carregar ativos.</td></tr>';
-            }
-
-            if (elementosInterface.listaCardsMobileAtivos) {
-                elementosInterface.listaCardsMobileAtivos.innerHTML = '<div class="glass p-6 rounded-[2rem] text-center text-red-500 italic">Erro ao carregar ativos.</div>';
-            }
-
             mostrarNotificacao(elementosInterface.containerNotificacoes, 'Erro ao carregar os ativos.', 'erro');
         }
     );
@@ -1144,7 +1000,6 @@ function assinarColecaoProventos() {
                 mesAno: documento.data().mesAno || ''
             }));
 
-            renderizarProventos();
             renderizarTudo();
         },
         (erro) => {
@@ -1194,7 +1049,7 @@ function cancelarEdicaoAtivo() {
     }
 
     if (elementosInterface.tituloFormularioAtivo) {
-        elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Gerenciar Ativo';
+        elementosInterface.tituloFormularioAtivo.textContent = 'Gerenciar Ativo';
     }
 
     Object.values(camposFormularioAtivo).forEach((campo) => {
@@ -1212,103 +1067,28 @@ function cancelarEdicaoAtivo() {
     limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
 }
 
-function prepararEdicaoProvento(provento) {
-    estadoAplicacao.identificadorProventoEmEdicao = provento.id;
-
-    if (camposFormularioProvento.ticker) {
-        camposFormularioProvento.ticker.value = provento.ticker;
-    }
-
-    if (camposFormularioProvento.valor) {
-        camposFormularioProvento.valor.value = provento.valor;
-    }
-
-    if (camposFormularioProvento.mes) {
-        camposFormularioProvento.mes.value = provento.mesAno;
-    }
-
-    if (elementosInterface.tituloFormularioProvento) {
-        elementosInterface.tituloFormularioProvento.textContent = 'Editar Provento';
-    }
-
-    if (elementosInterface.botaoSalvarProvento) {
-        elementosInterface.botaoSalvarProvento.textContent = 'Atualizar Provento';
-    }
-
-    if (elementosInterface.botaoCancelarEdicaoProvento) {
-        elementosInterface.botaoCancelarEdicaoProvento.classList.remove('hidden');
-    }
-
-    limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
-    alternarAbaPrincipal('proventos');
-}
-
-function cancelarEdicaoProvento() {
-    estadoAplicacao.identificadorProventoEmEdicao = null;
-
-    Object.values(camposFormularioProvento).forEach((campo) => {
-        if (campo) {
-            campo.value = '';
-        }
-    });
-
-    if (elementosInterface.tituloFormularioProvento) {
-        elementosInterface.tituloFormularioProvento.textContent = 'Lançar Provento';
-    }
-
-    if (elementosInterface.botaoSalvarProvento) {
-        elementosInterface.botaoSalvarProvento.textContent = 'Registrar Provento';
-    }
-
-    if (elementosInterface.botaoCancelarEdicaoProvento) {
-        elementosInterface.botaoCancelarEdicaoProvento.classList.add('hidden');
-    }
-
-    limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
-}
-
 async function prepararEdicaoAtivo(identificadorAtivo) {
     try {
         const referenciaDocumento = doc(db, 'ativos', identificadorAtivo);
-        const documento = await getDoc(referenciaDocumento);
+        const documentoAtivo = await getDoc(referenciaDocumento);
 
-        if (!documento.exists()) {
+        if (!documentoAtivo.exists()) {
             mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo não encontrado para edição.', 'erro');
             return;
         }
 
-        const dadosAtivo = documento.data();
+        const dadosAtivo = documentoAtivo.data();
 
-        if (camposFormularioAtivo.ticker) {
-            camposFormularioAtivo.ticker.value = dadosAtivo.ticker || '';
-        }
-        if (camposFormularioAtivo.quantidade) {
-            camposFormularioAtivo.quantidade.value = dadosAtivo.quantidade || '';
-        }
-        if (camposFormularioAtivo.precoMedio) {
-            camposFormularioAtivo.precoMedio.value = dadosAtivo.precoMedio || '';
-        }
-        if (camposFormularioAtivo.nota) {
-            camposFormularioAtivo.nota.value = dadosAtivo.nota || '';
-        }
-        if (camposFormularioAtivo.precoTeto) {
-            camposFormularioAtivo.precoTeto.value = dadosAtivo.precoTeto || '';
-        }
-        if (camposFormularioAtivo.precoAtualManual) {
-            camposFormularioAtivo.precoAtualManual.value = dadosAtivo.precoAtualManual || '';
-        }
-        if (camposFormularioAtivo.diaDataCom) {
-            camposFormularioAtivo.diaDataCom.value = dadosAtivo.diaDataCom || '';
-        }
-        if (camposFormularioAtivo.diaPagamento) {
-            camposFormularioAtivo.diaPagamento.value = dadosAtivo.diaPagamento || '';
-        }
-        if (camposFormularioAtivo.segmento) {
-            camposFormularioAtivo.segmento.value = dadosAtivo.segmento || 'Outros';
-        }
-        if (camposFormularioAtivo.observacao) {
-            camposFormularioAtivo.observacao.value = dadosAtivo.observacao || '';
-        }
+        if (camposFormularioAtivo.ticker) camposFormularioAtivo.ticker.value = dadosAtivo.ticker || '';
+        if (camposFormularioAtivo.quantidade) camposFormularioAtivo.quantidade.value = dadosAtivo.quantidade || '';
+        if (camposFormularioAtivo.precoMedio) camposFormularioAtivo.precoMedio.value = dadosAtivo.precoMedio || '';
+        if (camposFormularioAtivo.nota) camposFormularioAtivo.nota.value = dadosAtivo.nota || '';
+        if (camposFormularioAtivo.precoTeto) camposFormularioAtivo.precoTeto.value = dadosAtivo.precoTeto || '';
+        if (camposFormularioAtivo.precoAtualManual) camposFormularioAtivo.precoAtualManual.value = dadosAtivo.precoAtualManual || '';
+        if (camposFormularioAtivo.diaDataCom) camposFormularioAtivo.diaDataCom.value = dadosAtivo.diaDataCom || '';
+        if (camposFormularioAtivo.diaPagamento) camposFormularioAtivo.diaPagamento.value = dadosAtivo.diaPagamento || '';
+        if (camposFormularioAtivo.segmento) camposFormularioAtivo.segmento.value = dadosAtivo.segmento || 'Outros';
+        if (camposFormularioAtivo.observacao) camposFormularioAtivo.observacao.value = dadosAtivo.observacao || '';
 
         estadoAplicacao.identificadorAtivoEmEdicao = identificadorAtivo;
 
@@ -1321,13 +1101,13 @@ async function prepararEdicaoAtivo(identificadorAtivo) {
         }
 
         if (elementosInterface.tituloFormularioAtivo) {
-            elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span> Editando Ativo';
+            elementosInterface.tituloFormularioAtivo.textContent = 'Editando Ativo';
         }
 
-        limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
         alternarAbaPrincipal('carteira');
         alternarSubaba('carteira', 'gestao');
     } catch (erro) {
+        console.error('Erro ao carregar ativo para edição:', erro);
         mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao carregar ativo para edição: ${erro.message}`, 'erro');
     }
 }
@@ -1366,18 +1146,6 @@ async function salvarAtivo() {
     }
 
     try {
-        const ativoDuplicado = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => {
-            return ativo.ticker === dadosAtivo.ticker && ativo.id !== estadoAplicacao.identificadorAtivoEmEdicao;
-        });
-
-        if (ativoDuplicado) {
-            const confirmouContinuacao = confirm('Já existe um ativo com esse ticker. Deseja salvar mesmo assim?');
-
-            if (!confirmouContinuacao) {
-                return;
-            }
-        }
-
         if (estadoAplicacao.identificadorAtivoEmEdicao) {
             const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao);
 
@@ -1395,8 +1163,55 @@ async function salvarAtivo() {
 
         cancelarEdicaoAtivo();
     } catch (erro) {
+        console.error('Erro ao salvar ativo:', erro);
         mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao salvar ativo: ${erro.message}`, 'erro');
     }
+}
+
+function cancelarEdicaoProvento() {
+    estadoAplicacao.identificadorProventoEmEdicao = null;
+
+    Object.values(camposFormularioProvento).forEach((campo) => {
+        if (campo) {
+            campo.value = '';
+        }
+    });
+
+    if (elementosInterface.tituloFormularioProvento) {
+        elementosInterface.tituloFormularioProvento.textContent = 'Lançar Provento';
+    }
+
+    if (elementosInterface.botaoSalvarProvento) {
+        elementosInterface.botaoSalvarProvento.textContent = 'Registrar Provento';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoProvento) {
+        elementosInterface.botaoCancelarEdicaoProvento.classList.add('hidden');
+    }
+
+    limparErrosDosCampos(Object.values(camposFormularioProvento).filter(Boolean));
+}
+
+function prepararEdicaoProvento(provento) {
+    estadoAplicacao.identificadorProventoEmEdicao = provento.id;
+
+    if (camposFormularioProvento.ticker) camposFormularioProvento.ticker.value = provento.ticker;
+    if (camposFormularioProvento.valor) camposFormularioProvento.valor.value = provento.valor;
+    if (camposFormularioProvento.mes) camposFormularioProvento.mes.value = provento.mesAno;
+
+    if (elementosInterface.tituloFormularioProvento) {
+        elementosInterface.tituloFormularioProvento.textContent = 'Editar Provento';
+    }
+
+    if (elementosInterface.botaoSalvarProvento) {
+        elementosInterface.botaoSalvarProvento.textContent = 'Atualizar Provento';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoProvento) {
+        elementosInterface.botaoCancelarEdicaoProvento.classList.remove('hidden');
+    }
+
+    alternarAbaPrincipal('proventos');
 }
 
 async function salvarProvento() {
@@ -1429,6 +1244,7 @@ async function salvarProvento() {
 
         cancelarEdicaoProvento();
     } catch (erro) {
+        console.error('Erro ao salvar provento:', erro);
         mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao salvar provento: ${erro.message}`, 'erro');
     }
 }
@@ -1439,12 +1255,64 @@ function abrirFormularioProventoComTickerPreenchido(ticker) {
     if (camposFormularioProvento.ticker) {
         camposFormularioProvento.ticker.value = ticker;
     }
+}
 
-    if (camposFormularioProvento.valor) {
-        camposFormularioProvento.valor.focus();
+function prepararEdicaoAporte(identificadorAporte) {
+    const aporte = estadoAplicacao.listaAportesEmMemoria.find((item) => item.id === identificadorAporte);
+
+    if (!aporte) {
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte não encontrado.', 'erro');
+        return;
     }
 
-    mostrarNotificacao(elementosInterface.containerNotificacoes, `Ticker ${ticker} enviado para o formulário de proventos.`, 'info');
+    estadoAplicacao.identificadorAporteEmEdicao = identificadorAporte;
+
+    if (elementosInterface.campoTickerAporte) elementosInterface.campoTickerAporte.value = aporte.ticker || '';
+    if (elementosInterface.campoQuantidadeAporte) elementosInterface.campoQuantidadeAporte.value = aporte.quantidadeComprada || '';
+    if (elementosInterface.campoPrecoAporte) elementosInterface.campoPrecoAporte.value = aporte.precoPorCota || '';
+    if (elementosInterface.campoDataAporte) elementosInterface.campoDataAporte.value = aporte.dataAporte || '';
+    if (elementosInterface.campoObservacaoAporte) elementosInterface.campoObservacaoAporte.value = aporte.observacao || '';
+
+    if (elementosInterface.botaoSalvarAporte) {
+        elementosInterface.botaoSalvarAporte.textContent = 'Atualizar aporte';
+    }
+
+    if (elementosInterface.botaoCancelarEdicaoAporte) {
+        elementosInterface.botaoCancelarEdicaoAporte.classList.remove('hidden');
+    }
+
+    alternarAbaPrincipal('aportes');
+    alternarSubaba('aportes', 'registrar');
+}
+
+async function salvarAporte() {
+    if (!estadoAplicacao.usuarioAtual) {
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Faça login primeiro.', 'info');
+        return;
+    }
+
+    try {
+        const dadosAporte = montarDadosAporte({
+            usuarioAtual: estadoAplicacao.usuarioAtual,
+            ticker: elementosInterface.campoTickerAporte?.value,
+            quantidadeComprada: elementosInterface.campoQuantidadeAporte?.value,
+            precoPorCota: elementosInterface.campoPrecoAporte?.value,
+            dataAporte: elementosInterface.campoDataAporte?.value,
+            observacao: elementosInterface.campoObservacaoAporte?.value
+        });
+
+        const mensagemSucesso = await salvarAporteNoFirestore({
+            db,
+            identificadorAporteEmEdicao: estadoAplicacao.identificadorAporteEmEdicao,
+            dadosAporte
+        });
+
+        mostrarNotificacao(elementosInterface.containerNotificacoes, mensagemSucesso, 'sucesso');
+        limparFormularioAporte();
+    } catch (erro) {
+        console.error('Erro ao salvar aporte:', erro);
+        mostrarNotificacao(elementosInterface.containerNotificacoes, erro.message || 'Erro ao salvar aporte.', 'erro');
+    }
 }
 
 async function alternarFavorito(identificadorAtivo) {
@@ -1472,7 +1340,7 @@ async function alternarWatchlist(identificadorAtivo) {
 }
 
 function alternarAtivoNoComparador(identificadorAtivo) {
-    const listaAtual = estadoAplicacao.listaAtivosSelecionadosParaComparacao;
+    const listaAtual = estadoAplicacao.listaAtivosSelecionadosParaComparacao || [];
 
     if (listaAtual.includes(identificadorAtivo)) {
         estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaAtual.filter((item) => item !== identificadorAtivo);
@@ -1530,7 +1398,10 @@ function exportarRelatorioCarteira() {
         listaAtivos: estadoAplicacao.listaAtivosEmMemoria
     });
 
-    exportarRelatorioCarteiraComoTxt(`relatorio-fii-insight-${new Date().toISOString().slice(0, 10)}.txt`, conteudoRelatorio);
+    exportarRelatorioCarteiraComoTxt(
+        `relatorio-fii-insight-${new Date().toISOString().slice(0, 10)}.txt`,
+        conteudoRelatorio
+    );
 
     mostrarNotificacao(elementosInterface.containerNotificacoes, 'Relatório exportado com sucesso.', 'sucesso');
 }
@@ -1553,41 +1424,25 @@ function inicializarEventosDaInterface() {
 
     adicionarEventoSeElementoExistir(elementosInterface.navegacaoAbasPrincipais, 'click', (evento) => {
         const botaoAbaPrincipal = evento.target.closest('[data-aba-principal]');
-
-        if (!botaoAbaPrincipal) {
-            return;
-        }
-
+        if (!botaoAbaPrincipal) return;
         alternarAbaPrincipal(botaoAbaPrincipal.dataset.abaPrincipal);
     });
 
     adicionarEventoSeElementoExistir(elementosInterface.navegacaoSubabasCarteira, 'click', (evento) => {
         const botaoSubaba = evento.target.closest('[data-subaba-grupo="carteira"]');
-
-        if (!botaoSubaba) {
-            return;
-        }
-
+        if (!botaoSubaba) return;
         alternarSubaba('carteira', botaoSubaba.dataset.subaba);
     });
 
     adicionarEventoSeElementoExistir(elementosInterface.navegacaoSubabasAportes, 'click', (evento) => {
         const botaoSubaba = evento.target.closest('[data-subaba-grupo="aportes"]');
-
-        if (!botaoSubaba) {
-            return;
-        }
-
+        if (!botaoSubaba) return;
         alternarSubaba('aportes', botaoSubaba.dataset.subaba);
     });
 
     adicionarEventoSeElementoExistir(elementosInterface.navegacaoSubabasAnalises, 'click', (evento) => {
         const botaoSubaba = evento.target.closest('[data-subaba-grupo="analises"]');
-
-        if (!botaoSubaba) {
-            return;
-        }
-
+        if (!botaoSubaba) return;
         alternarSubaba('analises', botaoSubaba.dataset.subaba);
     });
 
@@ -1630,64 +1485,36 @@ function inicializarEventosDaInterface() {
 
     adicionarEventoSeElementoExistir(elementosInterface.containerFiltrosSegmento, 'click', (evento) => {
         const botaoFiltro = evento.target.closest('.botao-filtro');
-
-        if (!botaoFiltro) {
-            return;
-        }
+        if (!botaoFiltro) return;
 
         estadoAplicacao.filtroSegmentoAtual = botaoFiltro.dataset.filtro;
         salvarFiltroEOrdenacaoNoLocalStorage();
-
-        document.querySelectorAll('.botao-filtro').forEach((botao) => {
-            botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
-        });
-
+        carregarFiltroEOrdenacaoDoLocalStorage();
         renderizarTudo();
     });
 
     adicionarEventoSeElementoExistir(elementosInterface.containerFiltrosInteligentes, 'click', (evento) => {
         const botaoFiltroInteligente = evento.target.closest('.botao-filtro-inteligente');
-
-        if (!botaoFiltroInteligente) {
-            return;
-        }
+        if (!botaoFiltroInteligente) return;
 
         estadoAplicacao.filtroInteligenteAtual = botaoFiltroInteligente.dataset.filtroInteligente;
         salvarFiltroEOrdenacaoNoLocalStorage();
-
-        document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
-            botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
-        });
-
+        carregarFiltroEOrdenacaoDoLocalStorage();
         renderizarTudo();
     });
 
     adicionarEventoSeElementoExistir(elementosInterface.containerOrdenacaoCarteira, 'click', (evento) => {
         const botaoOrdenacao = evento.target.closest('.botao-ordenacao');
-
-        if (!botaoOrdenacao) {
-            return;
-        }
+        if (!botaoOrdenacao) return;
 
         estadoAplicacao.ordenacaoCarteiraAtual = botaoOrdenacao.dataset.ordenacao;
         salvarFiltroEOrdenacaoNoLocalStorage();
-
-        document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
-            botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
-        });
-
+        carregarFiltroEOrdenacaoDoLocalStorage();
         renderizarTudo();
     });
 
     adicionarEventoSeElementoExistir(elementosInterface.botaoLimparComparador, 'click', limparComparador);
     adicionarEventoSeElementoExistir(elementosInterface.botaoExportarRelatorio, 'click', exportarRelatorioCarteira);
-    adicionarEventoSeElementoExistir(elementosInterface.campoCaixaDisponivel, 'input', renderizarTudo);
-
-    adicionarEventoSeElementoExistir(elementosInterface.campoValorAporteGlobal, 'input', () => {
-        salvarAporteGlobalNoLocalStorage();
-        renderizarTudo();
-    });
-
     adicionarEventoSeElementoExistir(elementosInterface.botaoSalvarAtivo, 'click', salvarAtivo);
     adicionarEventoSeElementoExistir(elementosInterface.botaoCancelarEdicaoAtivo, 'click', cancelarEdicaoAtivo);
     adicionarEventoSeElementoExistir(elementosInterface.botaoSalvarProvento, 'click', salvarProvento);
@@ -1705,6 +1532,13 @@ function inicializarEventosDaInterface() {
         renderizarTudo();
     });
 
+    adicionarEventoSeElementoExistir(elementosInterface.campoValorAporteGlobal, 'input', () => {
+        salvarAporteGlobalNoLocalStorage();
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.campoCaixaDisponivel, 'input', renderizarTudo);
+
     adicionarEventoSeElementoExistir(elementosInterface.botaoExportarBackup, 'click', () => {
         exportarCarteiraParaJson(estadoAplicacao.listaAtivosEmMemoria, estadoAplicacao.listaProventosEmMemoria);
         mostrarNotificacao(elementosInterface.containerNotificacoes, 'Backup exportado com sucesso.', 'sucesso');
@@ -1712,25 +1546,13 @@ function inicializarEventosDaInterface() {
 
     adicionarEventoSeElementoExistir(elementosInterface.campoImportarBackup, 'change', async (evento) => {
         const arquivo = evento.target.files?.[0];
-
-        if (!arquivo) {
-            return;
-        }
+        if (!arquivo) return;
 
         try {
             const dadosImportados = await importarCarteiraDeArquivo(arquivo);
 
             if (!estadoAplicacao.usuarioAtual) {
                 throw new Error('Faça login antes de restaurar um backup.');
-            }
-
-            const confirmouRestauracao = confirm(
-                `Deseja restaurar este backup no Firestore?\n\nAtivos: ${dadosImportados.ativos.length}\nProventos: ${dadosImportados.proventos.length}\n\nIsso adicionará novos registros à sua conta.`
-            );
-
-            if (!confirmouRestauracao) {
-                evento.target.value = '';
-                return;
             }
 
             const resultadoRestauracao = await restaurarBackupNoFirestore({
@@ -1746,6 +1568,7 @@ function inicializarEventosDaInterface() {
                 'sucesso'
             );
         } catch (erro) {
+            console.error('Erro ao importar backup:', erro);
             mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao importar backup: ${erro.message}`, 'erro');
         } finally {
             evento.target.value = '';
@@ -1763,59 +1586,53 @@ function inicializarEventosDaInterface() {
 
         if (botaoEditarAtivo) {
             await prepararEdicaoAtivo(botaoEditarAtivo.dataset.id);
+            return;
         }
 
         if (botaoExcluirAtivo) {
             const confirmouExclusao = confirm('Deseja realmente excluir este ativo?');
-
-            if (!confirmouExclusao) {
-                return;
-            }
+            if (!confirmouExclusao) return;
 
             try {
                 await deleteDoc(doc(db, 'ativos', botaoExcluirAtivo.dataset.id));
-
-                if (estadoAplicacao.identificadorAtivoEmEdicao === botaoExcluirAtivo.dataset.id) {
-                    cancelarEdicaoAtivo();
-                }
-
-                delete estadoAplicacao.mapaObservacoesWatchlist[botaoExcluirAtivo.dataset.id];
-                salvarObservacoesWatchlistNoLocalStorage();
-
-                estadoAplicacao.listaAtivosSelecionadosParaComparacao =
-                    estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter((item) => item !== botaoExcluirAtivo.dataset.id);
-
-                salvarComparadorNoLocalStorage();
                 mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo excluído com sucesso.', 'sucesso');
             } catch (erro) {
+                console.error('Erro ao excluir ativo:', erro);
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir ativo: ${erro.message}`, 'erro');
             }
+            return;
         }
 
         if (botaoDetalhesAtivo) {
             const identificadorAtivo = botaoDetalhesAtivo.dataset.id;
             estadoAplicacao.mapaLinhasExpandidas[identificadorAtivo] = !estadoAplicacao.mapaLinhasExpandidas[identificadorAtivo];
             renderizarTudo();
+            return;
         }
 
         if (botaoRegistrarProvento) {
             abrirFormularioProventoComTickerPreenchido(botaoRegistrarProvento.dataset.ticker);
+            return;
         }
 
         if (botaoAlternarFavorito) {
             try {
                 await alternarFavorito(botaoAlternarFavorito.dataset.id);
             } catch (erro) {
+                console.error('Erro ao alterar favorito:', erro);
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao alterar favorito: ${erro.message}`, 'erro');
             }
+            return;
         }
 
         if (botaoAlternarWatchlist) {
             try {
                 await alternarWatchlist(botaoAlternarWatchlist.dataset.id);
             } catch (erro) {
+                console.error('Erro ao alterar watchlist:', erro);
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao alterar watchlist: ${erro.message}`, 'erro');
             }
+            return;
         }
 
         if (botaoAlternarComparador) {
@@ -1829,48 +1646,49 @@ function inicializarEventosDaInterface() {
     adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaAtivos, 'click', tratarCliqueAcoesAtivo);
     adicionarEventoSeElementoExistir(elementosInterface.listaCardsMobileAtivos, 'click', tratarCliqueAcoesAtivo);
 
-    const tratarInputAtivo = (evento) => {
+    adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaAtivos, 'input', (evento) => {
         const campoObservacaoWatchlist = evento.target.closest('.campo-observacao-watchlist');
 
-        if (campoObservacaoWatchlist) {
-            estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
-            salvarObservacoesWatchlistNoLocalStorage();
+        if (!campoObservacaoWatchlist) {
+            return;
         }
-    };
 
-    adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaAtivos, 'input', tratarInputAtivo);
-    adicionarEventoSeElementoExistir(elementosInterface.listaCardsMobileAtivos, 'input', tratarInputAtivo);
+        estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
+        salvarObservacoesWatchlistNoLocalStorage();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.listaCardsMobileAtivos, 'input', (evento) => {
+        const campoObservacaoWatchlist = evento.target.closest('.campo-observacao-watchlist');
+
+        if (!campoObservacaoWatchlist) {
+            return;
+        }
+
+        estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
+        salvarObservacoesWatchlistNoLocalStorage();
+    });
 
     adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaProventos, 'click', async (evento) => {
         const botaoEditarProvento = evento.target.closest('.botao-editar-provento');
         const botaoExcluirProvento = evento.target.closest('.botao-excluir-provento');
 
         if (botaoEditarProvento) {
-            const proventoSelecionado = estadoAplicacao.listaProventosEmMemoria.find(
-                (provento) => provento.id === botaoEditarProvento.dataset.id
-            );
-
+            const proventoSelecionado = estadoAplicacao.listaProventosEmMemoria.find((provento) => provento.id === botaoEditarProvento.dataset.id);
             if (proventoSelecionado) {
                 prepararEdicaoProvento(proventoSelecionado);
             }
+            return;
         }
 
         if (botaoExcluirProvento) {
             const confirmouExclusao = confirm('Deseja realmente excluir este provento?');
-
-            if (!confirmouExclusao) {
-                return;
-            }
+            if (!confirmouExclusao) return;
 
             try {
                 await deleteDoc(doc(db, 'proventos', botaoExcluirProvento.dataset.id));
-
-                if (estadoAplicacao.identificadorProventoEmEdicao === botaoExcluirProvento.dataset.id) {
-                    cancelarEdicaoProvento();
-                }
-
                 mostrarNotificacao(elementosInterface.containerNotificacoes, 'Provento excluído com sucesso.', 'sucesso');
             } catch (erro) {
+                console.error('Erro ao excluir provento:', erro);
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir provento: ${erro.message}`, 'erro');
             }
         }
@@ -1882,14 +1700,12 @@ function inicializarEventosDaInterface() {
 
         if (botaoEditarAporte) {
             prepararEdicaoAporte(botaoEditarAporte.dataset.id);
+            return;
         }
 
         if (botaoExcluirAporte) {
             const confirmouExclusao = confirm('Deseja realmente excluir este aporte?');
-
-            if (!confirmouExclusao) {
-                return;
-            }
+            if (!confirmouExclusao) return;
 
             try {
                 await excluirAporteNoFirestore({
@@ -1897,12 +1713,9 @@ function inicializarEventosDaInterface() {
                     identificadorAporte: botaoExcluirAporte.dataset.id
                 });
 
-                if (estadoAplicacao.identificadorAporteEmEdicao === botaoExcluirAporte.dataset.id) {
-                    limparFormularioAporte();
-                }
-
                 mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte excluído com sucesso.', 'sucesso');
             } catch (erro) {
+                console.error('Erro ao excluir aporte:', erro);
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir aporte: ${erro.message}`, 'erro');
             }
         }
@@ -1920,19 +1733,42 @@ function inicializarEventosDaInterface() {
         });
     });
 
+    vincularBotaoLoginAtual();
     atualizarContadoresDasAbas();
 }
 
-atualizarBlocoUsuario(false);
-inicializarEventosDaInterface();
+function inicializarAplicacaoComSeguranca() {
+    try {
+        atualizarBlocoUsuario(false);
+        vincularBotaoLoginAtual();
+        inicializarEventosDaInterface();
+        resetarPainel();
+    } catch (erro) {
+        console.error('Erro na inicialização da aplicação:', erro);
+        mostrarNotificacao(
+            elementosInterface.containerNotificacoes,
+            'Erro na inicialização da interface. Verifique o console do navegador.',
+            'erro'
+        );
+
+        try {
+            atualizarBlocoUsuario(false);
+            vincularBotaoLoginAtual();
+        } catch (erroSecundario) {
+            console.error('Erro secundário ao restaurar login:', erroSecundario);
+        }
+    }
+}
+
+inicializarAplicacaoComSeguranca();
 
 onAuthStateChanged(auth, (usuario) => {
     cancelarInscricoesAtivas();
 
     if (usuario) {
         estadoAplicacao.usuarioAtual = usuario;
-        resetarPainel();
         atualizarBlocoUsuario(true);
+        resetarPainel();
         assinarColecaoAtivos();
         assinarColecaoProventos();
         assinarColecaoAportes();
@@ -1940,9 +1776,7 @@ onAuthStateChanged(auth, (usuario) => {
     }
 
     estadoAplicacao.usuarioAtual = null;
-    cancelarEdicaoAtivo();
-    cancelarEdicaoProvento();
-    limparFormularioAporte();
     atualizarBlocoUsuario(false);
+    vincularBotaoLoginAtual();
     resetarPainel();
 });
