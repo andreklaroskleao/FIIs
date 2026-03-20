@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FII Insight</title>
 
+    <meta name="theme-color" content="#020617">
+    <meta name="description" content="Painel de fundos imobiliários com carteira, aportes, proventos, análises e acompanhamento inteligente.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="FII Insight">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="./assets/logo-fii-insight.svg">
+    <link rel="apple-touch-icon" href="./assets/logo-fii-insight.svg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -16,8 +27,17 @@
     <nav id="menu-superior" class="border-b border-slate-800 p-4 glass sticky top-0 z-50 flex flex-col gap-4 menu-superior">
         <div class="flex justify-between items-center gap-4 flex-wrap">
             <div class="flex items-center gap-4 flex-wrap">
-                <h1 class="text-lg font-black text-emerald-500 italic tracking-tighter uppercase">FII Insight</h1>
-                <span class="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-black">Painel de Fundos Imobiliários</span>
+                <div class="flex items-center gap-3">
+                    <img
+                        src="./assets/logo-fii-insight.svg"
+                        alt="Logo FII Insight"
+                        class="w-10 h-10 rounded-2xl shadow-lg border border-white/10"
+                    >
+                    <div class="flex flex-col">
+                        <h1 class="text-lg font-black text-emerald-500 italic tracking-tighter uppercase leading-none">FII Insight</h1>
+                        <span class="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-black">Painel de Fundos Imobiliários</span>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-4">
@@ -146,12 +166,16 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                     <div>
-                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Meta de patrimônio</label>
+                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
+                            Meta de patrimônio
+                        </label>
                         <input type="number" id="campo-meta-patrimonio" placeholder="Ex: 100000" class="campo-formulario">
                     </div>
 
                     <div>
-                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Meta de renda mensal</label>
+                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">
+                            Meta de renda mensal
+                        </label>
                         <input type="number" id="campo-meta-renda-mensal" placeholder="Ex: 1000" class="campo-formulario">
                     </div>
                 </div>
@@ -168,6 +192,7 @@
                         <h3 class="text-xs font-black uppercase text-cyan-400 tracking-widest">Alocação por Segmento</h3>
                         <span class="text-[10px] uppercase font-black text-slate-500">Distribuição Atual</span>
                     </div>
+
                     <div class="relative h-[280px]">
                         <canvas id="grafico-alocacao-segmentos"></canvas>
                     </div>
@@ -192,7 +217,7 @@
             <div class="cabecalho-secao">
                 <div>
                     <h2 class="titulo-secao-principal">Carteira</h2>
-                    <p class="descricao-secao-principal">Cadastro, edição e lista dos ativos.</p>
+                    <p class="descricao-secao-principal">Cadastro, edição, rebalanceamento e lista completa de ativos.</p>
                 </div>
             </div>
 
@@ -202,59 +227,99 @@
             </div>
 
             <div id="subaba-carteira-gestao" class="secao-subaba">
-                <div class="glass p-8 rounded-[2rem] border border-white/5">
-                    <h3 id="titulo-formulario-ativo" class="text-xs font-black uppercase text-emerald-400 mb-6">Gerenciar Ativo</h3>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+                    <div class="glass p-6 rounded-[2rem] border border-white/5">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xs font-black uppercase text-blue-400 tracking-tighter">Oportunidades de Rebalanceamento</h3>
 
-                    <div class="space-y-3">
-                        <input type="text" id="campo-ticker-ativo" placeholder="Ticker" class="campo-formulario uppercase font-black tracking-widest">
-                        <div id="erro-campo-ticker-ativo" class="mensagem-erro-campo hidden"></div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-slate-500 font-black uppercase">Caixa:</span>
+                                <input type="number" id="campo-caixa-disponivel" placeholder="R$ 0,00" class="bg-slate-900 border border-blue-900/30 rounded-lg p-2 text-[10px] text-blue-400 w-28 font-black">
+                            </div>
+                        </div>
 
-                        <input type="number" id="campo-quantidade-ativo" placeholder="Quantidade" class="campo-formulario">
-                        <div id="erro-campo-quantidade-ativo" class="mensagem-erro-campo hidden"></div>
+                        <div id="painel-rebalanceamento" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
 
-                        <input type="number" id="campo-preco-medio-ativo" placeholder="Preço médio" class="campo-formulario">
-                        <div id="erro-campo-preco-medio-ativo" class="mensagem-erro-campo hidden"></div>
+                    <div class="glass p-8 rounded-[2.5rem] border border-white/5">
+                        <h3 id="titulo-formulario-ativo" class="text-xs font-black uppercase text-emerald-400 mb-6 flex items-center gap-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            Gerenciar Ativo
+                        </h3>
 
-                        <input type="number" id="campo-nota-ativo" placeholder="Nota (1 a 10)" class="campo-formulario">
-                        <div id="erro-campo-nota-ativo" class="mensagem-erro-campo hidden"></div>
+                        <div class="space-y-3">
+                            <input type="text" id="campo-ticker-ativo" placeholder="Ticker" class="campo-formulario uppercase font-black tracking-widest">
+                            <div id="erro-campo-ticker-ativo" class="mensagem-erro-campo hidden"></div>
 
-                        <input type="number" id="campo-preco-teto-ativo" placeholder="Preço teto" class="campo-formulario">
-                        <div id="erro-campo-preco-teto-ativo" class="mensagem-erro-campo hidden"></div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <input type="number" id="campo-quantidade-ativo" placeholder="Quantidade" class="campo-formulario text-xs">
+                                    <div id="erro-campo-quantidade-ativo" class="mensagem-erro-campo hidden"></div>
+                                </div>
 
-                        <input type="number" id="campo-preco-atual-manual-ativo" placeholder="Preço atual manual (opcional)" class="campo-formulario">
-                        <div id="erro-campo-preco-atual-manual-ativo" class="mensagem-erro-campo hidden"></div>
+                                <div>
+                                    <input type="number" id="campo-preco-medio-ativo" placeholder="Preço médio" class="campo-formulario text-xs">
+                                    <div id="erro-campo-preco-medio-ativo" class="mensagem-erro-campo hidden"></div>
+                                </div>
+                            </div>
 
-                        <input type="number" id="campo-dia-data-com" placeholder="Dia da data com" class="campo-formulario">
-                        <div id="erro-campo-dia-data-com" class="mensagem-erro-campo hidden"></div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <input type="number" id="campo-nota-ativo" placeholder="Nota (1 a 10)" class="campo-formulario text-xs text-blue-400">
+                                    <div id="erro-campo-nota-ativo" class="mensagem-erro-campo hidden"></div>
+                                </div>
 
-                        <input type="number" id="campo-dia-pagamento" placeholder="Dia do pagamento" class="campo-formulario">
-                        <div id="erro-campo-dia-pagamento" class="mensagem-erro-campo hidden"></div>
+                                <div>
+                                    <input type="number" id="campo-preco-teto-ativo" placeholder="Preço teto" class="campo-formulario text-xs text-emerald-400">
+                                    <div id="erro-campo-preco-teto-ativo" class="mensagem-erro-campo hidden"></div>
+                                </div>
+                            </div>
 
-                        <select id="campo-segmento-ativo" class="campo-formulario">
-                            <option value="Papel">Papel</option>
-                            <option value="Tijolo">Tijolo</option>
-                            <option value="Agro">Agro</option>
-                            <option value="Fundo de Fundo">Fundo de Fundo</option>
-                            <option value="Outros">Outros</option>
-                        </select>
-                        <div id="erro-campo-segmento-ativo" class="mensagem-erro-campo hidden"></div>
+                            <div>
+                                <input type="number" id="campo-preco-atual-manual-ativo" placeholder="Preço atual manual (opcional)" class="campo-formulario text-xs text-cyan-300">
+                                <div id="erro-campo-preco-atual-manual-ativo" class="mensagem-erro-campo hidden"></div>
+                            </div>
 
-                        <textarea id="campo-observacao-ativo" rows="4" placeholder="Observações sobre o ativo" class="campo-formulario resize-none"></textarea>
-                        <div id="erro-campo-observacao-ativo" class="mensagem-erro-campo hidden"></div>
+                            <div class="grid grid-cols-2 gap-3 border-t border-slate-800 pt-4 mt-2">
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Dia da Data Com</label>
+                                    <input type="number" id="campo-dia-data-com" placeholder="Ex: 10" class="campo-formulario text-xs">
+                                    <div id="erro-campo-dia-data-com" class="mensagem-erro-campo hidden"></div>
+                                </div>
 
-                        <button id="botao-salvar-ativo" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 font-black py-4 rounded-2xl uppercase text-[11px] transition-all">
-                            Salvar no Portfólio
-                        </button>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Dia do Pagamento</label>
+                                    <input type="number" id="campo-dia-pagamento" placeholder="Ex: 15" class="campo-formulario text-xs">
+                                    <div id="erro-campo-dia-pagamento" class="mensagem-erro-campo hidden"></div>
+                                </div>
+                            </div>
 
-                        <button id="botao-cancelar-edicao-ativo" type="button" class="hidden w-full text-slate-500 text-[10px] font-black uppercase mt-2 hover:text-white transition">
-                            Cancelar edição
-                        </button>
+                            <select id="campo-segmento-ativo" class="campo-formulario text-[10px] uppercase font-black text-slate-400">
+                                <option value="Papel">Papel (CRI)</option>
+                                <option value="Tijolo">Tijolo</option>
+                                <option value="Agro">Agro</option>
+                                <option value="Fundo de Fundo">Fundo de Fundo</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                            <div id="erro-campo-segmento-ativo" class="mensagem-erro-campo hidden"></div>
+
+                            <textarea id="campo-observacao-ativo" rows="4" placeholder="Observações sobre o ativo" class="campo-formulario resize-none"></textarea>
+                            <div id="erro-campo-observacao-ativo" class="mensagem-erro-campo hidden"></div>
+
+                            <button id="botao-salvar-ativo" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 font-black py-4 rounded-2xl uppercase text-[11px] shadow-lg shadow-emerald-900/20 transition-all mt-4">
+                                Salvar no Portfólio
+                            </button>
+
+                            <button id="botao-cancelar-edicao-ativo" type="button" class="hidden w-full text-slate-500 text-[10px] font-black uppercase mt-2 hover:text-white transition">
+                                Cancelar edição
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div id="subaba-carteira-lista" class="secao-subaba hidden">
-                <div id="container-filtros-segmento" class="flex flex-wrap gap-2 mb-4">
+                <div class="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-2 esconder-barra-rolagem" id="container-filtros-segmento">
                     <button data-filtro="Todos" class="botao-filtro ativo" type="button">Todos</button>
                     <button data-filtro="Papel" class="botao-filtro" type="button">Papel</button>
                     <button data-filtro="Tijolo" class="botao-filtro" type="button">Tijolo</button>
@@ -263,7 +328,7 @@
                     <button data-filtro="Outros" class="botao-filtro" type="button">Outros</button>
                 </div>
 
-                <div id="container-filtros-inteligentes" class="flex flex-wrap gap-2 mb-4">
+                <div class="flex flex-wrap gap-2 mb-6 overflow-x-auto pb-2 esconder-barra-rolagem" id="container-filtros-inteligentes">
                     <button data-filtro-inteligente="todos" class="botao-filtro-inteligente ativo" type="button">Todos</button>
                     <button data-filtro-inteligente="favoritos" class="botao-filtro-inteligente" type="button">Favoritos</button>
                     <button data-filtro-inteligente="watchlist" class="botao-filtro-inteligente" type="button">Watchlist</button>
@@ -271,7 +336,7 @@
                     <button data-filtro-inteligente="acima-do-teto" class="botao-filtro-inteligente" type="button">Acima do teto</button>
                 </div>
 
-                <div id="container-ordenacao-carteira" class="flex flex-wrap gap-2 mb-6">
+                <div class="flex flex-wrap gap-2 mb-6" id="container-ordenacao-carteira">
                     <button data-ordenacao="maior-posicao" class="botao-ordenacao ativo" type="button">Maior posição</button>
                     <button data-ordenacao="menor-posicao" class="botao-ordenacao" type="button">Menor posição</button>
                     <button data-ordenacao="ticker" class="botao-ordenacao" type="button">Ticker</button>
@@ -293,9 +358,11 @@
                                     <th class="p-6 text-center">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="corpo-tabela-ativos">
+                            <tbody id="corpo-tabela-ativos" class="divide-y divide-slate-800/50">
                                 <tr>
-                                    <td colspan="7" class="p-10 text-center text-slate-500 italic">Faça login para carregar seus ativos.</td>
+                                    <td colspan="7" class="p-10 text-center text-slate-500 italic">
+                                        Faça login para carregar seus ativos.
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -303,7 +370,9 @@
                 </div>
 
                 <div id="lista-cards-mobile-ativos" class="lista-cards-mobile-ativos">
-                    <div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">Faça login para carregar seus ativos.</div>
+                    <div class="glass p-6 rounded-[2rem] text-center text-slate-500 italic">
+                        Faça login para carregar seus ativos.
+                    </div>
                 </div>
             </div>
         </section>
@@ -312,7 +381,7 @@
             <div class="cabecalho-secao">
                 <div>
                     <h2 class="titulo-secao-principal">Aportes</h2>
-                    <p class="descricao-secao-principal">Registro de compras.</p>
+                    <p class="descricao-secao-principal">Registro das compras e histórico consolidado de entradas.</p>
                 </div>
             </div>
 
@@ -323,14 +392,42 @@
 
             <div id="subaba-aportes-registrar" class="secao-subaba">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
-                    <div class="space-y-3">
-                        <input type="text" id="campo-ticker-aporte" placeholder="Ticker" class="campo-formulario uppercase font-black">
-                        <input type="number" id="campo-quantidade-aporte" placeholder="Quantidade comprada" class="campo-formulario">
-                        <input type="number" id="campo-preco-aporte" placeholder="Preço por cota" class="campo-formulario">
-                        <input type="date" id="campo-data-aporte" class="campo-formulario">
-                        <textarea id="campo-observacao-aporte" rows="3" placeholder="Observação do aporte" class="campo-formulario resize-none"></textarea>
+                    <div class="flex items-center justify-between mb-5 gap-4">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-amber-300 tracking-widest">Registrar Aporte</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Atualize quantidade e preço médio pelo histórico</p>
+                        </div>
+                    </div>
 
-                        <button id="botao-salvar-aporte" type="button" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-5 rounded-2xl uppercase text-[11px]">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Ticker</label>
+                            <input type="text" id="campo-ticker-aporte" placeholder="Ex: HGLG11" class="campo-formulario uppercase font-black">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Quantidade comprada</label>
+                            <input type="number" id="campo-quantidade-aporte" placeholder="Ex: 10" class="campo-formulario">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Preço por cota</label>
+                            <input type="number" id="campo-preco-aporte" placeholder="Ex: 96.45" class="campo-formulario">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Data do aporte</label>
+                            <input type="date" id="campo-data-aporte" class="campo-formulario">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Observação do aporte</label>
+                        <textarea id="campo-observacao-aporte" rows="3" placeholder="Observações sobre a compra" class="campo-formulario resize-none"></textarea>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap gap-3">
+                        <button id="botao-salvar-aporte" type="button" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 px-5 rounded-2xl uppercase text-[11px] shadow-lg transition-all">
                             Registrar aporte
                         </button>
 
@@ -343,6 +440,13 @@
 
             <div id="subaba-aportes-historico" class="secao-subaba hidden">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-amber-300 tracking-widest">Histórico de Aportes</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Compras registradas e evolução do preço médio</p>
+                        </div>
+                    </div>
+
                     <div id="painel-historico-aportes" class="space-y-3">
                         <div class="text-[11px] text-slate-500 italic">Nenhum aporte registrado.</div>
                     </div>
@@ -354,14 +458,21 @@
             <div class="cabecalho-secao">
                 <div>
                     <h2 class="titulo-secao-principal">Proventos</h2>
-                    <p class="descricao-secao-principal">Lançamentos e histórico.</p>
+                    <p class="descricao-secao-principal">Lançamentos, fluxo mensal e histórico completo de recebimentos.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="glass p-8 rounded-[2.5rem] h-fit border-t-4 border-blue-500">
-                    <div class="space-y-4">
+                    <div class="flex items-center justify-between gap-3 mb-6">
                         <h3 id="titulo-formulario-provento" class="text-xs font-black uppercase text-blue-400">Lançar Provento</h3>
+
+                        <button id="botao-cancelar-edicao-provento" type="button" class="hidden text-[10px] font-black uppercase text-slate-400 hover:text-white transition">
+                            Cancelar
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
                         <input type="text" id="campo-ticker-provento" placeholder="Ticker" class="campo-formulario uppercase font-bold">
                         <div id="erro-campo-ticker-provento" class="mensagem-erro-campo hidden"></div>
 
@@ -371,24 +482,34 @@
                         <input type="month" id="campo-mes-provento" class="campo-formulario text-slate-400">
                         <div id="erro-campo-mes-provento" class="mensagem-erro-campo hidden"></div>
 
-                        <button id="botao-salvar-provento" type="button" class="w-full bg-blue-600 hover:bg-blue-500 font-black py-4 rounded-2xl text-xs uppercase">
+                        <button id="botao-salvar-provento" type="button" class="w-full bg-blue-600 hover:bg-blue-500 font-black py-4 rounded-2xl text-xs uppercase shadow-lg shadow-blue-900/20 transition-all">
                             Registrar Provento
-                        </button>
-
-                        <button id="botao-cancelar-edicao-provento" type="button" class="hidden text-[10px] font-black uppercase text-slate-400 hover:text-white transition">
-                            Cancelar
                         </button>
                     </div>
                 </div>
 
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass p-8 rounded-[2.5rem] border-t-4 border-purple-500 min-h-[420px]">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-xs font-black uppercase text-purple-400">Fluxo de Proventos</h3>
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Histórico mensal consolidado</p>
+                            </div>
+                        </div>
+
                         <div class="relative h-[320px]">
                             <canvas id="grafico-proventos"></canvas>
                         </div>
                     </div>
 
                     <div class="glass p-6 rounded-[2rem] border border-white/5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-xs font-black uppercase text-emerald-400 tracking-widest">Histórico de Proventos</h3>
+                                <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Editar e excluir lançamentos</p>
+                            </div>
+                        </div>
+
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-[11px]">
                                 <thead class="bg-slate-900/50">
@@ -401,7 +522,9 @@
                                 </thead>
                                 <tbody id="corpo-tabela-proventos">
                                     <tr>
-                                        <td colspan="4" class="p-8 text-center text-slate-500 italic">Faça login para ver o histórico.</td>
+                                        <td colspan="4" class="p-8 text-center text-slate-500 italic">
+                                            Faça login para ver o histórico.
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -415,7 +538,7 @@
             <div class="cabecalho-secao">
                 <div>
                     <h2 class="titulo-secao-principal">Análises</h2>
-                    <p class="descricao-secao-principal">Simulador, comparador e ranking.</p>
+                    <p class="descricao-secao-principal">Simulações, comparação entre ativos e ranking de oportunidades.</p>
                 </div>
             </div>
 
@@ -427,7 +550,17 @@
 
             <div id="subaba-analises-simulador" class="secao-subaba">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
-                    <input type="number" id="campo-valor-aporte-global" placeholder="Valor total do aporte" class="campo-formulario mb-4">
+                    <div class="flex items-center justify-between mb-5 gap-4">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-cyan-400 tracking-widest">Simulador Global de Aporte</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Distribuição sugerida entre as melhores oportunidades</p>
+                        </div>
+
+                        <div class="w-full max-w-xs">
+                            <input type="number" id="campo-valor-aporte-global" placeholder="Valor total do aporte" class="campo-formulario">
+                        </div>
+                    </div>
+
                     <div id="painel-simulador-global" class="space-y-3">
                         <div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>
                     </div>
@@ -436,7 +569,17 @@
 
             <div id="subaba-analises-comparador" class="secao-subaba hidden">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
-                    <button id="botao-limpar-comparador" type="button" class="botao-acao-tabela text-[10px] uppercase mb-4">Limpar comparador</button>
+                    <div class="flex items-center justify-between mb-5 gap-4">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-violet-400 tracking-widest">Comparador de Ativos</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Compare até 2 ativos lado a lado</p>
+                        </div>
+
+                        <button id="botao-limpar-comparador" type="button" class="botao-acao-tabela text-[10px] uppercase">
+                            Limpar comparador
+                        </button>
+                    </div>
+
                     <div id="painel-comparador">
                         <div class="text-[11px] text-slate-500 italic">Selecione até 2 ativos na tabela para comparar.</div>
                     </div>
@@ -445,6 +588,13 @@
 
             <div id="subaba-analises-ranking" class="secao-subaba hidden">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-emerald-400 tracking-widest">Ranking de Oportunidades</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Melhores ativos por score</p>
+                        </div>
+                    </div>
+
                     <div id="painel-ranking-oportunidades" class="space-y-3">
                         <div class="text-[11px] text-slate-500 italic">Sem ativos para ranquear.</div>
                     </div>
@@ -456,18 +606,32 @@
             <div class="cabecalho-secao">
                 <div>
                     <h2 class="titulo-secao-principal">Listas</h2>
-                    <p class="descricao-secao-principal">Favoritos e watchlist.</p>
+                    <p class="descricao-secao-principal">Favoritos e watchlist para acompanhamento rápido.</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-yellow-400 tracking-widest">Favoritos</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Ativos destacados da carteira</p>
+                        </div>
+                    </div>
+
                     <div id="painel-favoritos" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="text-[11px] text-slate-500 italic">Nenhum ativo favorito.</div>
                     </div>
                 </div>
 
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-pink-400 tracking-widest">Watchlist</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Ativos em observação com observações dedicadas</p>
+                        </div>
+                    </div>
+
                     <div id="painel-watchlist" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         <div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>
                     </div>
@@ -479,27 +643,50 @@
             <div class="cabecalho-secao">
                 <div>
                     <h2 class="titulo-secao-principal">Configurações</h2>
-                    <p class="descricao-secao-principal">Exportações e backup.</p>
+                    <p class="descricao-secao-principal">Exportações, backup e ações de manutenção do sistema.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
-                    <button id="botao-exportar-relatorio" type="button" class="w-full bg-indigo-600 hover:bg-indigo-500 font-black py-3 px-4 rounded-2xl uppercase text-[11px]">
-                        Exportar relatório TXT
-                    </button>
+                    <div class="flex items-center justify-between mb-5 gap-4">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-indigo-400 tracking-widest">Relatório da Carteira</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Resumo exportável em texto</p>
+                        </div>
+
+                        <button id="botao-exportar-relatorio" type="button" class="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 font-black py-3 px-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all">
+                            Exportar relatório TXT
+                        </button>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 leading-relaxed">
+                        Gera um relatório com resumo geral, ranking, alertas, favoritos, watchlist e calendário de eventos.
+                    </div>
                 </div>
 
                 <div class="glass p-6 rounded-[2rem] border border-white/5">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-cyan-400 tracking-widest">Backup da Carteira</h3>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Exportação e importação</p>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <button id="botao-exportar-backup" type="button" class="w-full bg-cyan-600 hover:bg-cyan-500 font-black py-4 rounded-2xl uppercase text-[11px]">
+                        <button id="botao-exportar-backup" type="button" class="w-full bg-cyan-600 hover:bg-cyan-500 font-black py-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all">
                             Exportar JSON
                         </button>
 
-                        <label class="w-full bg-slate-800 hover:bg-slate-700 font-black py-4 rounded-2xl uppercase text-[11px] text-center cursor-pointer flex items-center justify-center">
+                        <label class="w-full bg-slate-800 hover:bg-slate-700 font-black py-4 rounded-2xl uppercase text-[11px] shadow-lg transition-all text-center cursor-pointer flex items-center justify-center">
                             Importar JSON
                             <input id="campo-importar-backup" type="file" accept=".json,application/json" class="hidden">
                         </label>
+                    </div>
+
+                    <div class="mt-4 text-[11px] text-slate-400 leading-relaxed">
+                        Exporte um backup completo da carteira e dos proventos em JSON.
+                        Você pode restaurar depois usando o arquivo exportado.
                     </div>
                 </div>
             </div>
