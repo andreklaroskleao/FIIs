@@ -2020,13 +2020,3 @@ window.addEventListener('load', () => {
     }
 });
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-        try {
-            await navigator.serviceWorker.register('./service-worker.js');
-            console.log('Service Worker registrado com sucesso.');
-        } catch (erro) {
-            console.error('Erro ao registrar o Service Worker:', erro);
-        }
-    });
-}
