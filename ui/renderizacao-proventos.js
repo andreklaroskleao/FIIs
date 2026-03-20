@@ -1,7 +1,18 @@
-import { escaparHtml, formatarMesAno, formatarMoeda } from '../services/formatadores.js';
+import { escaparHtml, formatarMoeda, formatarMesAno } from '../services/formatadores.js';
+import { converterParaNumeroSeguro } from '../services/calculos-carteira.js';
+
+function ordenarListaProventosDoMaisRecenteParaOMaisAntigo(listaProventos) {
+    return [...(listaProventos || [])].sort((proventoA, proventoB) => {
+        const mesA = String(proventoA.mesAno || '');
+        const mesB = String(proventoB.mesAno || '');
+        return mesB.localeCompare(mesA);
+    });
+}
 
 export function renderizarHistoricoProventos(corpoTabelaProventos, listaProventos) {
-    if (!listaProventos.length) {
+    const listaOrdenada = ordenarListaProventosDoMaisRecenteParaOMaisAntigo(listaProventos);
+
+    if (!Array.isArray(listaOrdenada) || listaOrdenada.length === 0) {
         corpoTabelaProventos.innerHTML = `
             <tr>
                 <td colspan="4" class="p-8 text-center text-slate-500 italic">
@@ -12,20 +23,31 @@ export function renderizarHistoricoProventos(corpoTabelaProventos, listaProvento
         return;
     }
 
-    const listaOrdenada = [...listaProventos].sort((a, b) => {
-        return (b.mesAno || '').localeCompare(a.mesAno || '');
-    });
-
     corpoTabelaProventos.innerHTML = listaOrdenada.map((provento) => {
+        const valor = converterParaNumeroSeguro(provento.valor, 0);
+
         return `
             <tr>
-                <td class="p-4 font-black">${escaparHtml(provento.ticker)}</td>
-                <td class="p-4">${escaparHtml(formatarMesAno(provento.mesAno))}</td>
-                <td class="p-4 text-right valor-sensivel">R$ ${formatarMoeda(provento.valor)}</td>
-                <td class="p-4 text-center">
-                    <div class="flex items-center justify-center gap-2">
-                        <button data-id="${escaparHtml(provento.id)}" type="button" class="botao-acao-tabela botao-editar-provento">📝</button>
-                        <button data-id="${escaparHtml(provento.id)}" type="button" class="botao-acao-tabela botao-excluir-provento">✕</button>
+                <td class="font-black text-emerald-400">${escaparHtml(provento.ticker || '--')}</td>
+                <td>${escaparHtml(formatarMesAno(provento.mesAno || ''))}</td>
+                <td class="text-right font-black">R$ ${formatarMoeda(valor)}</td>
+                <td class="text-center">
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button
+                            type="button"
+                            class="botao-acao-tabela botao-editar-provento"
+                            data-id="${escaparHtml(provento.id || '')}"
+                        >
+                            Editar
+                        </button>
+
+                        <button
+                            type="button"
+                            class="botao-acao-tabela botao-excluir-provento"
+                            data-id="${escaparHtml(provento.id || '')}"
+                        >
+                            Excluir
+                        </button>
                     </div>
                 </td>
             </tr>
