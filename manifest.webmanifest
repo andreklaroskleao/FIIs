@@ -1,0 +1,20 @@
+{
+  "name": "FII Insight",
+  "short_name": "FII Insight",
+  "description": "Painel de fundos imobiliários com carteira, aportes, proventos, análises e acompanhamento inteligente.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "./assets/logo-fii-insight.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
