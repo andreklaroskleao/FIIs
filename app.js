@@ -216,6 +216,14 @@ const camposFormularioProvento = {
     mes: document.getElementById('campo-mes-provento')
 };
 
+function adicionarEventoSeElementoExistir(elemento, evento, manipulador) {
+    if (!elemento) {
+        return;
+    }
+
+    elemento.addEventListener(evento, manipulador);
+}
+
 function salvarModoPrivacidadeNoLocalStorage() {
     localStorage.setItem(
         CHAVE_LOCAL_STORAGE_MODO_PRIVACIDADE,
@@ -260,15 +268,8 @@ function alternarMenuSuperior() {
 }
 
 function salvarMetasNoLocalStorage() {
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_META_PATRIMONIO,
-        String(elementosInterface.campoMetaPatrimonio?.value || '')
-    );
-
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL,
-        String(elementosInterface.campoMetaRendaMensal?.value || '')
-    );
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_META_PATRIMONIO, String(elementosInterface.campoMetaPatrimonio?.value || ''));
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_META_RENDA_MENSAL, String(elementosInterface.campoMetaRendaMensal?.value || ''));
 }
 
 function carregarMetasDoLocalStorage() {
@@ -321,10 +322,7 @@ function carregarFiltroEOrdenacaoDoLocalStorage() {
 }
 
 function salvarComparadorNoLocalStorage() {
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_COMPARADOR,
-        JSON.stringify(estadoAplicacao.listaAtivosSelecionadosParaComparacao || [])
-    );
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_COMPARADOR, JSON.stringify(estadoAplicacao.listaAtivosSelecionadosParaComparacao || []));
 }
 
 function carregarComparadorDoLocalStorage() {
@@ -337,22 +335,14 @@ function carregarComparadorDoLocalStorage() {
 
     try {
         const listaConvertida = JSON.parse(comparadorSalvo);
-
-        if (Array.isArray(listaConvertida)) {
-            estadoAplicacao.listaAtivosSelecionadosParaComparacao = listaConvertida.slice(0, 2);
-        } else {
-            estadoAplicacao.listaAtivosSelecionadosParaComparacao = [];
-        }
+        estadoAplicacao.listaAtivosSelecionadosParaComparacao = Array.isArray(listaConvertida) ? listaConvertida.slice(0, 2) : [];
     } catch {
         estadoAplicacao.listaAtivosSelecionadosParaComparacao = [];
     }
 }
 
 function salvarObservacoesWatchlistNoLocalStorage() {
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST,
-        JSON.stringify(estadoAplicacao.mapaObservacoesWatchlist || {})
-    );
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_OBSERVACOES_WATCHLIST, JSON.stringify(estadoAplicacao.mapaObservacoesWatchlist || {}));
 }
 
 function carregarObservacoesWatchlistDoLocalStorage() {
@@ -365,20 +355,14 @@ function carregarObservacoesWatchlistDoLocalStorage() {
 
     try {
         const objetoConvertido = JSON.parse(observacoesSalvas);
-        estadoAplicacao.mapaObservacoesWatchlist =
-            typeof objetoConvertido === 'object' && objetoConvertido !== null
-                ? objetoConvertido
-                : {};
+        estadoAplicacao.mapaObservacoesWatchlist = typeof objetoConvertido === 'object' && objetoConvertido !== null ? objetoConvertido : {};
     } catch {
         estadoAplicacao.mapaObservacoesWatchlist = {};
     }
 }
 
 function salvarAporteGlobalNoLocalStorage() {
-    localStorage.setItem(
-        CHAVE_LOCAL_STORAGE_APORTE_GLOBAL,
-        String(elementosInterface.campoValorAporteGlobal?.value || '')
-    );
+    localStorage.setItem(CHAVE_LOCAL_STORAGE_APORTE_GLOBAL, String(elementosInterface.campoValorAporteGlobal?.value || ''));
 }
 
 function carregarAporteGlobalNoLocalStorage() {
@@ -735,19 +719,11 @@ function renderizarMetas(patrimonioAtual, rendaMensalAtual) {
     const progressoMetaRenda = calcularProgressoMetaRenda(rendaMensalAtual, metaRendaMensal);
 
     if (elementosInterface.cardMetaPatrimonio) {
-        renderizarCardMetaPatrimonio(
-            elementosInterface.cardMetaPatrimonio,
-            progressoMetaPatrimonio,
-            patrimonioAtual
-        );
+        renderizarCardMetaPatrimonio(elementosInterface.cardMetaPatrimonio, progressoMetaPatrimonio, patrimonioAtual);
     }
 
     if (elementosInterface.cardMetaRenda) {
-        renderizarCardMetaRenda(
-            elementosInterface.cardMetaRenda,
-            progressoMetaRenda,
-            rendaMensalAtual
-        );
+        renderizarCardMetaRenda(elementosInterface.cardMetaRenda, progressoMetaRenda, rendaMensalAtual);
     }
 }
 
@@ -798,12 +774,7 @@ function filtrarListaAtivosPorFiltroInteligente(listaAtivos) {
         case 'watchlist':
             return listaAtivos.filter((ativo) => ativo.emWatchlist);
         case 'oportunidades':
-            return listaAtivos.filter((ativo) =>
-                ativo.precoAtual > 0 &&
-                ativo.precoTeto > 0 &&
-                ativo.precoAtual <= ativo.precoTeto &&
-                !ativo.emWatchlist
-            );
+            return listaAtivos.filter((ativo) => ativo.precoAtual > 0 && ativo.precoTeto > 0 && ativo.precoAtual <= ativo.precoTeto && !ativo.emWatchlist);
         case 'acima-do-teto':
             return listaAtivos.filter((ativo) => ativo.precoTeto > 0 && ativo.precoAtual > ativo.precoTeto);
         case 'todos':
@@ -847,12 +818,8 @@ function atualizarContadoresDasAbas() {
     const quantidadeAportes = estadoAplicacao.listaAportesEmMemoria.length;
     const quantidadeProventos = estadoAplicacao.listaProventosEmMemoria.length;
     const quantidadeAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria).length;
-
-    const quantidadeFavoritos =
-        estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.favorito).length;
-
-    const quantidadeWatchlist =
-        estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.emWatchlist).length;
+    const quantidadeFavoritos = estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.favorito).length;
+    const quantidadeWatchlist = estadoAplicacao.listaAtivosEmMemoria.filter((ativo) => ativo.emWatchlist).length;
 
     if (elementosInterface.contadorAbaVisaoGeral) {
         elementosInterface.contadorAbaVisaoGeral.textContent = String(quantidadeAlertas);
@@ -950,11 +917,7 @@ async function salvarAporte() {
         const ativoEncontrado = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.ticker === dadosAporte.ticker);
 
         if (!ativoEncontrado) {
-            mostrarNotificacao(
-                elementosInterface.containerNotificacoes,
-                `${mensagemSucesso} Cadastre também o ativo principal para refletir totalmente no painel.`,
-                'info'
-            );
+            mostrarNotificacao(elementosInterface.containerNotificacoes, `${mensagemSucesso} Cadastre também o ativo principal para refletir totalmente no painel.`, 'info');
         } else {
             mostrarNotificacao(elementosInterface.containerNotificacoes, mensagemSucesso, 'sucesso');
         }
@@ -1010,18 +973,11 @@ function renderizarTudo() {
     }
 
     if (elementosInterface.painelWatchlist) {
-        renderizarPainelWatchlist(
-            elementosInterface.painelWatchlist,
-            estadoAplicacao.listaAtivosEmMemoria,
-            estadoAplicacao.mapaObservacoesWatchlist
-        );
+        renderizarPainelWatchlist(elementosInterface.painelWatchlist, estadoAplicacao.listaAtivosEmMemoria, estadoAplicacao.mapaObservacoesWatchlist);
     }
 
     if (elementosInterface.painelFavoritos) {
-        renderizarPainelFavoritos(
-            elementosInterface.painelFavoritos,
-            estadoAplicacao.listaAtivosEmMemoria
-        );
+        renderizarPainelFavoritos(elementosInterface.painelFavoritos, estadoAplicacao.listaAtivosEmMemoria);
     }
 
     const patrimonioTotal = estadoAplicacao.listaAtivosEmMemoria.reduce((soma, ativo) => soma + ativo.valorTotalAtual, 0);
@@ -1036,26 +992,17 @@ function renderizarTudo() {
     );
 
     if (elementosInterface.painelRankingOportunidades) {
-        renderizarPainelRankingOportunidades(
-            elementosInterface.painelRankingOportunidades,
-            listaRanking
-        );
+        renderizarPainelRankingOportunidades(elementosInterface.painelRankingOportunidades, listaRanking);
     }
 
     const listaAlertas = gerarListaAlertas(estadoAplicacao.listaAtivosEmMemoria);
 
     if (elementosInterface.painelAlertas) {
-        renderizarPainelAlertas(
-            elementosInterface.painelAlertas,
-            listaAlertas
-        );
+        renderizarPainelAlertas(elementosInterface.painelAlertas, listaAlertas);
     }
 
     if (elementosInterface.painelComparador) {
-        renderizarPainelComparador(
-            elementosInterface.painelComparador,
-            obterAtivosSelecionadosParaComparacao()
-        );
+        renderizarPainelComparador(elementosInterface.painelComparador, obterAtivosSelecionadosParaComparacao());
     }
 
     const resultadoSimulacaoGlobal = gerarSimulacaoGlobalDeAporte(
@@ -1064,26 +1011,17 @@ function renderizarTudo() {
     );
 
     if (elementosInterface.painelSimuladorGlobal) {
-        renderizarPainelSimuladorGlobal(
-            elementosInterface.painelSimuladorGlobal,
-            resultadoSimulacaoGlobal
-        );
+        renderizarPainelSimuladorGlobal(elementosInterface.painelSimuladorGlobal, resultadoSimulacaoGlobal);
     }
 
     const listaEventosCalendario = gerarEventosCalendarioCarteira(estadoAplicacao.listaAtivosEmMemoria);
 
     if (elementosInterface.painelCalendarioCarteira) {
-        renderizarPainelCalendarioCarteira(
-            elementosInterface.painelCalendarioCarteira,
-            listaEventosCalendario
-        );
+        renderizarPainelCalendarioCarteira(elementosInterface.painelCalendarioCarteira, listaEventosCalendario);
     }
 
     if (elementosInterface.painelHistoricoAportes) {
-        renderizarPainelHistoricoAportes(
-            elementosInterface.painelHistoricoAportes,
-            estadoAplicacao.listaAportesEmMemoria
-        );
+        renderizarPainelHistoricoAportes(elementosInterface.painelHistoricoAportes, estadoAplicacao.listaAportesEmMemoria);
     }
 
     atualizarContadoresDasAbas();
@@ -1091,10 +1029,7 @@ function renderizarTudo() {
 
 function renderizarProventos() {
     if (elementosInterface.corpoTabelaProventos) {
-        renderizarHistoricoProventos(
-            elementosInterface.corpoTabelaProventos,
-            estadoAplicacao.listaProventosEmMemoria
-        );
+        renderizarHistoricoProventos(elementosInterface.corpoTabelaProventos, estadoAplicacao.listaProventosEmMemoria);
     }
 
     const mapaProventosAgrupadosPorMes = {};
@@ -1145,12 +1080,7 @@ async function atualizarListaAtivosEnriquecida() {
     const tickers = listaAtivosBruta.map((ativo) => ativo.ticker);
     const mapaCotacoes = await buscarCotacoesNaBrapi(tickers);
 
-    estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
-        listaAtivosBruta,
-        mapaCotacoes,
-        estadoAplicacao.listaAportesEmMemoria
-    );
-
+    estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes, estadoAplicacao.listaAportesEmMemoria);
     renderizarTudo();
 }
 
@@ -1174,13 +1104,7 @@ function assinarColecaoAtivos() {
             }));
 
             const mapaCotacoes = await buscarCotacoesNaBrapi(listaAtivosBruta.map((ativo) => ativo.ticker));
-
-            estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(
-                listaAtivosBruta,
-                mapaCotacoes,
-                estadoAplicacao.listaAportesEmMemoria
-            );
-
+            estadoAplicacao.listaAtivosEmMemoria = enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes, estadoAplicacao.listaAportesEmMemoria);
             renderizarTudo();
         },
         (erro) => {
@@ -1273,36 +1197,17 @@ function cancelarEdicaoAtivo() {
         elementosInterface.tituloFormularioAtivo.innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Gerenciar Ativo';
     }
 
-    if (camposFormularioAtivo.ticker) {
-        camposFormularioAtivo.ticker.value = '';
-    }
-    if (camposFormularioAtivo.quantidade) {
-        camposFormularioAtivo.quantidade.value = '';
-    }
-    if (camposFormularioAtivo.precoMedio) {
-        camposFormularioAtivo.precoMedio.value = '';
-    }
-    if (camposFormularioAtivo.nota) {
-        camposFormularioAtivo.nota.value = '';
-    }
-    if (camposFormularioAtivo.precoTeto) {
-        camposFormularioAtivo.precoTeto.value = '';
-    }
-    if (camposFormularioAtivo.precoAtualManual) {
-        camposFormularioAtivo.precoAtualManual.value = '';
-    }
-    if (camposFormularioAtivo.diaDataCom) {
-        camposFormularioAtivo.diaDataCom.value = '';
-    }
-    if (camposFormularioAtivo.diaPagamento) {
-        camposFormularioAtivo.diaPagamento.value = '';
-    }
-    if (camposFormularioAtivo.segmento) {
-        camposFormularioAtivo.segmento.value = 'Papel';
-    }
-    if (camposFormularioAtivo.observacao) {
-        camposFormularioAtivo.observacao.value = '';
-    }
+    Object.values(camposFormularioAtivo).forEach((campo) => {
+        if (!campo) {
+            return;
+        }
+
+        if (campo.tagName === 'SELECT') {
+            campo.value = 'Papel';
+        } else {
+            campo.value = '';
+        }
+    });
 
     limparErrosDosCampos(Object.values(camposFormularioAtivo).filter(Boolean));
 }
@@ -1341,17 +1246,11 @@ function prepararEdicaoProvento(provento) {
 function cancelarEdicaoProvento() {
     estadoAplicacao.identificadorProventoEmEdicao = null;
 
-    if (camposFormularioProvento.ticker) {
-        camposFormularioProvento.ticker.value = '';
-    }
-
-    if (camposFormularioProvento.valor) {
-        camposFormularioProvento.valor.value = '';
-    }
-
-    if (camposFormularioProvento.mes) {
-        camposFormularioProvento.mes.value = '';
-    }
+    Object.values(camposFormularioProvento).forEach((campo) => {
+        if (campo) {
+            campo.value = '';
+        }
+    });
 
     if (elementosInterface.tituloFormularioProvento) {
         elementosInterface.tituloFormularioProvento.textContent = 'Lançar Provento';
@@ -1480,9 +1379,7 @@ async function salvarAtivo() {
         }
 
         if (estadoAplicacao.identificadorAtivoEmEdicao) {
-            const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find(
-                (ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao
-            );
+            const ativoAtual = estadoAplicacao.listaAtivosEmMemoria.find((ativo) => ativo.id === estadoAplicacao.identificadorAtivoEmEdicao);
 
             await updateDoc(doc(db, 'ativos', estadoAplicacao.identificadorAtivoEmEdicao), {
                 ...dadosAtivo,
@@ -1547,11 +1444,7 @@ function abrirFormularioProventoComTickerPreenchido(ticker) {
         camposFormularioProvento.valor.focus();
     }
 
-    mostrarNotificacao(
-        elementosInterface.containerNotificacoes,
-        `Ticker ${ticker} enviado para o formulário de proventos.`,
-        'info'
-    );
+    mostrarNotificacao(elementosInterface.containerNotificacoes, `Ticker ${ticker} enviado para o formulário de proventos.`, 'info');
 }
 
 async function alternarFavorito(identificadorAtivo) {
@@ -1588,11 +1481,7 @@ function alternarAtivoNoComparador(identificadorAtivo) {
     }
 
     if (listaAtual.length >= 2) {
-        mostrarNotificacao(
-            elementosInterface.containerNotificacoes,
-            'O comparador aceita no máximo 2 ativos.',
-            'info'
-        );
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'O comparador aceita no máximo 2 ativos.', 'info');
         return;
     }
 
@@ -1641,16 +1530,9 @@ function exportarRelatorioCarteira() {
         listaAtivos: estadoAplicacao.listaAtivosEmMemoria
     });
 
-    exportarRelatorioCarteiraComoTxt(
-        `relatorio-fii-insight-${new Date().toISOString().slice(0, 10)}.txt`,
-        conteudoRelatorio
-    );
+    exportarRelatorioCarteiraComoTxt(`relatorio-fii-insight-${new Date().toISOString().slice(0, 10)}.txt`, conteudoRelatorio);
 
-    mostrarNotificacao(
-        elementosInterface.containerNotificacoes,
-        'Relatório exportado com sucesso.',
-        'sucesso'
-    );
+    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Relatório exportado com sucesso.', 'sucesso');
 }
 
 function inicializarEventosDaInterface() {
@@ -1667,283 +1549,208 @@ function inicializarEventosDaInterface() {
     alternarSubaba('aportes', carregarSubabaDoLocalStorage('aportes'));
     alternarSubaba('analises', carregarSubabaDoLocalStorage('analises'));
 
-    if (elementosInterface.botaoAlternarMenu) {
-        elementosInterface.botaoAlternarMenu.addEventListener('click', alternarMenuSuperior);
-    }
+    adicionarEventoSeElementoExistir(elementosInterface.botaoAlternarMenu, 'click', alternarMenuSuperior);
 
-    if (elementosInterface.navegacaoAbasPrincipais) {
-        elementosInterface.navegacaoAbasPrincipais.addEventListener('click', (evento) => {
-            const botaoAbaPrincipal = evento.target.closest('[data-aba-principal]');
+    adicionarEventoSeElementoExistir(elementosInterface.navegacaoAbasPrincipais, 'click', (evento) => {
+        const botaoAbaPrincipal = evento.target.closest('[data-aba-principal]');
 
-            if (!botaoAbaPrincipal) {
-                return;
+        if (!botaoAbaPrincipal) {
+            return;
+        }
+
+        alternarAbaPrincipal(botaoAbaPrincipal.dataset.abaPrincipal);
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.navegacaoSubabasCarteira, 'click', (evento) => {
+        const botaoSubaba = evento.target.closest('[data-subaba-grupo="carteira"]');
+
+        if (!botaoSubaba) {
+            return;
+        }
+
+        alternarSubaba('carteira', botaoSubaba.dataset.subaba);
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.navegacaoSubabasAportes, 'click', (evento) => {
+        const botaoSubaba = evento.target.closest('[data-subaba-grupo="aportes"]');
+
+        if (!botaoSubaba) {
+            return;
+        }
+
+        alternarSubaba('aportes', botaoSubaba.dataset.subaba);
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.navegacaoSubabasAnalises, 'click', (evento) => {
+        const botaoSubaba = evento.target.closest('[data-subaba-grupo="analises"]');
+
+        if (!botaoSubaba) {
+            return;
+        }
+
+        alternarSubaba('analises', botaoSubaba.dataset.subaba);
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoModoPrivacidade, 'click', () => {
+        estadoAplicacao.modoPrivacidadeAtivo = !estadoAplicacao.modoPrivacidadeAtivo;
+        document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
+
+        if (elementosInterface.iconeModoPrivacidade) {
+            elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
+        }
+
+        salvarModoPrivacidadeNoLocalStorage();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoAcaoRapidaNovoAtivo, 'click', () => {
+        alternarAbaPrincipal('carteira');
+        alternarSubaba('carteira', 'gestao');
+        camposFormularioAtivo.ticker?.focus();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoAcaoRapidaNovoAporte, 'click', () => {
+        alternarAbaPrincipal('aportes');
+        alternarSubaba('aportes', 'registrar');
+        elementosInterface.campoTickerAporte?.focus();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoAcaoRapidaNovoProvento, 'click', () => {
+        alternarAbaPrincipal('proventos');
+        camposFormularioProvento.ticker?.focus();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoAcaoRapidaComparador, 'click', () => {
+        alternarAbaPrincipal('analises');
+        alternarSubaba('analises', 'comparador');
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoAcaoRapidaBackup, 'click', () => {
+        alternarAbaPrincipal('configuracoes');
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.containerFiltrosSegmento, 'click', (evento) => {
+        const botaoFiltro = evento.target.closest('.botao-filtro');
+
+        if (!botaoFiltro) {
+            return;
+        }
+
+        estadoAplicacao.filtroSegmentoAtual = botaoFiltro.dataset.filtro;
+        salvarFiltroEOrdenacaoNoLocalStorage();
+
+        document.querySelectorAll('.botao-filtro').forEach((botao) => {
+            botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
+        });
+
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.containerFiltrosInteligentes, 'click', (evento) => {
+        const botaoFiltroInteligente = evento.target.closest('.botao-filtro-inteligente');
+
+        if (!botaoFiltroInteligente) {
+            return;
+        }
+
+        estadoAplicacao.filtroInteligenteAtual = botaoFiltroInteligente.dataset.filtroInteligente;
+        salvarFiltroEOrdenacaoNoLocalStorage();
+
+        document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
+            botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
+        });
+
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.containerOrdenacaoCarteira, 'click', (evento) => {
+        const botaoOrdenacao = evento.target.closest('.botao-ordenacao');
+
+        if (!botaoOrdenacao) {
+            return;
+        }
+
+        estadoAplicacao.ordenacaoCarteiraAtual = botaoOrdenacao.dataset.ordenacao;
+        salvarFiltroEOrdenacaoNoLocalStorage();
+
+        document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
+            botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
+        });
+
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoLimparComparador, 'click', limparComparador);
+    adicionarEventoSeElementoExistir(elementosInterface.botaoExportarRelatorio, 'click', exportarRelatorioCarteira);
+    adicionarEventoSeElementoExistir(elementosInterface.campoCaixaDisponivel, 'input', renderizarTudo);
+
+    adicionarEventoSeElementoExistir(elementosInterface.campoValorAporteGlobal, 'input', () => {
+        salvarAporteGlobalNoLocalStorage();
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoSalvarAtivo, 'click', salvarAtivo);
+    adicionarEventoSeElementoExistir(elementosInterface.botaoCancelarEdicaoAtivo, 'click', cancelarEdicaoAtivo);
+    adicionarEventoSeElementoExistir(elementosInterface.botaoSalvarProvento, 'click', salvarProvento);
+    adicionarEventoSeElementoExistir(elementosInterface.botaoCancelarEdicaoProvento, 'click', cancelarEdicaoProvento);
+    adicionarEventoSeElementoExistir(elementosInterface.botaoSalvarAporte, 'click', salvarAporte);
+    adicionarEventoSeElementoExistir(elementosInterface.botaoCancelarEdicaoAporte, 'click', limparFormularioAporte);
+
+    adicionarEventoSeElementoExistir(elementosInterface.campoMetaPatrimonio, 'input', () => {
+        salvarMetasNoLocalStorage();
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.campoMetaRendaMensal, 'input', () => {
+        salvarMetasNoLocalStorage();
+        renderizarTudo();
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.botaoExportarBackup, 'click', () => {
+        exportarCarteiraParaJson(estadoAplicacao.listaAtivosEmMemoria, estadoAplicacao.listaProventosEmMemoria);
+        mostrarNotificacao(elementosInterface.containerNotificacoes, 'Backup exportado com sucesso.', 'sucesso');
+    });
+
+    adicionarEventoSeElementoExistir(elementosInterface.campoImportarBackup, 'change', async (evento) => {
+        const arquivo = evento.target.files?.[0];
+
+        if (!arquivo) {
+            return;
+        }
+
+        try {
+            const dadosImportados = await importarCarteiraDeArquivo(arquivo);
+
+            if (!estadoAplicacao.usuarioAtual) {
+                throw new Error('Faça login antes de restaurar um backup.');
             }
 
-            alternarAbaPrincipal(botaoAbaPrincipal.dataset.abaPrincipal);
-        });
-    }
-
-    if (elementosInterface.navegacaoSubabasCarteira) {
-        elementosInterface.navegacaoSubabasCarteira.addEventListener('click', (evento) => {
-            const botaoSubaba = evento.target.closest('[data-subaba-grupo="carteira"]');
-
-            if (!botaoSubaba) {
-                return;
-            }
-
-            alternarSubaba('carteira', botaoSubaba.dataset.subaba);
-        });
-    }
-
-    if (elementosInterface.navegacaoSubabasAportes) {
-        elementosInterface.navegacaoSubabasAportes.addEventListener('click', (evento) => {
-            const botaoSubaba = evento.target.closest('[data-subaba-grupo="aportes"]');
-
-            if (!botaoSubaba) {
-                return;
-            }
-
-            alternarSubaba('aportes', botaoSubaba.dataset.subaba);
-        });
-    }
-
-    if (elementosInterface.navegacaoSubabasAnalises) {
-        elementosInterface.navegacaoSubabasAnalises.addEventListener('click', (evento) => {
-            const botaoSubaba = evento.target.closest('[data-subaba-grupo="analises"]');
-
-            if (!botaoSubaba) {
-                return;
-            }
-
-            alternarSubaba('analises', botaoSubaba.dataset.subaba);
-        });
-    }
-
-    if (elementosInterface.botaoModoPrivacidade) {
-        elementosInterface.botaoModoPrivacidade.addEventListener('click', () => {
-            estadoAplicacao.modoPrivacidadeAtivo = !estadoAplicacao.modoPrivacidadeAtivo;
-            document.body.classList.toggle('modo-privacidade', estadoAplicacao.modoPrivacidadeAtivo);
-
-            if (elementosInterface.iconeModoPrivacidade) {
-                elementosInterface.iconeModoPrivacidade.innerText = estadoAplicacao.modoPrivacidadeAtivo ? '🙈' : '👁️';
-            }
-
-            salvarModoPrivacidadeNoLocalStorage();
-        });
-    }
-
-    if (elementosInterface.botaoAcaoRapidaNovoAtivo) {
-        elementosInterface.botaoAcaoRapidaNovoAtivo.addEventListener('click', () => {
-            alternarAbaPrincipal('carteira');
-            alternarSubaba('carteira', 'gestao');
-            camposFormularioAtivo.ticker?.focus();
-        });
-    }
-
-    if (elementosInterface.botaoAcaoRapidaNovoAporte) {
-        elementosInterface.botaoAcaoRapidaNovoAporte.addEventListener('click', () => {
-            alternarAbaPrincipal('aportes');
-            alternarSubaba('aportes', 'registrar');
-            elementosInterface.campoTickerAporte?.focus();
-        });
-    }
-
-    if (elementosInterface.botaoAcaoRapidaNovoProvento) {
-        elementosInterface.botaoAcaoRapidaNovoProvento.addEventListener('click', () => {
-            alternarAbaPrincipal('proventos');
-            camposFormularioProvento.ticker?.focus();
-        });
-    }
-
-    if (elementosInterface.botaoAcaoRapidaComparador) {
-        elementosInterface.botaoAcaoRapidaComparador.addEventListener('click', () => {
-            alternarAbaPrincipal('analises');
-            alternarSubaba('analises', 'comparador');
-        });
-    }
-
-    if (elementosInterface.botaoAcaoRapidaBackup) {
-        elementosInterface.botaoAcaoRapidaBackup.addEventListener('click', () => {
-            alternarAbaPrincipal('configuracoes');
-        });
-    }
-
-    if (elementosInterface.containerFiltrosSegmento) {
-        elementosInterface.containerFiltrosSegmento.addEventListener('click', (evento) => {
-            const botaoFiltro = evento.target.closest('.botao-filtro');
-
-            if (!botaoFiltro) {
-                return;
-            }
-
-            estadoAplicacao.filtroSegmentoAtual = botaoFiltro.dataset.filtro;
-            salvarFiltroEOrdenacaoNoLocalStorage();
-
-            document.querySelectorAll('.botao-filtro').forEach((botao) => {
-                botao.classList.toggle('ativo', botao.dataset.filtro === estadoAplicacao.filtroSegmentoAtual);
-            });
-
-            renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.containerFiltrosInteligentes) {
-        elementosInterface.containerFiltrosInteligentes.addEventListener('click', (evento) => {
-            const botaoFiltroInteligente = evento.target.closest('.botao-filtro-inteligente');
-
-            if (!botaoFiltroInteligente) {
-                return;
-            }
-
-            estadoAplicacao.filtroInteligenteAtual = botaoFiltroInteligente.dataset.filtroInteligente;
-            salvarFiltroEOrdenacaoNoLocalStorage();
-
-            document.querySelectorAll('.botao-filtro-inteligente').forEach((botao) => {
-                botao.classList.toggle('ativo', botao.dataset.filtroInteligente === estadoAplicacao.filtroInteligenteAtual);
-            });
-
-            renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.containerOrdenacaoCarteira) {
-        elementosInterface.containerOrdenacaoCarteira.addEventListener('click', (evento) => {
-            const botaoOrdenacao = evento.target.closest('.botao-ordenacao');
-
-            if (!botaoOrdenacao) {
-                return;
-            }
-
-            estadoAplicacao.ordenacaoCarteiraAtual = botaoOrdenacao.dataset.ordenacao;
-            salvarFiltroEOrdenacaoNoLocalStorage();
-
-            document.querySelectorAll('.botao-ordenacao').forEach((botao) => {
-                botao.classList.toggle('ativo', botao.dataset.ordenacao === estadoAplicacao.ordenacaoCarteiraAtual);
-            });
-
-            renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.botaoLimparComparador) {
-        elementosInterface.botaoLimparComparador.addEventListener('click', limparComparador);
-    }
-
-    if (elementosInterface.botaoExportarRelatorio) {
-        elementosInterface.botaoExportarRelatorio.addEventListener('click', exportarRelatorioCarteira);
-    }
-
-    if (elementosInterface.campoCaixaDisponivel) {
-        elementosInterface.campoCaixaDisponivel.addEventListener('input', renderizarTudo);
-    }
-
-    if (elementosInterface.campoValorAporteGlobal) {
-        elementosInterface.campoValorAporteGlobal.addEventListener('input', () => {
-            salvarAporteGlobalNoLocalStorage();
-            renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.botaoSalvarAtivo) {
-        elementosInterface.botaoSalvarAtivo.addEventListener('click', salvarAtivo);
-    }
-
-    if (elementosInterface.botaoCancelarEdicaoAtivo) {
-        elementosInterface.botaoCancelarEdicaoAtivo.addEventListener('click', cancelarEdicaoAtivo);
-    }
-
-    if (elementosInterface.botaoSalvarProvento) {
-        elementosInterface.botaoSalvarProvento.addEventListener('click', salvarProvento);
-    }
-
-    if (elementosInterface.botaoCancelarEdicaoProvento) {
-        elementosInterface.botaoCancelarEdicaoProvento.addEventListener('click', cancelarEdicaoProvento);
-    }
-
-    if (elementosInterface.botaoSalvarAporte) {
-        elementosInterface.botaoSalvarAporte.addEventListener('click', salvarAporte);
-    }
-
-    if (elementosInterface.botaoCancelarEdicaoAporte) {
-        elementosInterface.botaoCancelarEdicaoAporte.addEventListener('click', limparFormularioAporte);
-    }
-
-    if (elementosInterface.campoMetaPatrimonio) {
-        elementosInterface.campoMetaPatrimonio.addEventListener('input', () => {
-            salvarMetasNoLocalStorage();
-            renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.campoMetaRendaMensal) {
-        elementosInterface.campoMetaRendaMensal.addEventListener('input', () => {
-            salvarMetasNoLocalStorage();
-            renderizarTudo();
-        });
-    }
-
-    if (elementosInterface.botaoExportarBackup) {
-        elementosInterface.botaoExportarBackup.addEventListener('click', () => {
-            exportarCarteiraParaJson(
-                estadoAplicacao.listaAtivosEmMemoria,
-                estadoAplicacao.listaProventosEmMemoria
+            const confirmouRestauracao = confirm(
+                `Deseja restaurar este backup no Firestore?\n\nAtivos: ${dadosImportados.ativos.length}\nProventos: ${dadosImportados.proventos.length}\n\nIsso adicionará novos registros à sua conta.`
             );
+
+            if (!confirmouRestauracao) {
+                evento.target.value = '';
+                return;
+            }
+
+            const resultadoRestauracao = await restaurarBackupNoFirestore({
+                db,
+                usuarioAtual: estadoAplicacao.usuarioAtual,
+                ativos: dadosImportados.ativos,
+                proventos: dadosImportados.proventos
+            });
 
             mostrarNotificacao(
                 elementosInterface.containerNotificacoes,
-                'Backup exportado com sucesso.',
+                `Backup restaurado com sucesso. Ativos: ${resultadoRestauracao.quantidadeAtivos}, Proventos: ${resultadoRestauracao.quantidadeProventos}.`,
                 'sucesso'
             );
-        });
-    }
-
-    if (elementosInterface.campoImportarBackup) {
-        elementosInterface.campoImportarBackup.addEventListener('change', async (evento) => {
-            const arquivo = evento.target.files?.[0];
-
-            if (!arquivo) {
-                return;
-            }
-
-            try {
-                const dadosImportados = await importarCarteiraDeArquivo(arquivo);
-
-                if (!estadoAplicacao.usuarioAtual) {
-                    throw new Error('Faça login antes de restaurar um backup.');
-                }
-
-                const confirmouRestauracao = confirm(
-                    `Deseja restaurar este backup no Firestore?\n\nAtivos: ${dadosImportados.ativos.length}\nProventos: ${dadosImportados.proventos.length}\n\nIsso adicionará novos registros à sua conta.`
-                );
-
-                if (!confirmouRestauracao) {
-                    evento.target.value = '';
-                    return;
-                }
-
-                const resultadoRestauracao = await restaurarBackupNoFirestore({
-                    db,
-                    usuarioAtual: estadoAplicacao.usuarioAtual,
-                    ativos: dadosImportados.ativos,
-                    proventos: dadosImportados.proventos
-                });
-
-                mostrarNotificacao(
-                    elementosInterface.containerNotificacoes,
-                    `Backup restaurado com sucesso. Ativos: ${resultadoRestauracao.quantidadeAtivos}, Proventos: ${resultadoRestauracao.quantidadeProventos}.`,
-                    'sucesso'
-                );
-            } catch (erro) {
-                mostrarNotificacao(
-                    elementosInterface.containerNotificacoes,
-                    `Erro ao importar backup: ${erro.message}`,
-                    'erro'
-                );
-            } finally {
-                evento.target.value = '';
-            }
-        });
-    }
+        } catch (erro) {
+            mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao importar backup: ${erro.message}`, 'erro');
+        } finally {
+            evento.target.value = '';
+        }
+    });
 
     const tratarCliqueAcoesAtivo = async (evento) => {
         const botaoEditarAtivo = evento.target.closest('.botao-editar-ativo');
@@ -1976,12 +1783,9 @@ function inicializarEventosDaInterface() {
                 salvarObservacoesWatchlistNoLocalStorage();
 
                 estadoAplicacao.listaAtivosSelecionadosParaComparacao =
-                    estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter(
-                        (item) => item !== botaoExcluirAtivo.dataset.id
-                    );
+                    estadoAplicacao.listaAtivosSelecionadosParaComparacao.filter((item) => item !== botaoExcluirAtivo.dataset.id);
 
                 salvarComparadorNoLocalStorage();
-
                 mostrarNotificacao(elementosInterface.containerNotificacoes, 'Ativo excluído com sucesso.', 'sucesso');
             } catch (erro) {
                 mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir ativo: ${erro.message}`, 'erro');
@@ -2022,103 +1826,87 @@ function inicializarEventosDaInterface() {
         }
     };
 
-    if (elementosInterface.corpoTabelaAtivos) {
-        elementosInterface.corpoTabelaAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
-    }
-
-    if (elementosInterface.listaCardsMobileAtivos) {
-        elementosInterface.listaCardsMobileAtivos.addEventListener('click', tratarCliqueAcoesAtivo);
-    }
+    adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaAtivos, 'click', tratarCliqueAcoesAtivo);
+    adicionarEventoSeElementoExistir(elementosInterface.listaCardsMobileAtivos, 'click', tratarCliqueAcoesAtivo);
 
     const tratarInputAtivo = (evento) => {
         const campoObservacaoWatchlist = evento.target.closest('.campo-observacao-watchlist');
 
         if (campoObservacaoWatchlist) {
-            estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] =
-                campoObservacaoWatchlist.value || '';
+            estadoAplicacao.mapaObservacoesWatchlist[campoObservacaoWatchlist.dataset.id] = campoObservacaoWatchlist.value || '';
             salvarObservacoesWatchlistNoLocalStorage();
-            renderizarTudo();
         }
     };
 
-    if (elementosInterface.corpoTabelaAtivos) {
-        elementosInterface.corpoTabelaAtivos.addEventListener('input', tratarInputAtivo);
-    }
+    adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaAtivos, 'input', tratarInputAtivo);
+    adicionarEventoSeElementoExistir(elementosInterface.listaCardsMobileAtivos, 'input', tratarInputAtivo);
 
-    if (elementosInterface.listaCardsMobileAtivos) {
-        elementosInterface.listaCardsMobileAtivos.addEventListener('input', tratarInputAtivo);
-    }
+    adicionarEventoSeElementoExistir(elementosInterface.corpoTabelaProventos, 'click', async (evento) => {
+        const botaoEditarProvento = evento.target.closest('.botao-editar-provento');
+        const botaoExcluirProvento = evento.target.closest('.botao-excluir-provento');
 
-    if (elementosInterface.corpoTabelaProventos) {
-        elementosInterface.corpoTabelaProventos.addEventListener('click', async (evento) => {
-            const botaoEditarProvento = evento.target.closest('.botao-editar-provento');
-            const botaoExcluirProvento = evento.target.closest('.botao-excluir-provento');
+        if (botaoEditarProvento) {
+            const proventoSelecionado = estadoAplicacao.listaProventosEmMemoria.find(
+                (provento) => provento.id === botaoEditarProvento.dataset.id
+            );
 
-            if (botaoEditarProvento) {
-                const proventoSelecionado = estadoAplicacao.listaProventosEmMemoria.find(
-                    (provento) => provento.id === botaoEditarProvento.dataset.id
-                );
+            if (proventoSelecionado) {
+                prepararEdicaoProvento(proventoSelecionado);
+            }
+        }
 
-                if (proventoSelecionado) {
-                    prepararEdicaoProvento(proventoSelecionado);
-                }
+        if (botaoExcluirProvento) {
+            const confirmouExclusao = confirm('Deseja realmente excluir este provento?');
+
+            if (!confirmouExclusao) {
+                return;
             }
 
-            if (botaoExcluirProvento) {
-                const confirmouExclusao = confirm('Deseja realmente excluir este provento?');
+            try {
+                await deleteDoc(doc(db, 'proventos', botaoExcluirProvento.dataset.id));
 
-                if (!confirmouExclusao) {
-                    return;
+                if (estadoAplicacao.identificadorProventoEmEdicao === botaoExcluirProvento.dataset.id) {
+                    cancelarEdicaoProvento();
                 }
 
-                try {
-                    await deleteDoc(doc(db, 'proventos', botaoExcluirProvento.dataset.id));
-
-                    if (estadoAplicacao.identificadorProventoEmEdicao === botaoExcluirProvento.dataset.id) {
-                        cancelarEdicaoProvento();
-                    }
-
-                    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Provento excluído com sucesso.', 'sucesso');
-                } catch (erro) {
-                    mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir provento: ${erro.message}`, 'erro');
-                }
+                mostrarNotificacao(elementosInterface.containerNotificacoes, 'Provento excluído com sucesso.', 'sucesso');
+            } catch (erro) {
+                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir provento: ${erro.message}`, 'erro');
             }
-        });
-    }
+        }
+    });
 
-    if (elementosInterface.painelHistoricoAportes) {
-        elementosInterface.painelHistoricoAportes.addEventListener('click', async (evento) => {
-            const botaoEditarAporte = evento.target.closest('.botao-editar-aporte');
-            const botaoExcluirAporte = evento.target.closest('.botao-excluir-aporte');
+    adicionarEventoSeElementoExistir(elementosInterface.painelHistoricoAportes, 'click', async (evento) => {
+        const botaoEditarAporte = evento.target.closest('.botao-editar-aporte');
+        const botaoExcluirAporte = evento.target.closest('.botao-excluir-aporte');
 
-            if (botaoEditarAporte) {
-                prepararEdicaoAporte(botaoEditarAporte.dataset.id);
+        if (botaoEditarAporte) {
+            prepararEdicaoAporte(botaoEditarAporte.dataset.id);
+        }
+
+        if (botaoExcluirAporte) {
+            const confirmouExclusao = confirm('Deseja realmente excluir este aporte?');
+
+            if (!confirmouExclusao) {
+                return;
             }
 
-            if (botaoExcluirAporte) {
-                const confirmouExclusao = confirm('Deseja realmente excluir este aporte?');
+            try {
+                await excluirAporteNoFirestore({
+                    db,
+                    identificadorAporte: botaoExcluirAporte.dataset.id
+                });
 
-                if (!confirmouExclusao) {
-                    return;
+                if (estadoAplicacao.identificadorAporteEmEdicao === botaoExcluirAporte.dataset.id) {
+                    limparFormularioAporte();
                 }
 
-                try {
-                    await excluirAporteNoFirestore({
-                        db,
-                        identificadorAporte: botaoExcluirAporte.dataset.id
-                    });
-
-                    if (estadoAplicacao.identificadorAporteEmEdicao === botaoExcluirAporte.dataset.id) {
-                        limparFormularioAporte();
-                    }
-
-                    mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte excluído com sucesso.', 'sucesso');
-                } catch (erro) {
-                    mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir aporte: ${erro.message}`, 'erro');
-                }
+                mostrarNotificacao(elementosInterface.containerNotificacoes, 'Aporte excluído com sucesso.', 'sucesso');
+            } catch (erro) {
+                mostrarNotificacao(elementosInterface.containerNotificacoes, `Erro ao excluir aporte: ${erro.message}`, 'erro');
             }
-        });
-    }
+        }
+    });
 
     Object.values(camposFormularioAtivo).filter(Boolean).forEach((campo) => {
         campo.addEventListener('input', () => {
@@ -2135,6 +1923,7 @@ function inicializarEventosDaInterface() {
     atualizarContadoresDasAbas();
 }
 
+atualizarBlocoUsuario(false);
 inicializarEventosDaInterface();
 
 onAuthStateChanged(auth, (usuario) => {
