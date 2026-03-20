@@ -1781,3 +1781,87 @@ onAuthStateChanged(auth, (usuario) => {
     resetarPainel();
 });
 
+let eventoInstalacaoAdiado = null;
+
+function obterElementoInstalacaoAplicativo() {
+    return {
+        botaoTopo: document.getElementById('botao-instalar-aplicativo'),
+        painel: document.getElementById('painel-instalacao-aplicativo'),
+        botaoPainel: document.getElementById('botao-instalar-aplicativo-painel'),
+        botaoFecharPainel: document.getElementById('botao-fechar-painel-instalacao')
+    };
+}
+
+function esconderInstalacaoAplicativo() {
+    const elementosInstalacao = obterElementoInstalacaoAplicativo();
+
+    if (elementosInstalacao.botaoTopo) {
+        elementosInstalacao.botaoTopo.classList.add('hidden');
+    }
+
+    if (elementosInstalacao.painel) {
+        elementosInstalacao.painel.classList.add('hidden');
+    }
+}
+
+function exibirInstalacaoAplicativo() {
+    const elementosInstalacao = obterElementoInstalacaoAplicativo();
+
+    if (elementosInstalacao.botaoTopo) {
+        elementosInstalacao.botaoTopo.classList.remove('hidden');
+    }
+
+    if (elementosInstalacao.painel) {
+        elementosInstalacao.painel.classList.remove('hidden');
+    }
+}
+
+async function instalarAplicativoProgressivo() {
+    if (!eventoInstalacaoAdiado) {
+        return;
+    }
+
+    await eventoInstalacaoAdiado.prompt();
+    await eventoInstalacaoAdiado.userChoice;
+
+    eventoInstalacaoAdiado = null;
+    esconderInstalacaoAplicativo();
+}
+
+window.addEventListener('beforeinstallprompt', (evento) => {
+    evento.preventDefault();
+    eventoInstalacaoAdiado = evento;
+    exibirInstalacaoAplicativo();
+});
+
+window.addEventListener('appinstalled', () => {
+    eventoInstalacaoAdiado = null;
+    esconderInstalacaoAplicativo();
+});
+
+window.addEventListener('load', () => {
+    const elementosInstalacao = obterElementoInstalacaoAplicativo();
+
+    if (elementosInstalacao.botaoTopo) {
+        elementosInstalacao.botaoTopo.addEventListener('click', instalarAplicativoProgressivo);
+    }
+
+    if (elementosInstalacao.botaoPainel) {
+        elementosInstalacao.botaoPainel.addEventListener('click', instalarAplicativoProgressivo);
+    }
+
+    if (elementosInstalacao.botaoFecharPainel) {
+        elementosInstalacao.botaoFecharPainel.addEventListener('click', esconderInstalacaoAplicativo);
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        try {
+            await navigator.serviceWorker.register('./service-worker.js');
+            console.log('Service Worker registrado com sucesso.');
+        } catch (erro) {
+            console.error('Erro ao registrar o Service Worker:', erro);
+        }
+    });
+}
