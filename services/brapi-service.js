@@ -47,7 +47,10 @@ function lerCacheCotacoesDoLocalStorage() {
 
 function salvarCacheCotacoesNoLocalStorage(mapaCotacoes) {
     try {
-        localStorage.setItem(CHAVE_LOCAL_STORAGE_CACHE_COTACOES, JSON.stringify(mapaCotacoes));
+        localStorage.setItem(
+            CHAVE_LOCAL_STORAGE_CACHE_COTACOES,
+            JSON.stringify(mapaCotacoes)
+        );
     } catch {
         return;
     }
@@ -132,7 +135,7 @@ export async function buscarCotacoesNaBrapi(listaTickers = []) {
         atualizarIndicadorStatusCotacoes('Cotações: carregando BRAPI');
 
         const parametroTickers = encodeURIComponent(listaTickersNormalizados.join(','));
-        const url = `${URL_BASE_BRAPI}/${parametroTickers}`;
+        const url = `${URL_BASE_BRAPI}/${parametroTickers}?token=${encodeURIComponent(tokenBrapi)}`;
 
         const resposta = await fetch(url, {
             method: 'GET'
@@ -147,14 +150,18 @@ export async function buscarCotacoesNaBrapi(listaTickers = []) {
                 };
             }
 
-            atualizarIndicadorStatusCotacoes('Cotações: BRAPI indisponível');
+            atualizarIndicadorStatusCotacoes(`Cotações: BRAPI indisponível (${resposta.status})`);
             return mapaCotacoesPadrao;
         }
 
         const dadosResposta = await resposta.json();
-        const listaResultados = Array.isArray(dadosResposta?.results) ? dadosResposta.results : [];
+        const listaResultados = Array.isArray(dadosResposta?.results)
+            ? dadosResposta.results
+            : [];
 
-        const mapaCotacoes = { ...mapaCotacoesPadrao };
+        const mapaCotacoes = {
+            ...mapaCotacoesPadrao
+        };
 
         listaResultados.forEach((itemResultado) => {
             const tickerNormalizado = normalizarTicker(itemResultado?.symbol);
