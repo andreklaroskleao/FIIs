@@ -1,18 +1,22 @@
-const NOME_CACHE_ESTATICO = 'fii-insight-cache-v1';
-const ARQUIVOS_PARA_CACHE = [
+const VERSAO_CACHE_ESTATICO = 'fii-insight-estatico-v2';
+const VERSAO_CACHE_DINAMICO = 'fii-insight-dinamico-v2';
+
+const ARQUIVOS_ESTATICOS = [
     './',
     './index.html',
     './style.css',
     './app.js',
     './firebase-config.js',
     './manifest.webmanifest',
-    './assets/logo-fii-insight.svg'
+    './assets/logo-fii-insight.svg',
+    './assets/logo-fii-insight-192.png',
+    './assets/logo-fii-insight-512.png'
 ];
 
 self.addEventListener('install', (evento) => {
     evento.waitUntil(
-        caches.open(NOME_CACHE_ESTATICO).then((cache) => {
-            return cache.addAll(ARQUIVOS_PARA_CACHE);
+        caches.open(VERSAO_CACHE_ESTATICO).then((cache) => {
+            return cache.addAll(ARQUIVOS_ESTATICOS);
         })
     );
 
@@ -24,7 +28,9 @@ self.addEventListener('activate', (evento) => {
         caches.keys().then((listaChaves) => {
             return Promise.all(
                 listaChaves.map((chave) => {
-                    if (chave !== NOME_CACHE_ESTATICO) {
+                    const cacheValido = chave === VERSAO_CACHE_ESTATICO || chave === VERSAO_CACHE_DINAMICO;
+
+                    if (!cacheValido) {
                         return caches.delete(chave);
                     }
 
@@ -42,30 +48,46 @@ self.addEventListener('fetch', (evento) => {
         return;
     }
 
-    evento.respondWith(
-        caches.match(evento.request).then((respostaEmCache) => {
-            if (respostaEmCache) {
-                return respostaEmCache;
-            }
+    const urlRequisicao = new URL(evento.request.url);
 
-            return fetch(evento.request)
-                .then((respostaRede) => {
-                    const copiaResposta = respostaRede.clone();
+    const requisicaoMesmoDominio = urlRequisicao.origin === self.location.origin;
 
-                    if (
-                        evento.request.url.startsWith(self.location.origin) &&
-                        respostaRede.status === 200
-                    ) {
-                        caches.open(NOME_CACHE_ESTATICO).then((cache) => {
+    if (requisicaoMesmoDominio) {
+        evento.respondWith(
+            caches.match(evento.request).then((respostaEmCache) => {
+                if (respostaEmCache) {
+                    return respostaEmCache;
+                }
+
+                return fetch(evento.request)
+                    .then((respostaRede) => {
+                        if (!respostaRede || respostaRede.status !== 200) {
+                            return respostaRede;
+                        }
+
+                        const copiaResposta = respostaRede.clone();
+
+                        caches.open(VERSAO_CACHE_DINAMICO).then((cache) => {
                             cache.put(evento.request, copiaResposta);
                         });
-                    }
 
-                    return respostaRede;
-                })
-                .catch(() => {
-                    return caches.match('./index.html');
-                });
+                        return respostaRede;
+                    })
+                    .catch(() => {
+                        return caches.match('./index.html');
+                    });
+            })
+        );
+
+        return;
+    }
+
+    evento.respondWith(
+        fetch(evento.request).catch(() => {
+            return new Response('Sem conexão no momento.', {
+                status: 503,
+                statusText: 'Offline'
+            });
         })
     );
 });
