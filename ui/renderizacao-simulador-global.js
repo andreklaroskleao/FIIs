@@ -1,54 +1,52 @@
-import { escaparHtml, formatarMoeda } from '../services/formatadores.js';
+import { escaparHtml, formatarMoeda, formatarPercentual } from '../services/formatadores.js';
+import { converterParaNumeroSeguro } from '../services/calculos-carteira.js';
 
 export function renderizarPainelSimuladorGlobal(painelSimuladorGlobal, resultadoSimulacaoGlobal) {
-    if (!resultadoSimulacaoGlobal || !resultadoSimulacaoGlobal.listaDistribuicao.length) {
-        painelSimuladorGlobal.innerHTML = '<div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>';
+    if (!painelSimuladorGlobal) {
+        return;
+    }
+
+    const valorTotalAporte = converterParaNumeroSeguro(resultadoSimulacaoGlobal?.valorTotalAporte, 0);
+    const listaSugestoes = Array.isArray(resultadoSimulacaoGlobal?.listaSugestoes)
+        ? resultadoSimulacaoGlobal.listaSugestoes
+        : [];
+
+    if (valorTotalAporte <= 0 || listaSugestoes.length === 0) {
+        painelSimuladorGlobal.innerHTML = `
+            <div class="text-[11px] text-slate-500 italic">Informe um valor para simular a distribuição do aporte.</div>
+        `;
         return;
     }
 
     painelSimuladorGlobal.innerHTML = `
-        <div class="grid grid-cols-1 gap-3">
-            ${resultadoSimulacaoGlobal.listaDistribuicao.map((itemDistribuicao) => {
-                return `
-                    <div class="cartao-simulador-global item-simulador-global">
-                        <div>
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="font-black text-cyan-300">${escaparHtml(itemDistribuicao.ticker)}</span>
-                                <span class="selo-status ranking">Score ${itemDistribuicao.score.toFixed(1)}</span>
+        <div class="cartao-simulador-global">
+            <div class="text-[11px] text-slate-300 mb-4">
+                Valor total do aporte: <strong>R$ ${formatarMoeda(valorTotalAporte)}</strong>
+            </div>
+
+            <div class="space-y-3">
+                ${listaSugestoes.map((sugestao) => {
+                    return `
+                        <div class="item-simulador-global">
+                            <div>
+                                <div class="font-black text-cyan-400">${escaparHtml(sugestao.ticker)}</div>
+                                <div class="text-[10px] text-slate-500 uppercase font-black">
+                                    ${formatarPercentual(converterParaNumeroSeguro(sugestao.percentualDistribuicao, 0) * 100)}
+                                </div>
                             </div>
-                            <div class="text-[11px] text-slate-400 mt-1">
-                                ${escaparHtml(itemDistribuicao.segmento)}
+
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-500 uppercase font-black">Valor sugerido</div>
+                                <div class="font-black">R$ ${formatarMoeda(converterParaNumeroSeguro(sugestao.valorSugerido, 0))}</div>
+                            </div>
+
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-500 uppercase font-black">Quantidade</div>
+                                <div class="font-black">${converterParaNumeroSeguro(sugestao.quantidadeSugerida, 0)}</div>
                             </div>
                         </div>
-
-                        <div class="text-left md:text-right">
-                            <div class="text-[11px] text-slate-400">Aporte sugerido</div>
-                            <div class="font-black text-white valor-sensivel">R$ ${formatarMoeda(itemDistribuicao.valorSugerido)}</div>
-                        </div>
-
-                        <div class="text-left md:text-right">
-                            <div class="text-[11px] text-slate-400">Cotas estimadas</div>
-                            <div class="font-black text-emerald-400">${itemDistribuicao.quantidadeEstimativa}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('')}
-
-            <div class="cartao-simulador-global">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <div class="text-[11px] text-slate-400">Valor do aporte</div>
-                        <div class="font-black text-white valor-sensivel">R$ ${formatarMoeda(resultadoSimulacaoGlobal.valorTotalAporte)}</div>
-                    </div>
-                    <div>
-                        <div class="text-[11px] text-slate-400">Valor distribuído</div>
-                        <div class="font-black text-cyan-300 valor-sensivel">R$ ${formatarMoeda(resultadoSimulacaoGlobal.valorDistribuido)}</div>
-                    </div>
-                    <div>
-                        <div class="text-[11px] text-slate-400">Saldo residual</div>
-                        <div class="font-black text-amber-300 valor-sensivel">R$ ${formatarMoeda(resultadoSimulacaoGlobal.saldoResidual)}</div>
-                    </div>
-                </div>
+                    `;
+                }).join('')}
             </div>
         </div>
     `;
