@@ -203,6 +203,7 @@ const camposFormularioAtivo = {
     precoMedio: document.getElementById('campo-preco-medio-ativo'),
     nota: document.getElementById('campo-nota-ativo'),
     precoTeto: document.getElementById('campo-preco-teto-ativo'),
+    precoAtualManual: document.getElementById('campo-preco-atual-manual-ativo'),
     diaDataCom: document.getElementById('campo-dia-data-com'),
     diaPagamento: document.getElementById('campo-dia-pagamento'),
     segmento: document.getElementById('campo-segmento-ativo'),
@@ -1132,6 +1133,7 @@ async function atualizarListaAtivosEnriquecida() {
         precoMedio: ativo.precoMedioCadastro ?? ativo.precoMedio,
         nota: ativo.nota,
         precoTeto: ativo.precoTeto,
+        precoAtualManual: ativo.precoAtualManual,
         diaDataCom: ativo.diaDataCom,
         diaPagamento: ativo.diaPagamento,
         segmento: ativo.segmento,
@@ -1286,6 +1288,9 @@ function cancelarEdicaoAtivo() {
     if (camposFormularioAtivo.precoTeto) {
         camposFormularioAtivo.precoTeto.value = '';
     }
+    if (camposFormularioAtivo.precoAtualManual) {
+        camposFormularioAtivo.precoAtualManual.value = '';
+    }
     if (camposFormularioAtivo.diaDataCom) {
         camposFormularioAtivo.diaDataCom.value = '';
     }
@@ -1390,6 +1395,9 @@ async function prepararEdicaoAtivo(identificadorAtivo) {
         if (camposFormularioAtivo.precoTeto) {
             camposFormularioAtivo.precoTeto.value = dadosAtivo.precoTeto || '';
         }
+        if (camposFormularioAtivo.precoAtualManual) {
+            camposFormularioAtivo.precoAtualManual.value = dadosAtivo.precoAtualManual || '';
+        }
         if (camposFormularioAtivo.diaDataCom) {
             camposFormularioAtivo.diaDataCom.value = dadosAtivo.diaDataCom || '';
         }
@@ -1431,6 +1439,11 @@ async function salvarAtivo() {
         return;
     }
 
+    const valorPrecoAtualManual = camposFormularioAtivo.precoAtualManual?.value;
+    const precoAtualManual = valorPrecoAtualManual === '' || valorPrecoAtualManual === null || valorPrecoAtualManual === undefined
+        ? null
+        : converterParaNumeroSeguro(valorPrecoAtualManual, 0);
+
     const dadosAtivo = {
         uid: estadoAplicacao.usuarioAtual.uid,
         ticker: normalizarTicker(camposFormularioAtivo.ticker?.value),
@@ -1438,6 +1451,7 @@ async function salvarAtivo() {
         precoMedio: converterParaNumeroSeguro(camposFormularioAtivo.precoMedio?.value, 0),
         nota: parseInt(camposFormularioAtivo.nota?.value, 10),
         precoTeto: converterParaNumeroSeguro(camposFormularioAtivo.precoTeto?.value, 0),
+        precoAtualManual,
         diaDataCom: validarDiaDoMes(camposFormularioAtivo.diaDataCom?.value),
         diaPagamento: validarDiaDoMes(camposFormularioAtivo.diaPagamento?.value),
         segmento: camposFormularioAtivo.segmento?.value || 'Outros',
