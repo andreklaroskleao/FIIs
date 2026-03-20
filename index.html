@@ -13,7 +13,7 @@
 <body class="min-h-screen">
     <div id="container-notificacoes" class="container-notificacoes"></div>
 
-    <nav class="border-b border-slate-800 p-4 glass sticky top-0 z-50 flex flex-col gap-4">
+    <nav id="menu-superior" class="border-b border-slate-800 p-4 glass sticky top-0 z-50 flex flex-col gap-4 menu-superior">
         <div class="flex justify-between items-center gap-4 flex-wrap">
             <div class="flex items-center gap-4 flex-wrap">
                 <h1 class="text-lg font-black text-emerald-500 italic tracking-tighter uppercase">FII Insight</h1>
@@ -74,6 +74,16 @@
             </button>
         </div>
     </nav>
+
+    <div class="barra-controle-menu">
+        <button id="botao-alternar-menu" type="button" class="botao-alternar-menu">
+            Ocultar menu
+        </button>
+
+        <div id="indicador-status-cotacoes" class="indicador-status-cotacoes">
+            Cotações: aguardando carregamento
+        </div>
+    </div>
 
     <main class="p-6 container mx-auto space-y-8">
         <section id="secao-visao-geral" class="secao-aba-principal">
