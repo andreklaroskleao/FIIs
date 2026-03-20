@@ -49,7 +49,6 @@ self.addEventListener('fetch', (evento) => {
     }
 
     const urlRequisicao = new URL(evento.request.url);
-
     const requisicaoMesmoDominio = urlRequisicao.origin === self.location.origin;
 
     if (requisicaoMesmoDominio) {
