@@ -10,6 +10,22 @@ function montarBotaoAcao(texto, classe, atributoData, valorData) {
     return `<button type="button" class="botao-acao-tabela ${classe}" ${atributoData}="${escaparHtml(valorData)}">${escaparHtml(texto)}</button>`;
 }
 
+function montarSeloFontePreco(ativo) {
+    if (ativo.fontePrecoAtual === 'manual') {
+        return '<span class="selo-status peso-baixo">Preço manual</span>';
+    }
+
+    if (ativo.fontePrecoAtual === 'cache') {
+        return '<span class="selo-status neutro">Cache</span>';
+    }
+
+    if (ativo.fontePrecoAtual === 'brapi') {
+        return '<span class="selo-status oportunidade">BRAPI</span>';
+    }
+
+    return '<span class="selo-status acima-teto">Sem cotação</span>';
+}
+
 export function renderizarCardsMobileAtivos({
     listaCardsMobileAtivos,
     listaAtivos,
@@ -60,6 +76,7 @@ export function renderizarCardsMobileAtivos({
 
                         <div class="flex flex-wrap gap-2 mt-1">
                             <span class="selo-status ${escaparHtml(statusAtivo.tipoStatus)}">${escaparHtml(statusAtivo.textoStatus)}</span>
+                            ${montarSeloFontePreco(ativo)}
                             ${ativo.favorito ? '<span class="selo-status favorito">Favorito</span>' : ''}
                             ${ativo.emWatchlist ? '<span class="selo-status watchlist">Watchlist</span>' : ''}
                             ${estaSelecionadoParaComparacao ? '<span class="selo-status ranking">No comparador</span>' : ''}
@@ -117,6 +134,18 @@ export function renderizarCardsMobileAtivos({
                             <div class="cartao-ativo-mobile-campo">
                                 <div class="cartao-ativo-mobile-rotulo">Preço médio</div>
                                 <div class="cartao-ativo-mobile-valor">R$ ${formatarMoeda(converterParaNumeroSeguro(ativo.precoMedio, 0))}</div>
+                            </div>
+
+                            <div class="cartao-ativo-mobile-campo">
+                                <div class="cartao-ativo-mobile-rotulo">Preço atual manual</div>
+                                <div class="cartao-ativo-mobile-valor">
+                                    ${converterParaNumeroSeguro(ativo.precoAtualManual, 0) > 0 ? `R$ ${formatarMoeda(converterParaNumeroSeguro(ativo.precoAtualManual, 0))}` : '--'}
+                                </div>
+                            </div>
+
+                            <div class="cartao-ativo-mobile-campo">
+                                <div class="cartao-ativo-mobile-rotulo">Origem do preço</div>
+                                <div class="cartao-ativo-mobile-valor">${escaparHtml(ativo.fontePrecoAtual || '--')}</div>
                             </div>
 
                             <div class="cartao-ativo-mobile-campo">
