@@ -1881,39 +1881,7 @@ if ('serviceWorker' in navigator) {
             console.error('Erro ao registrar o Service Worker:', erro);
         }
     });
-}
-}
 
-function exibirInstalacaoAplicativo() {
-    const elementosInstalacao = obterElementoInstalacaoAplicativo();
-
-    if (elementosInstalacao.botaoTopo) {
-        elementosInstalacao.botaoTopo.classList.remove('hidden');
-    }
-
-    if (elementosInstalacao.painel) {
-        elementosInstalacao.painel.classList.remove('hidden');
-    }
-}
-
-async function instalarAplicativoProgressivo() {
-    if (!eventoInstalacaoAdiado) {
-        return;
-    }
-
-    eventoInstalacaoAdiado.prompt();
-
-    const resultadoEscolha = await eventoInstalacaoAdiado.userChoice;
-
-    if (resultadoEscolha.outcome === 'accepted') {
-        console.log('Instalação do aplicativo aceita.');
-    } else {
-        console.log('Instalação do aplicativo recusada.');
-    }
-
-    eventoInstalacaoAdiado = null;
-    esconderInstalacaoAplicativo();
-}
 
 window.addEventListener('beforeinstallprompt', (evento) => {
     evento.preventDefault();
