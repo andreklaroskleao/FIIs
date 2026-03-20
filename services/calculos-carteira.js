@@ -91,6 +91,32 @@ function obterOrigemCalculoPosicao(resumoAportesTicker, quantidadeCadastro, prec
     return 'cadastro';
 }
 
+function escolherPrecoAtualFinal(ativoBruto, mapaCotacoes, tickerNormalizado) {
+    const precoAtualManual = converterParaNumeroSeguro(ativoBruto.precoAtualManual, 0);
+
+    if (precoAtualManual > 0) {
+        return {
+            precoAtual: precoAtualManual,
+            fontePrecoAtual: 'manual'
+        };
+    }
+
+    const precoAtualDaBrapiOuCache = calcularPrecoAtualDoMapa(mapaCotacoes, tickerNormalizado);
+
+    if (precoAtualDaBrapiOuCache > 0) {
+        const itemCotacao = mapaCotacoes?.[tickerNormalizado];
+        return {
+            precoAtual: precoAtualDaBrapiOuCache,
+            fontePrecoAtual: itemCotacao?.fonteCotacao || 'brapi'
+        };
+    }
+
+    return {
+        precoAtual: 0,
+        fontePrecoAtual: 'indisponivel'
+    };
+}
+
 export function enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes = {}, listaAportes = []) {
     const mapaResumoAportesPorTicker = calcularResumoAportesPorTicker(listaAportes);
 
@@ -119,7 +145,13 @@ export function enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes = {}, lista
             ? valorTotalInvestido / quantidadeFinal
             : precoMedioCadastro;
 
-        const precoAtual = calcularPrecoAtualDoMapa(mapaCotacoes, tickerNormalizado);
+        const resultadoPrecoAtual = escolherPrecoAtualFinal(
+            ativoBruto,
+            mapaCotacoes,
+            tickerNormalizado
+        );
+
+        const precoAtual = resultadoPrecoAtual.precoAtual;
         const valorTotalAtual = quantidadeFinal * precoAtual;
         const lucroPrejuizoValor = valorTotalAtual - valorTotalInvestido;
         const lucroPrejuizoPercentual = valorTotalInvestido > 0
@@ -136,6 +168,8 @@ export function enriquecerListaAtivos(listaAtivosBruta, mapaCotacoes = {}, lista
             quantidadeCadastro,
             precoMedio: precoMedioFinal,
             precoMedioCadastro,
+            precoAtualManual: converterParaNumeroSeguro(ativoBruto.precoAtualManual, 0),
+            fontePrecoAtual: resultadoPrecoAtual.fontePrecoAtual,
             valorTotalInvestido,
             precoAtual,
             valorTotalAtual,
@@ -200,6 +234,16 @@ export function gerarListaAlertas(listaAtivos) {
                 tipo: 'acima-do-teto',
                 titulo: `${ativo.ticker} acima do teto`,
                 descricao: `Preço atual acima do preço teto definido.`,
+                ticker: ativo.ticker
+            });
+        }
+
+        if (ativo.precoAtual <= 0) {
+            listaAlertas.push({
+                id: `${ativo.id}-sem-cotacao`,
+                tipo: 'watchlist',
+                titulo: `${ativo.ticker} sem preço atual`,
+                descricao: 'Defina um preço manual ou aguarde cotação externa válida.',
                 ticker: ativo.ticker
             });
         }
