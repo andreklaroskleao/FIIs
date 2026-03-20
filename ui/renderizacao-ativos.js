@@ -10,6 +10,22 @@ function montarSeloStatus(tipoStatus, textoStatus) {
     return `<span class="selo-status ${escaparHtml(tipoStatus)}">${escaparHtml(textoStatus)}</span>`;
 }
 
+function montarSeloFontePreco(ativo) {
+    if (ativo.fontePrecoAtual === 'manual') {
+        return '<span class="selo-status peso-baixo">Preço manual</span>';
+    }
+
+    if (ativo.fontePrecoAtual === 'cache') {
+        return '<span class="selo-status neutro">Cache</span>';
+    }
+
+    if (ativo.fontePrecoAtual === 'brapi') {
+        return '<span class="selo-status oportunidade">BRAPI</span>';
+    }
+
+    return '<span class="selo-status acima-teto">Sem cotação</span>';
+}
+
 function montarBotoesAcoesAtivo(ativo) {
     return `
         <div class="flex flex-wrap justify-center gap-2">
@@ -76,6 +92,18 @@ function montarLinhaExpandida({
                         </div>
 
                         <div>
+                            <div class="titulo-cartao-detalhes">Preço atual manual</div>
+                            <div class="valor-destaque-detalhes">
+                                ${converterParaNumeroSeguro(ativo.precoAtualManual, 0) > 0 ? `R$ ${formatarMoeda(converterParaNumeroSeguro(ativo.precoAtualManual, 0))}` : '--'}
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="titulo-cartao-detalhes">Origem do preço</div>
+                            <div class="valor-destaque-detalhes">${escaparHtml(ativo.fontePrecoAtual || '--')}</div>
+                        </div>
+
+                        <div>
                             <div class="titulo-cartao-detalhes">Lucro / Prejuízo</div>
                             <div class="valor-destaque-detalhes ${classeResultado}">
                                 R$ ${formatarMoeda(converterParaNumeroSeguro(ativo.lucroPrejuizoValor, 0))}
@@ -113,6 +141,7 @@ function montarLinhaExpandida({
                         <div class="titulo-cartao-detalhes">Estado do ativo</div>
                         <div class="flex flex-wrap gap-2 mt-2">
                             ${montarSeloStatus(statusAtivo.tipoStatus, statusAtivo.textoStatus)}
+                            ${montarSeloFontePreco(ativo)}
                             ${ativo.favorito ? '<span class="selo-status favorito">Favorito</span>' : ''}
                             ${ativo.emWatchlist ? '<span class="selo-status watchlist">Watchlist</span>' : ''}
                             ${estaSelecionadoParaComparacao ? '<span class="selo-status ranking">No comparador</span>' : ''}
@@ -222,6 +251,7 @@ export function renderizarTabelaAtivos({
                         <div class="text-[10px] text-slate-500 uppercase font-black">${escaparHtml(ativo.segmento || 'Outros')}</div>
                         <div class="flex flex-wrap gap-2">
                             ${montarSeloStatus(statusAtivo.tipoStatus, statusAtivo.textoStatus)}
+                            ${montarSeloFontePreco(ativo)}
                             ${ativo.favorito ? '<span class="selo-status favorito">Favorito</span>' : ''}
                             ${ativo.emWatchlist ? '<span class="selo-status watchlist">Watchlist</span>' : ''}
                         </div>
