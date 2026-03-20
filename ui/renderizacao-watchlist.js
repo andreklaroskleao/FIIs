@@ -1,49 +1,55 @@
 import { escaparHtml, formatarMoeda } from '../services/formatadores.js';
+import { converterParaNumeroSeguro } from '../services/calculos-carteira.js';
 
-export function renderizarPainelWatchlist(painelWatchlist, listaAtivos, mapaObservacoesWatchlist) {
-    const listaWatchlist = listaAtivos.filter((ativo) => ativo.emWatchlist);
+export function renderizarPainelWatchlist(painelWatchlist, listaAtivos, mapaObservacoesWatchlist = {}) {
+    if (!painelWatchlist) {
+        return;
+    }
 
-    if (!listaWatchlist.length) {
-        painelWatchlist.innerHTML = '<div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>';
+    const listaWatchlist = (listaAtivos || []).filter((ativo) => ativo.emWatchlist);
+
+    if (listaWatchlist.length === 0) {
+        painelWatchlist.innerHTML = `
+            <div class="text-[11px] text-slate-500 italic">Nenhum ativo em watchlist.</div>
+        `;
         return;
     }
 
     painelWatchlist.innerHTML = listaWatchlist.map((ativo) => {
-        const observacaoWatchlist = mapaObservacoesWatchlist[ativo.id] || '';
+        const observacaoWatchlist = mapaObservacoesWatchlist?.[ativo.id] || '';
 
         return `
             <div class="cartao-watchlist">
-                <div class="flex items-center justify-between gap-3 mb-2">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="font-black text-pink-400 text-sm">${escaparHtml(ativo.ticker)}</span>
-                        ${ativo.favorito ? '<span class="selo-status favorito">Favorito</span>' : ''}
-                        <span class="selo-status watchlist">Watchlist</span>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                        <div class="font-black text-pink-400">${escaparHtml(ativo.ticker)}</div>
+                        <div class="text-[10px] text-slate-500 uppercase font-black">${escaparHtml(ativo.segmento || 'Outros')}</div>
                     </div>
-                    <span class="text-[10px] uppercase font-black text-slate-500">${escaparHtml(ativo.segmento)}</span>
+
+                    <span class="selo-status watchlist">Watchlist</span>
                 </div>
 
-                <div class="space-y-1 text-[11px] mb-3">
-                    <div class="text-slate-400">
-                        Preço atual: <span class="font-black text-white valor-sensivel">R$ ${formatarMoeda(ativo.precoAtual)}</span>
+                <div class="space-y-2 mb-4">
+                    <div class="text-[11px] text-slate-300">
+                        Preço atual: <strong>R$ ${formatarMoeda(converterParaNumeroSeguro(ativo.precoAtual, 0))}</strong>
                     </div>
-                    <div class="text-slate-400">
-                        Preço teto: <span class="font-black text-emerald-400 valor-sensivel">R$ ${formatarMoeda(ativo.precoTeto)}</span>
+
+                    <div class="text-[11px] text-slate-300">
+                        Preço teto: <strong>R$ ${formatarMoeda(converterParaNumeroSeguro(ativo.precoTeto, 0))}</strong>
                     </div>
-                    <div class="text-slate-400">
-                        Nota: <span class="font-black text-blue-300">${ativo.nota}</span>
+
+                    <div class="text-[11px] text-slate-300">
+                        Nota: <strong>${converterParaNumeroSeguro(ativo.nota, 0)}</strong>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 block">
-                        Observação da watchlist
-                    </label>
+                <div class="mb-2">
+                    <div class="titulo-cartao-detalhes">Observação da watchlist</div>
                     <textarea
                         class="textarea-watchlist campo-observacao-watchlist"
                         data-id="${escaparHtml(ativo.id)}"
-                        placeholder="Escreva por que este ativo está em observação"
+                        placeholder="Escreva observações para acompanhar este ativo..."
                     >${escaparHtml(observacaoWatchlist)}</textarea>
-                    <div class="area-observacao-watchlist">${escaparHtml(observacaoWatchlist || 'Sem observação registrada.')}</div>
                 </div>
             </div>
         `;
