@@ -103,6 +103,20 @@ export function validarDadosAtivo(dadosAtivo, camposFormularioAtivo) {
         formularioValido = false;
     }
 
+    if (
+        dadosAtivo.precoAtualManual !== null &&
+        dadosAtivo.precoAtualManual !== undefined &&
+        dadosAtivo.precoAtualManual !== '' &&
+        (!Number.isFinite(Number(dadosAtivo.precoAtualManual)) || Number(dadosAtivo.precoAtualManual) <= 0)
+    ) {
+        definirErroNoCampo(
+            camposFormularioAtivo.precoAtualManual,
+            obterElementoErroPeloCampo(camposFormularioAtivo.precoAtualManual),
+            'Se informado, o preço atual manual deve ser maior que zero.'
+        );
+        formularioValido = false;
+    }
+
     if (!dadosAtivo.segmento || String(dadosAtivo.segmento).trim() === '') {
         definirErroNoCampo(
             camposFormularioAtivo.segmento,
